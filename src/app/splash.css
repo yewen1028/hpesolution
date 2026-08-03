@@ -1,0 +1,90 @@
+/* Intro overlay. Only ever visible on the first entry of a browsing session. */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-paper);
+}
+
+html.splash-pending .splash {
+  display: flex;
+}
+
+/* Hold the page still underneath the overlay. */
+html.splash-pending body {
+  overflow: hidden;
+}
+
+.splash[data-leaving] {
+  opacity: 0;
+  transition: opacity 550ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.splash__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 1.5rem;
+}
+
+.splash__logo {
+  width: clamp(190px, 34vw, 260px);
+  height: auto;
+  animation: splash-logo 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Thin brand rule that fills once, left to right. */
+.splash__bar {
+  position: relative;
+  display: block;
+  width: clamp(190px, 34vw, 260px);
+  height: 2px;
+  overflow: hidden;
+  background-color: var(--color-rule);
+}
+
+.splash__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-brand);
+  transform-origin: left;
+  animation: splash-bar 1150ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+@keyframes splash-logo {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash__logo,
+  .splash__bar::after {
+    animation: none;
+  }
+
+  .splash__bar::after {
+    transform: none;
+  }
+}

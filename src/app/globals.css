@@ -1,26 +1,197 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   HPE Solutions — design tokens.
+   Brand orange on a warm white base. Orange is an accent, never a background
+   wash: rules, labels, states and a single primary action per view.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --color-brand: #f26f21;
+  --color-brand-strong: #d4550c;
+  --color-brand-tint: #fdf1e8;
+
+  --color-ink: #14181d;
+  --color-ink-soft: #3f464f;
+  --color-ink-muted: #6d7480;
+
+  --color-paper: #ffffff;
+  --color-paper-warm: #faf8f6;
+  --color-paper-deep: #10151b;
+
+  --color-rule: #e7e3de;
+  --color-rule-strong: #d3cec7;
+
+  --font-display: var(--font-archivo), "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --header-h: 76px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Parallax layers read this; JS keeps it in sync with scrollY. */
+    scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink-soft);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Small uppercase section marker with a leading orange rule. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 2px;
+    background-color: var(--color-brand);
+  }
+
+  .eyebrow-light {
+    color: rgb(255 255 255 / 0.62);
+  }
+
+  /* Fluid display scale — no arbitrary per-heading font sizes downstream. */
+  .display-1 {
+    font-size: clamp(2.5rem, 1.35rem + 4.6vw, 5rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .display-2 {
+    font-size: clamp(1.95rem, 1.25rem + 2.6vw, 3.25rem);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+  }
+
+  .display-3 {
+    font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
+    line-height: 1.2;
+  }
+
+  .lede {
+    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+    line-height: 1.65;
+    color: var(--color-ink-soft);
+  }
+}
+
+@layer utilities {
+  /* Hairline dividers that keep the grid visible without boxing everything in. */
+  .rule-t {
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .rule-l {
+    border-left: 1px solid var(--color-rule);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --- Scroll reveal ------------------------------------------------------- */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.75s var(--ease-out-quint),
+    transform 0.75s var(--ease-out-quint);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Parallax ------------------------------------------------------------ */
+
+/*
+ * The engine writes a pixel offset into --py on each registered layer.
+ * Layers are oversized so drift never exposes an edge.
+ */
+[data-parallax] {
+  will-change: transform;
+  transform: translate3d(0, var(--py, 0px), 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-parallax] {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Scripting off: nothing may stay invisible. */
+.no-js [data-reveal] {
+  opacity: 1;
+  transform: none;
 }
