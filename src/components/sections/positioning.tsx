@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { Media } from "@/components/media";
+import { MaskReveal } from "@/components/mask-reveal";
 import { Parallax } from "@/components/parallax";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink, Container } from "@/components/ui";
@@ -11,9 +12,18 @@ export function Positioning() {
         <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
           {/* Photo column — the parallax frame is fixed height, the layer drifts. */}
           <Reveal className="relative">
-            <div className="relative h-[26rem] overflow-hidden lg:sticky lg:top-32 lg:h-[34rem]">
+            {/*
+              MaskReveal wraps the frame, not the Parallax layer: the layer is
+              oversized by `speed` on both edges so its drift never exposes an
+              edge, and clipping it there would cut the picture at the drift
+              boundary rather than at the frame.
+            */}
+            <MaskReveal
+              from="up"
+              className="relative h-[26rem] overflow-hidden lg:sticky lg:top-32 lg:h-[34rem]"
+            >
               <Parallax speed={70} className="absolute inset-x-0">
-                <Image
+                <Media
                   src="/media/band-office.jpg"
                   alt="Two colleagues working at computers in an open-plan office"
                   fill
@@ -21,7 +31,7 @@ export function Positioning() {
                   className="object-cover"
                 />
               </Parallax>
-            </div>
+            </MaskReveal>
           </Reveal>
 
           <div>

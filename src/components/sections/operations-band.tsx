@@ -1,4 +1,7 @@
 import { Reveal } from "@/components/reveal";
+import { ScrollTheme } from "@/components/scroll-theme";
+import { SectionDivider } from "@/components/section-divider";
+import { AnimatedText } from "@/components/animated-text";
 import { BackgroundVideo } from "@/components/video-band";
 import { ButtonLink, Container } from "@/components/ui";
 import { principles } from "@/lib/site";
@@ -12,29 +15,45 @@ const tiers = [
 
 export function OperationsBand() {
   return (
-    <section className="relative isolate overflow-hidden bg-paper-deep">
+    <ScrollTheme className="relative isolate overflow-hidden bg-paper-deep">
+      {/*
+        Angled edges cut against the sections either side — white above,
+        warm white below — so neither boundary is a dead-flat line. `flip`
+        alternates the lean so the band is not a parallelogram.
+      */}
+      <SectionDivider position="top" color="var(--color-paper)" />
+      <SectionDivider position="bottom" color="var(--color-paper-warm)" flip />
+
       <BackgroundVideo
         src="/media/about-operations.mp4"
         poster="/media/svc-helpdesk.jpg"
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       />
+      {/*
+        The tint's opacity rides --theme-progress, so the band resolves from
+        the light page into full dark across half a viewport of scrolling
+        rather than switching between two frames.
+      */}
       <div
-        className="absolute inset-0 -z-10"
+        className="scroll-theme__tint absolute inset-0 -z-10"
         aria-hidden="true"
-        style={{
-          background:
-            "linear-gradient(100deg, rgb(16 21 27 / 0.95) 0%, rgb(16 21 27 / 0.88) 52%, rgb(16 21 27 / 0.7) 100%)",
-        }}
       />
 
       <Container className="py-24 sm:py-32">
         <div className="grid gap-16 lg:grid-cols-2 lg:gap-24">
           <div>
-            <Reveal>
-              <p className="eyebrow eyebrow-light">Service Level Assurance</p>
-              <h2 className="display-2 mt-5 text-white">
-                Support coverage built around your operating hours.
-              </h2>
+            <Reveal as="p" className="eyebrow eyebrow-light">
+              Service Level Assurance
+            </Reveal>
+
+            <AnimatedText
+              as="h2"
+              text="Support coverage built around your operating hours."
+              className="display-2 mt-5 text-white"
+              stagger={44}
+            />
+
+            <Reveal delay={220}>
               <p className="lede mt-6 text-white/70">
                 {principles.commitment} Coverage is written into the contract
                 before work starts, so escalation is a procedure rather than a
@@ -100,6 +119,6 @@ export function OperationsBand() {
           </Reveal>
         </div>
       </Container>
-    </section>
+    </ScrollTheme>
   );
 }

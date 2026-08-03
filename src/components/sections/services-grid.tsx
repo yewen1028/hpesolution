@@ -36,13 +36,19 @@ export function ServicesGrid({
             >
               <Link
                 href={`/services/${service.slug}`}
+                data-press="card"
                 className="group flex h-full flex-col p-8 transition-colors duration-300 hover:bg-paper-warm lg:p-10"
               >
                 <span className="flex h-12 w-12 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
                   <ServiceIcon name={service.icon} />
                 </span>
 
-                <h3 className="display-3 mt-7">{service.title}</h3>
+                {/*
+                  `wght-hover` ramps the variable axis 600 → 780 on hover of
+                  the surrounding `group` link. The weight is the hover state —
+                  the type thickens rather than something being added to it.
+                */}
+                <h3 className="display-3 wght-hover mt-7">{service.title}</h3>
 
                 <p className="mt-4 flex-1 text-[0.95rem] leading-relaxed text-ink-soft">
                   {service.short}
@@ -69,6 +75,8 @@ export function ServicesGrid({
           >
             <Link
               href="/contact"
+              data-press="card"
+              data-tone="dark"
               className="group flex h-full flex-col justify-center p-8 lg:p-10"
             >
               <h3 className="display-3 max-w-md text-white">

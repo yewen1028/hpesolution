@@ -5,21 +5,59 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { contact, navigation, services } from "@/lib/site";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [shrunk, setShrunk] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const servicesRef = useRef<HTMLLIElement>(null);
 
+  /**
+   * Two thresholds, not one.
+   *
+   * `scrolled` (12px) is the existing hairline-and-blur change — it has to fire
+   * the moment content slides under the header or the bar looks detached.
+   *
+   * `shrunk` fires once the hero is behind you, which is a different question
+   * and cannot be a fixed number: the home hero is nearly a viewport tall and a
+   * `PageHero` is roughly half that. It is measured from the element marked
+   * `data-site-hero`, minus the header's own height so the change lands as the
+   * hero's last pixel passes under the bar. Pages with no hero fall back to one
+   * header height.
+   */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    let shrinkAt = 160;
+
+    const measure = () => {
+      const hero = document.querySelector<HTMLElement>("[data-site-hero]");
+      const headerH = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--header-h"),
+      ) || 76;
+
+      shrinkAt = hero
+        ? Math.max(headerH, hero.offsetTop + hero.offsetHeight - headerH)
+        : headerH * 2;
+    };
+
+    const onScroll = () => {
+      setScrolled(window.scrollY > 12);
+      setShrunk(window.scrollY > shrinkAt);
+    };
+
+    measure();
     onScroll();
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", measure, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
+    };
+  }, [pathname]);
 
   // Close everything on navigation. Adjusting during render (rather than in an
   // effect) avoids a frame where the new page shows behind an open menu.
@@ -63,12 +101,12 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-100 border-b transition-colors duration-300 ${
+      data-shrunk={shrunk ? "" : undefined}
+      className={`site-header fixed inset-x-0 top-0 z-100 border-b transition-colors duration-300 ${
         scrolled
           ? "border-rule bg-paper/92 backdrop-blur-md"
           : "border-transparent bg-paper"
       }`}
-      style={{ height: "var(--header-h)" }}
     >
       <div className="mx-auto flex h-full max-w-[88rem] items-center gap-6 px-5 sm:px-8">
         <Link
@@ -82,7 +120,7 @@ export function SiteHeader() {
             width={390}
             height={120}
             priority
-            className="h-8 w-auto sm:h-9"
+            className="site-header__logo w-auto"
           />
         </Link>
 
@@ -95,16 +133,14 @@ export function SiteHeader() {
                     <Link
                       href={item.href}
                       aria-current={isActive(item.href) ? "page" : undefined}
-                      className={`relative rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
+                      data-active={isActive(item.href) ? "" : undefined}
+                      className={`nav-link rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                         isActive(item.href)
                           ? "text-ink"
                           : "text-ink-soft hover:text-ink"
                       }`}
                     >
                       {item.label}
-                      {isActive(item.href) && (
-                        <span className="absolute inset-x-3.5 -bottom-0.5 h-0.5 bg-brand" />
-                      )}
                     </Link>
                   </li>
                 );
@@ -116,7 +152,8 @@ export function SiteHeader() {
                     type="button"
                     onClick={() => setServicesOpen((v) => !v)}
                     aria-expanded={servicesOpen}
-                    className={`relative flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
+                    data-active={isActive(item.href) ? "" : undefined}
+                    className={`nav-link flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                       isActive(item.href)
                         ? "text-ink"
                         : "text-ink-soft hover:text-ink"
@@ -131,9 +168,6 @@ export function SiteHeader() {
                         servicesOpen ? "rotate-180" : ""
                       }`}
                     />
-                    {isActive(item.href) && (
-                      <span className="absolute inset-x-3.5 -bottom-0.5 h-0.5 bg-brand" />
-                    )}
                   </button>
 
                   {servicesOpen && (
@@ -167,9 +201,11 @@ export function SiteHeader() {
           </ul>
         </nav>
 
+        <ThemeToggle className="ml-auto hidden lg:ml-4 lg:inline-flex" />
+
         <a
           href={`tel:${contact.phoneDial}`}
-          className="ml-auto hidden items-center gap-2 bg-brand px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-strong lg:ml-4 lg:flex"
+          className="hidden items-center gap-2 bg-brand px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-strong lg:ml-3 lg:flex"
         >
           <Phone size={15} strokeWidth={2.25} aria-hidden="true" />
           {contact.phoneDisplay}
@@ -227,9 +263,16 @@ export function SiteHeader() {
               ))}
             </ul>
 
+            <div className="mt-8 flex items-center justify-between border-t border-rule pt-6">
+              <span className="text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                Theme
+              </span>
+              <ThemeToggle />
+            </div>
+
             <a
               href={`tel:${contact.phoneDial}`}
-              className="mt-8 flex items-center justify-center gap-2 bg-brand px-5 py-4 font-semibold text-white"
+              className="mt-6 flex items-center justify-center gap-2 bg-brand px-5 py-4 font-semibold text-white"
             >
               <Phone size={17} strokeWidth={2.25} aria-hidden="true" />
               {contact.phoneDisplay}

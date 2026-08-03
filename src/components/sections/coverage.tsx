@@ -1,5 +1,9 @@
 import { MapPin } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { Counter } from "@/components/counter";
+import { MeterBar } from "@/components/meter";
+import { DisplayWatermark } from "@/components/display-watermark";
+import { TextMarquee } from "@/components/text-marquee";
 import {
   ButtonLink,
   ParallaxBand,
@@ -9,6 +13,7 @@ import {
 import { regions } from "@/lib/site";
 
 const totalCentres = regions.reduce((n, r) => n + r.centres.length, 0);
+const centreNames = regions.flatMap((r) => r.centres.map((c) => c.name));
 
 export function Coverage() {
   return (
@@ -20,25 +25,45 @@ export function Coverage() {
       eager
       overlay="linear-gradient(180deg, rgb(16 21 27 / 0.93), rgb(16 21 27 / 0.88))"
     >
-      <Container className="py-24 sm:py-32">
-        <Reveal>
-          <SectionHeading
-            tone="light"
-            eyebrow="Service centres"
-            title={`${totalCentres} support centres nationwide`}
-            lede="Coverage is what turns a four-hour SLA from a number into a commitment. Every centre carries loaner and replacement stock, and every ticket escalates through the same route regardless of which one takes it."
-          />
-        </Reveal>
+      {/*
+        The section's own figure, set as a shape. It restates the number in the
+        heading, so it is decorative and hidden from assistive tech.
+      */}
+      <DisplayWatermark tone="light">{totalCentres}</DisplayWatermark>
+
+      <Container className="relative z-10 py-24 sm:py-32">
+        {/* `animate` reveals the eyebrow and lede itself — no <Reveal> here. */}
+        <SectionHeading
+          tone="light"
+          animate
+          underline
+          eyebrow="Service centres"
+          title={`${totalCentres} support centres nationwide`}
+          lede="Coverage is what turns a four-hour SLA from a number into a commitment. Every centre carries loaner and replacement stock, and every ticket escalates through the same route regardless of which one takes it."
+        />
 
         <div className="mt-16 grid gap-12 lg:grid-cols-2 lg:gap-20">
           {regions.map((region, ri) => (
             <Reveal key={region.name} delay={ri * 120}>
-              <h3 className="flex items-baseline gap-3 border-b border-white/20 pb-4 font-display text-sm font-semibold uppercase tracking-[0.14em] text-white">
+              <h3 className="flex items-baseline gap-3 pb-4 font-display text-sm font-semibold uppercase tracking-[0.14em] text-white">
                 {region.name}
                 <span className="tabular text-white/40">
-                  {region.centres.length}
+                  <Counter value={region.centres.length} />
+                </span>
+                <span className="ml-auto text-[0.7rem] font-normal normal-case tracking-normal text-white/35">
+                  <Counter value={region.centres.length} /> of {totalCentres}
                 </span>
               </h3>
+              {/*
+                The share of the network this region carries — the figure was
+                already on the page as text; this is the same number drawn.
+              */}
+              <MeterBar
+                tone="light"
+                value={region.centres.length}
+                total={totalCentres}
+                label={`${region.name}: ${region.centres.length} of ${totalCentres} service centres`}
+              />
               <ul className="mt-2 grid gap-x-8 sm:grid-cols-2">
                 {region.centres.map((centre) => (
                   <li
@@ -57,6 +82,15 @@ export function Coverage() {
               </ul>
             </Reveal>
           ))}
+        </div>
+
+        {/*
+          Every town with a centre, on a loop. Real data — the same
+          `regions[].centres` the maps read — so the strip says something
+          rather than repeating a slogan.
+        */}
+        <div className="mt-16 border-y border-white/12">
+          <TextMarquee items={centreNames} tone="light" duration={64} />
         </div>
 
         <Reveal delay={160}>

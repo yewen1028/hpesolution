@@ -1,15 +1,20 @@
-import Image from "next/image";
+import { Media } from "@/components/media";
 import { Parallax } from "@/components/parallax";
 import { Reveal } from "@/components/reveal";
+import { AnimatedText } from "@/components/animated-text";
+import { Magnetic } from "@/components/magnetic";
 import { ButtonLink, Container } from "@/components/ui";
 import { stats } from "@/lib/site";
 import { Counter } from "@/components/counter";
 
 export function Hero() {
   return (
-    <section className="relative isolate overflow-hidden bg-paper-deep">
+    <section
+      data-site-hero
+      className="relative isolate overflow-hidden bg-paper-deep"
+    >
       <Parallax speed={130} className="absolute inset-x-0 -z-10">
-        <Image
+        <Media
           src="/media/hero-datacentre.jpg"
           alt="Server hardware and structured cabling inside a datacentre"
           fill
@@ -36,13 +41,18 @@ export function Hero() {
             </p>
           </Reveal>
 
-          <Reveal delay={80}>
-            <h1 className="display-1 mt-7 text-white">
-              Malaysia&apos;s established
-              <br />
-              IT support service provider.
-            </h1>
-          </Reveal>
+          {/*
+            Not wrapped in <Reveal>: AnimatedText carries its own observer, and
+            fading the block in while the words also stagger reads as two
+            competing animations on the first thing the visitor sees.
+          */}
+          <AnimatedText
+            as="h1"
+            text={"Malaysia's established\nIT support service provider."}
+            className="display-1 mt-7 text-white"
+            delay={80}
+            stagger={48}
+          />
 
           <Reveal delay={160}>
             <p className="lede mt-8 max-w-2xl text-white/72">
@@ -54,8 +64,11 @@ export function Hero() {
           </Reveal>
 
           <Reveal delay={240}>
-            <div className="mt-11 flex flex-wrap gap-4">
-              <ButtonLink href="/services">Explore our services</ButtonLink>
+            <div className="mt-11 flex flex-wrap items-center gap-4">
+              {/* The one primary action in this view gets the magnet. */}
+              <Magnetic>
+                <ButtonLink href="/services">Explore our services</ButtonLink>
+              </Magnetic>
               <ButtonLink href="/contact" variant="light">
                 Talk to our team
               </ButtonLink>

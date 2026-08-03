@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Media } from "@/components/media";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Parallax } from "./parallax";
@@ -24,9 +24,12 @@ export function PageHero({
   crumbs?: Crumb[];
 }) {
   return (
-    <section className="relative isolate overflow-hidden bg-paper-deep">
+    <section
+      data-site-hero
+      className="relative isolate overflow-hidden bg-paper-deep"
+    >
       <Parallax speed={100} className="absolute inset-x-0 -z-10">
-        <Image
+        <Media
           src={image}
           alt={imageAlt}
           fill

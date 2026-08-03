@@ -319,6 +319,7 @@ export function CoverageMap({ networkMap }: { networkMap: React.ReactNode }) {
             role="tab"
             aria-selected={view === id}
             onClick={() => setView(id)}
+            data-press="toggle"
             className={`flex items-center gap-2.5 px-5 py-3 text-[0.85rem] font-semibold transition-colors duration-200 ${
               view === id
                 ? "bg-brand text-white"

@@ -3,6 +3,11 @@ import { Archivo, Inter } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { SplashScreen, splashBootScript } from "@/components/splash-screen";
+import { mapIntroBootScript } from "@/components/map-intro";
+import { ScrollProgress } from "@/components/scroll-progress";
+import { BackToTop } from "@/components/back-to-top";
+import { themeBootScript } from "@/components/theme-toggle";
+import { PressProvider } from "@/components/press";
 import { company, contact } from "@/lib/site";
 import "./globals.css";
 import "./splash.css";
@@ -55,17 +60,31 @@ export default function RootLayout({
       lang="en-MY"
       data-scroll-behavior="smooth"
       className={`${archivo.variable} ${inter.variable} h-full antialiased`}
-      // `splashBootScript` adds `splash-pending` to this element before
-      // hydration, so its className legitimately differs from the SSR output.
+      // `splashBootScript` adds `splash-pending` and `themeBootScript` adds
+      // `data-theme` to this element before hydration, so its className and
+      // attributes legitimately differ from the SSR output.
       suppressHydrationWarning
     >
       <head>
         {/* Runs before paint so returning visitors never see the splash flash. */}
+        {/*
+          Must run before paint, or a dark-mode visitor gets a white flash on
+          every load. Placed first so the theme is settled before anything else
+          reads it.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <script dangerouslySetInnerHTML={{ __html: splashBootScript }} />
+        {/*
+          Route-scoped, but it has to live here: a <script> rendered inside a
+          page component is never executed on a client-side navigation, and
+          React warns about it. The script guards on the pathname itself, and
+          MapStage covers the client-navigation case in a layout effect.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: mapIntroBootScript }} />
       </head>
       <body className="flex min-h-full flex-col bg-paper">
         <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}.splash{display:none!important}`}</style>
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important}.split-part{opacity:1!important;transform:none!important}.split-rule{transform:scaleX(1)!important}.mask-reveal{clip-path:none!important}.mask-reveal__inner{transform:none!important}.splash{display:none!important}`}</style>
         </noscript>
 
         <SplashScreen />
@@ -77,11 +96,24 @@ export default function RootLayout({
           Skip to content
         </a>
 
-        <SiteHeader />
+        {/* One delegated pointer listener drives every [data-press] element. */}
+        <PressProvider />
 
-        <main id="main" className="flex-1" style={{ paddingTop: "var(--header-h)" }}>
+        <SiteHeader />
+        <ScrollProgress />
+
+        <main
+          id="main"
+          // Focus target for the skip link and for BackToTop, which has to move
+          // focus as well as scroll or a keyboard user stays at the bottom.
+          tabIndex={-1}
+          className="flex-1 outline-none"
+          style={{ paddingTop: "var(--header-h)" }}
+        >
           {children}
         </main>
+
+        <BackToTop />
 
         <SiteFooter />
 

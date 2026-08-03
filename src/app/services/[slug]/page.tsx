@@ -6,6 +6,7 @@ import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
+import { SectionNav } from "@/components/section-nav";
 import { getService, services } from "@/lib/site";
 
 export function generateStaticParams() {
@@ -33,6 +34,16 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
 
   const others = services.filter((s) => s.slug !== service.slug).slice(0, 3);
 
+  // Only sections this service actually renders. `scope` and `tiers` are
+  // optional in the data, and a nav entry pointing at a missing id would
+  // scroll nowhere and never highlight.
+  const sectionLinks = [
+    { id: "features", label: "Features" },
+    ...(service.scope?.length ? [{ id: "scope", label: "Scope" }] : []),
+    ...(service.tiers?.length ? [{ id: "tiers", label: "Service tiers" }] : []),
+    { id: "benefits", label: "Benefits" },
+  ];
+
   return (
     <>
       <PageHero
@@ -47,8 +58,10 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         ]}
       />
 
+      <SectionNav links={sectionLinks} />
+
       {/* Features */}
-      <section className="py-24 sm:py-32">
+      <section id="features" className="scroll-mt-28 py-24 sm:py-32">
         <Container>
           <Reveal>
             <div className="flex items-start gap-6">
@@ -89,7 +102,8 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
       {service.scope?.map((block) => (
         <section
           key={block.heading}
-          className="border-t border-rule bg-paper-warm py-24 sm:py-32"
+          id="scope"
+          className="scroll-mt-28 border-t border-rule bg-paper-warm py-24 sm:py-32"
         >
           <Container>
             <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
@@ -121,7 +135,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
 
       {/* Optional tier table */}
       {service.tiers && (
-        <section className="border-t border-rule py-24 sm:py-32">
+        <section id="tiers" className="scroll-mt-28 border-t border-rule py-24 sm:py-32">
           <Container>
             <Reveal>
               <SectionHeading
@@ -182,7 +196,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
       )}
 
       {/* Benefits */}
-      <section className="border-t border-rule bg-paper-warm py-24 sm:py-32">
+      <section id="benefits" className="scroll-mt-28 border-t border-rule bg-paper-warm py-24 sm:py-32">
         <Container>
           <Reveal>
             <SectionHeading

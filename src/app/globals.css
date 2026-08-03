@@ -651,3 +651,1416 @@
     overflow-x: hidden;
   }
 }
+
+/* --- Split-text reveal ---------------------------------------------------- */
+
+/*
+ * AnimatedText renders one span per word (or per character) with an `--i`
+ * index; the stagger is that index times `--split-stagger`. The component only
+ * flips `data-split` to "shown" — every value below is declarative, so the
+ * reduced-motion and no-JS overrides at the end of this block are the complete
+ * bail-out. Nothing here may leave text invisible.
+ */
+/*
+ * The container is deliberately not given a `display` here: AnimatedText is
+ * rendered as the real heading and must keep whatever layout its own tag and
+ * utility classes give it. Only the parts inside it are transformed.
+ */
+.split-word {
+  display: inline-block;
+  /* Clips the upward travel so parts rise out of the line rather than
+     appearing over the line above it. */
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Descenders would otherwise be shaved by the clip. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.split-part {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.9em) rotate(2deg);
+  transition:
+    opacity var(--split-duration, 750ms) var(--ease-out-quint),
+    transform var(--split-duration, 750ms) var(--ease-out-quint);
+  transition-delay: calc(
+    var(--split-delay, 0ms) + var(--i, 0) * var(--split-stagger, 55ms)
+  );
+}
+
+[data-split="shown"] .split-part {
+  opacity: 1;
+  transform: none;
+}
+
+/* Animated underline: wipes in from the left once the words have landed. */
+.split-rule {
+  display: block;
+  height: 2px;
+  margin-top: 0.35em;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.7s var(--ease-out-quint);
+  transition-delay: calc(
+    var(--split-delay, 0ms) + var(--split-underline-delay, 260ms)
+  );
+}
+
+[data-split="shown"] .split-rule {
+  transform: scaleX(1);
+}
+
+/* --- Meters --------------------------------------------------------------- */
+
+.meter {
+  position: relative;
+  height: 2px;
+  width: 100%;
+  background: var(--color-rule);
+  overflow: hidden;
+}
+
+.meter--light {
+  background: rgb(255 255 255 / 0.16);
+}
+
+.meter__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-brand);
+  transform: scaleX(var(--meter-fill, 1));
+  transform-origin: left;
+}
+
+.meter-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meter-ring__track {
+  stroke: var(--color-rule);
+}
+
+.meter-ring__fill {
+  stroke: var(--color-brand);
+}
+
+.meter-ring__label {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Pointer interactions ------------------------------------------------- */
+
+/*
+ * Magnetic and Tilt both write custom properties from rAF and never touch
+ * layout. The transition covers the release: on pointerleave the properties go
+ * back to 0 in a single write and the transition carries the element home.
+ */
+.magnetic {
+  display: inline-block;
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+  transition: transform 0.45s var(--ease-out-quint);
+}
+
+/* While the cursor is inside the radius the transform is driven per frame, so
+   the transition has to get out of the way or it lags a frame behind. */
+.magnetic:hover {
+  transition: none;
+}
+
+.tilt {
+  transform: perspective(var(--tilt-perspective, 900px))
+    rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.5s var(--ease-out-quint);
+}
+
+/* Promoted only while it is actually moving — three cards holding a permanent
+   compositor layer each is not worth the memory when nothing is hovered. */
+.tilt[data-tilt="active"] {
+  will-change: transform;
+  transition: transform 0.12s linear;
+  transform: perspective(var(--tilt-perspective, 900px))
+    rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+    translate3d(0, calc(var(--tilt-lift, 6px) * -1), 0);
+}
+
+/* --- Hover reveal --------------------------------------------------------- */
+
+.hover-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-reveal__media {
+  transition: transform 0.7s var(--ease-out-quint);
+}
+
+.hover-reveal__panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.75rem;
+  background: linear-gradient(
+    0deg,
+    rgb(16 21 27 / 0.92) 0%,
+    rgb(16 21 27 / 0.55) 55%,
+    rgb(16 21 27 / 0) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-out-quint);
+}
+
+.hover-reveal__panel > * {
+  transform: translateY(12px);
+  transition: transform 0.55s var(--ease-out-quint);
+}
+
+/*
+ * Keyboard users get the same reveal: the panel's content is decorative here
+ * (the card already carries it as text), but the focus state has to be visible
+ * when the card itself is focused.
+ */
+.hover-reveal:hover .hover-reveal__media,
+.hover-reveal:focus-within .hover-reveal__media {
+  transform: scale(1.06);
+}
+
+.hover-reveal:hover .hover-reveal__panel,
+.hover-reveal:focus-within .hover-reveal__panel {
+  opacity: 1;
+}
+
+.hover-reveal:hover .hover-reveal__panel > *,
+.hover-reveal:focus-within .hover-reveal__panel > * {
+  transform: none;
+}
+
+/*
+ * Coarse pointers cannot hover: :hover on touch latches on tap and stays until
+ * something else is tapped, which leaves a card stuck under an overlay. The
+ * panel is shown outright instead, so the content is never unreachable.
+ */
+@media (hover: none), (pointer: coarse) {
+  .hover-reveal__panel {
+    opacity: 1;
+  }
+
+  .hover-reveal__panel > * {
+    transform: none;
+  }
+
+  .hover-reveal__media {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The finished state is the rendered state; only the arrival is dropped. */
+  .split-part {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .split-rule {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .meter__fill {
+    transform: scaleX(var(--meter-fill, 1));
+  }
+
+  .magnetic,
+  .tilt,
+  .tilt[data-tilt="active"] {
+    transform: none;
+    transition: none;
+  }
+
+  .hover-reveal__media,
+  .hover-reveal__panel,
+  .hover-reveal__panel > * {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Scripting off: nothing may stay invisible. */
+.no-js .split-part {
+  opacity: 1;
+  transform: none;
+}
+
+.no-js .split-rule {
+  transform: scaleX(1);
+}
+
+/* --- Coverage map intro --------------------------------------------------- */
+
+/*
+ * First entry to /service-centre/map in a session shows a progress bar over the
+ * map area; the map then transitions in behind it. `map-intro-pending` is set
+ * by `mapIntroBootScript` before first paint and removed by MapStage, so the
+ * hidden state exists only while script is driving it:
+ *
+ *   - no JavaScript  → the class is never added, the map renders normally
+ *   - reduced motion → the boot script declines to add it
+ *   - second visit   → the session flag is already set
+ *
+ * The map keeps its layout box while hidden (opacity, never display), so the
+ * page does not reflow when it arrives and the bar stays centred on it.
+ */
+.map-stage {
+  position: relative;
+}
+
+.map-stage__map {
+  transition:
+    opacity 0.9s var(--ease-out-quint),
+    transform 0.9s var(--ease-out-quint);
+}
+
+.map-intro-pending .map-stage__map {
+  opacity: 0;
+  /* Rises and settles as it fades in — the same drift the parallax bands use,
+     applied once as an entrance rather than tied to scroll. */
+  transform: translateY(46px) scale(0.985);
+}
+
+/*
+ * The overlay is always rendered and hidden by default, so a visitor who is
+ * not being shown the intro pays no attention to it and no layout depends on
+ * it. `map-intro-pending` displays it at first paint, before hydration;
+ * `[data-intro]` on the stage keeps it displayed afterwards so it can fade out
+ * over the arriving map rather than being cut.
+ */
+.map-stage__intro {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  place-items: center;
+  padding: 1.5rem;
+  opacity: 1;
+  transition: opacity 420ms var(--ease-out-quint);
+}
+
+.map-intro-pending .map-stage__intro,
+.map-stage[data-intro] .map-stage__intro {
+  display: grid;
+}
+
+.map-stage[data-intro="leaving"] .map-stage__intro {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * Palette bridge for the vendored ProgressBar.
+ *
+ * `components/ui/progress-bar.tsx` is kept byte-identical to its source, so its
+ * blue fill, stone greys and `dark:` variants are overridden here rather than
+ * in the file. Two reasons this is not optional:
+ *   - #4568FF is off-palette; on this site the accent is --color-brand.
+ *   - the site has no dark mode, but Tailwind v4 resolves `dark:` from
+ *     prefers-color-scheme, so a visitor whose OS is dark would otherwise get
+ *     a dark bar on a warm-white page.
+ * Specificity alone beats the utilities; no !important is needed except on the
+ * label colours, which Tailwind emits at the same weight.
+ */
+.map-intro-progress [role="progressbar"] {
+  background: var(--color-paper-warm);
+  box-shadow:
+    inset 0 1px 2px rgb(20 24 29 / 0.1),
+    inset 0 0 0 1px rgb(20 24 29 / 0.08);
+}
+
+.map-intro-progress [role="progressbar"] > div > span {
+  background: var(--color-brand);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    inset 0 -1px 0 rgb(20 24 29 / 0.18);
+}
+
+.map-intro-progress [id] {
+  color: var(--color-ink) !important;
+}
+
+.map-intro-progress [aria-hidden] span {
+  color: var(--color-ink-muted) !important;
+}
+
+/* --- Page transition ------------------------------------------------------ */
+
+/*
+ * Opacity only, and deliberately so. A `transform` on this wrapper would make
+ * it the containing block for everything inside a page, which breaks two things
+ * this site now depends on:
+ *   - `position: sticky` on the pinned case scroller,
+ *   - any `position: fixed` child that ends up inside a page rather than the
+ *     layout (the header is outside `{children}`, so it is safe today).
+ *
+ * `backwards` rather than `both`: the fill is only needed before the animation
+ * starts. Leaving `opacity: 1` applied afterwards would keep a stacking context
+ * alive on every page for no benefit.
+ */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+[data-page-enter] {
+  animation: page-enter 420ms var(--ease-out-quint) backwards;
+}
+
+/*
+ * The global reduced-motion block already collapses animation durations, but
+ * an explicit rule keeps the intent readable next to the effect it disables.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-page-enter] {
+    animation: none;
+  }
+}
+
+/* --- Primary CTA fill ----------------------------------------------------- */
+
+/*
+ * The primary button fills from the edge the cursor arrives at rather than
+ * cross-fading its background. `isolation: isolate` lets the fill sit at
+ * `z-index: -1` without escaping behind the button's own background, so the
+ * label and icon need no wrapper element and the markup is unchanged.
+ */
+.btn-fill {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.btn-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-brand-strong);
+  transform: scaleX(0);
+  /* Wipes out towards the right… */
+  transform-origin: right;
+  transition: transform 0.45s var(--ease-out-quint);
+}
+
+/* …and in from the left, so entering and leaving are not the same movement. */
+.btn-fill:hover::before,
+.btn-fill:focus-visible::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* --- Nav links ------------------------------------------------------------ */
+
+/*
+ * Replaces the conditional <span> bar that used to mark the active item: the
+ * rule is now one pseudo-element in three states — rest, hover/focus, and
+ * `[data-active]` — so the active underline and the hover underline are the
+ * same object and cannot disagree.
+ */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0.875rem;
+  right: 0.875rem;
+  bottom: 0.125rem;
+  height: 2px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.38s var(--ease-out-quint);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Current page: drawn at rest, and it stays drawn while hovered. */
+.nav-link[data-active]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* --- Form fields ---------------------------------------------------------- */
+
+/*
+ * Floating label plus a rule that draws in from the left on focus. The label
+ * is a real <label> tied to the control by `for`/`id`, so the float is purely
+ * visual — nothing about the accessible name depends on it.
+ *
+ * The floated state is driven by `:placeholder-shown`, which is why every
+ * control carries `placeholder=" "`. A <select> has no such state, so it is
+ * marked `data-static-label` and floats permanently.
+ */
+.field {
+  position: relative;
+}
+
+.field__input {
+  width: 100%;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  padding: 1.55rem 1rem 0.55rem;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+  transition: border-color 0.25s var(--ease-out-quint);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--color-rule-strong);
+}
+
+textarea.field__input {
+  padding-top: 1.7rem;
+  resize: vertical;
+}
+
+.field__label {
+  position: absolute;
+  left: 1rem;
+  top: 1.05rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-ink-muted);
+  pointer-events: none;
+  transform-origin: left top;
+  transition:
+    transform 0.28s var(--ease-out-quint),
+    color 0.28s var(--ease-out-quint);
+}
+
+/* Focused, filled, or a control that can never report an empty placeholder. */
+.field__input:focus ~ .field__label,
+.field__input:not(:placeholder-shown) ~ .field__label,
+.field[data-static-label] .field__label {
+  transform: translateY(-0.72rem) scale(0.72);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.field__input:focus ~ .field__label {
+  color: var(--color-brand);
+}
+
+/* Textareas are top-aligned, so the label starts at the first line. */
+.field:has(textarea) .field__label {
+  top: 1.2rem;
+}
+
+/* The draw-in rule, over the bottom edge of the box border. */
+.field__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out-quint);
+}
+
+.field__input:focus ~ .field__line {
+  transform: scaleX(1);
+}
+
+/* Invalid only after the browser has had something to validate. */
+.field__input:not(:placeholder-shown):invalid ~ .field__line {
+  transform: scaleX(1);
+  background: var(--color-brand-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Each end state is still reachable — only the travel is dropped. */
+  .btn-fill::before,
+  .nav-link::after,
+  .field__label,
+  .field__line {
+    transition: none;
+  }
+}
+
+/* --- Mask reveal ---------------------------------------------------------- */
+
+/*
+ * A clip-path wipe rather than a fade: the image stays fully opaque and only
+ * the visible rectangle grows, so the photograph is never washed out halfway
+ * through. `clip-path` and `transform` are both compositor properties, so the
+ * whole thing runs off the main thread.
+ *
+ * The resting state below is the revealed one. `data-shown` is what MaskReveal
+ * sets; if it never arrives — no JS, observer never fires, safety net missed —
+ * the image is simply visible, which is the only acceptable failure here.
+ */
+.mask-reveal {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path var(--mask-duration, 1100ms) var(--ease-out-quint);
+  transition-delay: var(--mask-delay, 0ms);
+}
+
+.mask-reveal:not([data-shown])[data-from="up"] {
+  /* Closed from the bottom edge. */
+  clip-path: inset(0 0 100% 0);
+}
+
+.mask-reveal:not([data-shown])[data-from="left"] {
+  clip-path: inset(0 100% 0 0);
+}
+
+/*
+ * Counter-scale: the picture relaxes to its resting size as the clip opens, so
+ * it settles into the frame instead of sitting still behind a moving window.
+ */
+.mask-reveal__inner {
+  height: 100%;
+  transform: scale(1.08);
+  transition: transform
+    calc(var(--mask-duration, 1100ms) * 1.15) var(--ease-out-quint);
+  transition-delay: var(--mask-delay, 0ms);
+}
+
+.mask-reveal[data-shown] .mask-reveal__inner {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Fully open, no travel — the resting state is already the complete one. */
+  .mask-reveal,
+  .mask-reveal:not([data-shown])[data-from="up"],
+  .mask-reveal:not([data-shown])[data-from="left"] {
+    clip-path: none;
+    transition: none;
+  }
+
+  .mask-reveal__inner {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Scripting off: nothing may stay hidden. */
+.no-js .mask-reveal {
+  clip-path: none;
+}
+
+.no-js .mask-reveal__inner {
+  transform: none;
+}
+
+/* --- Wayfinding ----------------------------------------------------------- */
+
+/*
+ * Sticky header. Height moves here rather than on an inline style so the two
+ * scroll states can transition; `--header-h` stays the layout constant that
+ * `main` pads by, so the page never reflows as the bar shrinks.
+ */
+.site-header {
+  height: var(--header-h);
+  transition:
+    height 0.32s var(--ease-out-quint),
+    background-color 0.3s linear,
+    border-color 0.3s linear;
+}
+
+.site-header__logo {
+  height: 2rem;
+  transition: height 0.32s var(--ease-out-quint);
+}
+
+@media (min-width: 640px) {
+  .site-header__logo {
+    height: 2.25rem;
+  }
+}
+
+/* Past the hero: 76px → 60px, logo 2.25rem → 1.75rem. */
+.site-header[data-shrunk] {
+  height: 60px;
+  box-shadow: 0 1px 0 rgb(20 24 29 / 0.04), 0 10px 30px -22px rgb(20 24 29 / 0.5);
+}
+
+.site-header[data-shrunk] .site-header__logo {
+  height: 1.75rem;
+}
+
+/* --- Scroll progress ------------------------------------------------------ */
+
+.scroll-progress {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  z-index: 99;
+  height: 2px;
+  pointer-events: none;
+  transition:
+    top 0.32s var(--ease-out-quint),
+    opacity 0.3s linear;
+}
+
+/* Rides the header down when it shrinks. */
+.site-header[data-shrunk] ~ .scroll-progress,
+body:has(.site-header[data-shrunk]) .scroll-progress {
+  top: 60px;
+}
+
+/* Short page: nothing worth tracking. */
+.scroll-progress[data-idle] {
+  opacity: 0;
+}
+
+.scroll-progress__fill {
+  display: block;
+  height: 100%;
+  background: var(--color-brand);
+  transform: scaleX(var(--scroll-progress, 0));
+  transform-origin: left;
+  /* Eases toward the true position so the bar does not judder on a trackpad. */
+  transition: transform 0.12s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Track the scrollbar exactly rather than gliding after it. */
+  .scroll-progress__fill {
+    transition: none;
+  }
+}
+
+/* --- Section nav (scroll-spy) --------------------------------------------- */
+
+.section-nav {
+  position: sticky;
+  z-index: 80;
+}
+
+/* Rail: vertical sidebar, marker on the list's own hairline. */
+.section-nav--rail {
+  top: calc(var(--header-h) + 1.5rem);
+}
+
+.section-nav--rail ul {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--color-rule);
+}
+
+/*
+ * Bar: a sticky strip that parks directly under the header, so it has to track
+ * the header's shrink the same way the progress bar does.
+ */
+.section-nav--bar {
+  top: var(--header-h);
+  border-bottom: 1px solid var(--color-rule);
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(12px);
+  transition: top 0.32s var(--ease-out-quint);
+}
+
+body:has(.site-header[data-shrunk]) .section-nav--bar {
+  top: 60px;
+}
+
+.section-nav--bar ul {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 auto;
+  max-width: 88rem;
+  padding: 0 1.25rem;
+}
+
+.section-nav--bar ul::-webkit-scrollbar {
+  display: none;
+}
+
+.section-nav--bar .section-nav__link {
+  padding: 0.9rem 0.5rem;
+  white-space: nowrap;
+}
+
+/* Underline marker, matching the header's nav-link language. */
+.section-nav--bar .section-nav__link::before {
+  left: 0.5rem;
+  right: 0.5rem;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.32s var(--ease-out-quint);
+}
+
+.section-nav--bar .section-nav__link[data-active]::before {
+  transform: scaleX(1);
+}
+
+@media (min-width: 640px) {
+  .section-nav--bar ul {
+    padding: 0 2rem;
+  }
+}
+
+.section-nav__link {
+  position: relative;
+  display: block;
+  padding: 0.6rem 0 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  transition: color 0.25s var(--ease-out-quint);
+}
+
+.section-nav__link:hover {
+  color: var(--color-ink);
+}
+
+/* The active marker rides the same hairline the list is drawn against. */
+.section-nav__link::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.32s var(--ease-out-quint);
+}
+
+.section-nav__link[data-active] {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.section-nav__link[data-active]::before {
+  transform: scaleY(1);
+}
+
+/* --- Back to top ---------------------------------------------------------- */
+
+.back-to-top {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  width: 2.875rem;
+  height: 2.875rem;
+  background: var(--color-ink);
+  color: #fff;
+  box-shadow: 0 18px 40px -18px rgb(20 24 29 / 0.55);
+
+  /* Exit state. `visibility` is what takes it out of the tab order — the
+     button stays mounted so it has something to animate. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(14px) scale(0.9);
+  transition:
+    opacity 0.32s var(--ease-out-quint),
+    transform 0.32s var(--ease-out-quint),
+    visibility 0s linear 0.32s,
+    background-color 0.25s linear;
+}
+
+.back-to-top[data-shown] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  /* Un-delay visibility on the way in. */
+  transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.back-to-top:hover {
+  background: var(--color-brand);
+}
+
+@media (min-width: 1024px) {
+  .back-to-top {
+    right: 2rem;
+    bottom: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top {
+    transition:
+      opacity 0.01ms linear,
+      visibility 0s linear 0.01ms;
+    transform: none;
+  }
+
+  .back-to-top[data-shown] {
+    transform: none;
+  }
+}
+
+/* --- Section dividers ----------------------------------------------------- */
+
+/*
+ * The divider paints the neighbouring section's colour over this section's
+ * edge, so it reads as that section intruding rather than as a third band.
+ * Positioned absolutely so it costs no layout height — the section keeps its
+ * own padding and nothing below shifts.
+ */
+.section-divider {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.section-divider--top {
+  top: 0;
+}
+
+.section-divider--bottom {
+  bottom: 0;
+}
+
+.section-divider svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Shallower on narrow screens: a 72px cut across 375px is a steep wedge. */
+@media (max-width: 640px) {
+  .section-divider {
+    height: 40px !important;
+  }
+}
+
+/* --- Scroll-linked theme -------------------------------------------------- */
+
+/*
+ * `--theme-progress` is written by ScrollTheme, 0 → 1 across roughly half a
+ * viewport. It is server-rendered at 1, so with no JavaScript the band is its
+ * full intended colour rather than a washed-out half state.
+ */
+.scroll-theme__tint {
+  background: linear-gradient(
+    100deg,
+    rgb(16 21 27 / 0.95) 0%,
+    rgb(16 21 27 / 0.88) 52%,
+    rgb(16 21 27 / 0.7) 100%
+  );
+  /*
+   * Floor of 0.55 rather than 0: the band carries white type over video, so it
+   * may never become light enough to lose contrast. The scroll-linked part is
+   * the last 45% of the tint, not all of it.
+   */
+  opacity: calc(0.55 + 0.45 * var(--theme-progress, 1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-theme__tint {
+    opacity: 1;
+  }
+}
+
+/* --- Type as graphic ------------------------------------------------------ */
+
+/*
+ * Oversized numeral used as a background element. Sized in vw so it scales with
+ * the band rather than with the type ramp — it is a shape, not a heading, and
+ * the `.display-*` classes would cap it far too small.
+ *
+ * `-webkit-text-stroke` rather than a filled glyph: at this size a solid form
+ * either competes with the content in front of it or has to sit so low in
+ * opacity that it turns to mud.
+ */
+.display-watermark {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 2%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: 34vw;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  user-select: none;
+  pointer-events: none;
+  color: transparent;
+}
+
+.display-watermark--light {
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.11);
+}
+
+.display-watermark--dark {
+  -webkit-text-stroke: 1px rgb(20 24 29 / 0.08);
+}
+
+/* Below the fold of a phone it would crop to a single stroke. */
+@media (max-width: 640px) {
+  .display-watermark {
+    font-size: 46vw;
+    right: -6%;
+    opacity: 0.7;
+  }
+}
+
+/* --- Text marquee --------------------------------------------------------- */
+
+.text-marquee {
+  position: relative;
+  overflow: hidden;
+  padding-block: 0.9rem;
+}
+
+/*
+ * Painted gradients rather than `mask-image`, for the reason documented on
+ * `.marquee`: masking a wide, continuously animated layer is dropped outright
+ * by some low-end integrated graphics, and the strip renders blank.
+ */
+.text-marquee::before,
+.text-marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: clamp(2rem, 8vw, 7rem);
+  pointer-events: none;
+}
+
+.text-marquee::before {
+  left: 0;
+}
+
+.text-marquee::after {
+  right: 0;
+}
+
+.text-marquee--light::before {
+  background: linear-gradient(90deg, var(--color-paper-deep), transparent);
+}
+
+.text-marquee--light::after {
+  background: linear-gradient(270deg, var(--color-paper-deep), transparent);
+}
+
+.text-marquee--dark::before {
+  background: linear-gradient(90deg, var(--color-paper), transparent);
+}
+
+.text-marquee--dark::after {
+  background: linear-gradient(270deg, var(--color-paper), transparent);
+}
+
+.text-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee-drift var(--marquee-duration, 48s) linear infinite;
+}
+
+.text-marquee__set {
+  display: flex;
+  align-items: center;
+}
+
+.text-marquee__item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 0.9rem + 1vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-marquee--light .text-marquee__item {
+  color: rgb(255 255 255 / 0.55);
+}
+
+.text-marquee--dark .text-marquee__item {
+  color: var(--color-ink-muted);
+}
+
+.text-marquee__sep {
+  padding-inline: 1.5rem;
+  color: var(--color-brand);
+}
+
+/*
+ * Standard bail-out, unlike `.marquee`. A stopped line of text still reads as a
+ * list, so it becomes a scrollable row rather than a clipped one.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .text-marquee {
+    overflow-x: auto;
+  }
+
+  .text-marquee__track {
+    animation: none;
+  }
+}
+
+/* --- Variable weight on hover --------------------------------------------- */
+
+/*
+ * `font-weight` between two variable-font instances does not interpolate on its
+ * own — a custom property does, but only once it has been registered with a
+ * type. `@property` is what makes this a smooth 600 → 780 ramp rather than a
+ * snap at the midpoint.
+ *
+ * Both Archivo and Inter are loaded by `next/font/google` without a `weight`
+ * argument, which serves the variable file, so the `wght` axis is live.
+ * `font-synthesis-weight: none` in the base layer keeps the browser from
+ * faking any of it.
+ */
+@property --wght {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 600;
+}
+
+.wght-hover {
+  --wght: 600;
+  font-variation-settings: "wght" var(--wght);
+  /* Long-hand deliberately: a custom property name inside the `transition`
+     shorthand is not parsed consistently across engines. */
+  transition-property: --wght, color;
+  transition-duration: 0.4s;
+  transition-timing-function: var(--ease-out-quint);
+}
+
+.group:hover .wght-hover,
+.wght-hover:hover,
+.group:focus-visible .wght-hover {
+  --wght: 780;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wght-hover {
+    transition: none;
+  }
+}
+
+/* --- Skeletons ------------------------------------------------------------ */
+
+/*
+ * A block that reserves the shape of the content arriving in its place.
+ *
+ * The shimmer is a background-position animation on a gradient, not a moving
+ * pseudo-element: no extra node, nothing to clip, and it composites cleanly
+ * over any number of blocks on one page.
+ */
+.skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background-color: var(--color-rule);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.65) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: -120% 0;
+  }
+  to {
+    background-position: 120% 0;
+  }
+}
+
+/* On a dark band the base and the sweep both invert. */
+.skeleton-on-dark .skeleton {
+  background-color: rgb(255 255 255 / 0.12);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.14) 50%,
+    transparent 100%
+  );
+}
+
+/* The network map's stage, so the page reserves its exact height. */
+.skeleton--netmap {
+  aspect-ratio: 800 / 380;
+}
+
+/*
+ * Reduced motion: the shape still has to communicate "content is coming", so
+ * the block stays and only the sweep is dropped.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* --- Empty state ---------------------------------------------------------- */
+
+/*
+ * Drawn with the same hairline vocabulary as the rest of the site — a frame and
+ * an outlined icon, no illustration. An illustrated empty state would be the
+ * only decorative artwork on the site.
+ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper-warm);
+  padding: clamp(2rem, 1rem + 4vw, 3.5rem);
+}
+
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid var(--color-rule-strong);
+  color: var(--color-brand);
+}
+
+/* --- Dark theme ----------------------------------------------------------- */
+
+/*
+ * The palette is inverted around the surfaces the site already owns rather than
+ * invented: `--color-paper-deep` (#10151b) is the dark surface the hero, the
+ * operations band and the coverage band already sit on, so dark mode promotes
+ * it to the page background and the site stays recognisably itself.
+ *
+ * These override the `@theme` block above, so every `bg-paper`, `text-ink`,
+ * `border-rule` utility on the site re-colours with no markup change.
+ *
+ * `[data-theme="dark"]` is set before first paint by `themeBootScript`. The
+ * light values remain the defaults in `@theme`, so a document with no attribute
+ * — script blocked, crawler, no JS — renders the light site exactly as before.
+ */
+:root[data-theme="dark"] {
+  /* Surfaces. paper → the near-black the dark bands already use. */
+  --color-paper: #10151b;
+  --color-paper-warm: #161d25;
+  /* Deeper than `paper`, so bands still separate from the page behind them. */
+  --color-paper-deep: #070b0f;
+
+  /* Ink inverts to a warm off-white — pure #fff on near-black glares. */
+  --color-ink: #f4f2ef;
+  --color-ink-soft: #c2c8cf;
+  --color-ink-muted: #8b939d;
+
+  --color-rule: #252d37;
+  --color-rule-strong: #333c48;
+
+  /*
+   * Brand lifts slightly. #f26f21 on #10151b is only about 3.6:1 — fine for a
+   * 2px rule, short of AA for the small uppercase eyebrow text that also uses
+   * it. #ff8236 clears 4.5:1 while reading as the same orange.
+   */
+  --color-brand: #ff8236;
+  /* On dark, the "stronger" hover has to go lighter, not darker. */
+  --color-brand-strong: #ffa06b;
+  --color-brand-tint: #2a1a10;
+}
+
+/*
+ * Colour transition, applied only while a switch is happening.
+ *
+ * `.theme-transition` is added by the toggle and removed 320ms later. If this
+ * lived permanently on `*`, every page load would animate up from the browser's
+ * default colours, and every hover that changes a background would inherit the
+ * fade — which is exactly the mushy feel the site's 0.3s hovers avoid.
+ */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 300ms var(--ease-out-quint),
+    border-color 300ms var(--ease-out-quint),
+    color 300ms var(--ease-out-quint),
+    fill 300ms var(--ease-out-quint),
+    stroke 300ms var(--ease-out-quint) !important;
+  transition-delay: 0ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition: none !important;
+  }
+}
+
+/* --- Theme toggle --------------------------------------------------------- */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper-warm);
+}
+
+/* Same footprint before mount, so the header does not shift. */
+.theme-toggle--idle {
+  width: 6.5rem;
+  height: 1.875rem;
+  border: 1px solid transparent;
+  background: none;
+}
+
+.theme-toggle__option {
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.5rem;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.25s var(--ease-out-quint),
+    color 0.25s var(--ease-out-quint);
+}
+
+.theme-toggle__option:hover {
+  color: var(--color-ink);
+}
+
+.theme-toggle__option[data-active] {
+  background: var(--color-paper);
+  color: var(--color-brand);
+  box-shadow: 0 1px 2px rgb(20 24 29 / 0.12);
+}
+
+:root[data-theme="dark"] .theme-toggle__option[data-active] {
+  box-shadow: none;
+  background: var(--color-paper-deep);
+}
+
+/* --- Press feedback ------------------------------------------------------- */
+
+/*
+ * Asymmetric timing, which is the whole point of a press state: the depression
+ * has to land on the same frame as the finger (60ms linear reads as instant),
+ * and the release eases back over 260ms so the element settles rather than
+ * snapping. Equal timings in both directions feel mechanical.
+ *
+ * Both selectors are always paired:
+ *   [data-pressed] — set by PressProvider from Pointer Events, works on touch
+ *   :active        — the CSS-only baseline, so this still works with no JS
+ */
+[data-press] {
+  /* Removes the grey flash iOS paints over a tapped element, which would
+     otherwise fight whatever the press state is doing. */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform 260ms var(--ease-out-quint),
+    box-shadow 260ms var(--ease-out-quint),
+    background-color 260ms var(--ease-out-quint),
+    filter 260ms var(--ease-out-quint);
+}
+
+[data-press][data-pressed],
+[data-press]:active {
+  transition-duration: 60ms;
+  transition-timing-function: linear;
+}
+
+/*
+ * A press must never be mistaken for a hover. Hover on the primary CTA is a
+ * colour wipe; the press is geometry — the button physically compresses and
+ * its shadow tightens as though it has been pushed toward the page.
+ */
+[data-press="cta"][data-pressed],
+[data-press="cta"]:active {
+  transform: scale(0.968);
+  box-shadow: inset 0 2px 6px rgb(20 24 29 / 0.28);
+  /* Darkens past the hover fill, so pressing during hover still registers. */
+  filter: brightness(0.93);
+}
+
+/*
+ * Toggle segments are small, so the same 0.968 would be invisible. They take a
+ * deeper scale and lose their raised shadow entirely.
+ */
+[data-press="toggle"][data-pressed],
+[data-press="toggle"]:active {
+  transform: scale(0.88);
+  box-shadow: none;
+}
+
+/*
+ * Cards are large. Scale is proportional to area, not a constant: 0.968 on a
+ * 400px card is a 13px shift that reads as the layout breaking, so a card gets
+ * a fraction of it plus a background shift to carry the feedback.
+ */
+[data-press="card"][data-pressed],
+[data-press="card"]:active {
+  transform: scale(0.992);
+  background-color: var(--color-paper-warm);
+  box-shadow: inset 0 1px 10px rgb(20 24 29 / 0.06);
+}
+
+/* On the dark closing panel of the services grid, warm white would flash. */
+[data-press="card"][data-tone="dark"][data-pressed],
+[data-press="card"][data-tone="dark"]:active {
+  background-color: #0b1015;
+}
+
+/*
+ * Reduced motion keeps the feedback but drops the movement — a press still has
+ * to be confirmable, so the colour and shadow changes remain and only the
+ * transform goes.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-press],
+  [data-press][data-pressed],
+  [data-press]:active {
+    transform: none;
+    transition-duration: 1ms;
+  }
+}

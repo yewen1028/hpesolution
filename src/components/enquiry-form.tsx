@@ -6,11 +6,47 @@ import { services } from "@/lib/site";
 
 const SALES = "sales@hpe.com.my";
 
-const inputClass =
-  "w-full border border-rule bg-paper px-4 py-3 text-[0.95rem] text-ink transition-colors placeholder:text-ink-muted focus:border-brand focus:outline-none";
-
-const labelClass =
-  "block text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink-muted";
+/**
+ * One field: floating label, and a brand rule that draws in from the left on
+ * focus. Styling lives in `.field` in globals.css.
+ *
+ * `placeholder=" "` is required, not decorative — the float is driven by
+ * `:placeholder-shown`, which only reports empty when a placeholder exists. It
+ * is a single space so nothing is announced or painted.
+ *
+ * The <label> stays a real label bound by `for`/`id`; the float is visual only,
+ * so the accessible name is unchanged from the version this replaces.
+ */
+function Field({
+  id,
+  label,
+  required = false,
+  staticLabel = false,
+  className = "",
+  children,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  /** For controls with no `:placeholder-shown` state, i.e. <select>. */
+  staticLabel?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`field ${className}`}
+      data-static-label={staticLabel ? "" : undefined}
+    >
+      {children}
+      <label className="field__label" htmlFor={id}>
+        {label}
+        {required && <span className="text-brand"> *</span>}
+      </label>
+      <span className="field__line" aria-hidden="true" />
+    </div>
+  );
+}
 
 /**
  * There is no backend on this site, so the form composes a structured message
@@ -48,67 +84,62 @@ export function EnquiryForm() {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2">
-      <div>
-        <label className={labelClass} htmlFor="name">
-          Name <span className="text-brand">*</span>
-        </label>
+      <Field id="name" label="Name" required>
         <input
           id="name"
           name="name"
           required
           autoComplete="name"
-          className={`${inputClass} mt-2.5`}
+          placeholder=" "
+          className="field__input"
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className={labelClass} htmlFor="company">
-          Company
-        </label>
+      <Field id="company" label="Company">
         <input
           id="company"
           name="company"
           autoComplete="organization"
-          className={`${inputClass} mt-2.5`}
+          placeholder=" "
+          className="field__input"
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className={labelClass} htmlFor="email">
-          Email <span className="text-brand">*</span>
-        </label>
+      <Field id="email" label="Email" required>
         <input
           id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
-          className={`${inputClass} mt-2.5`}
+          placeholder=" "
+          className="field__input"
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className={labelClass} htmlFor="phone">
-          Phone
-        </label>
+      <Field id="phone" label="Phone">
         <input
           id="phone"
           name="phone"
           type="tel"
           autoComplete="tel"
-          className={`${inputClass} mt-2.5`}
+          placeholder=" "
+          className="field__input"
         />
-      </div>
+      </Field>
 
-      <div className="sm:col-span-2">
-        <label className={labelClass} htmlFor="service">
-          Service of interest
-        </label>
+      {/* A <select> always has a value, so its label cannot float on demand. */}
+      <Field
+        id="service"
+        label="Service of interest"
+        staticLabel
+        className="sm:col-span-2"
+      >
         <select
           id="service"
           name="service"
           defaultValue=""
-          className={`${inputClass} mt-2.5`}
+          className="field__input"
         >
           <option value="">Select a service</option>
           {services.map((service) => (
@@ -118,26 +149,37 @@ export function EnquiryForm() {
           ))}
           <option value="Other">Something else</option>
         </select>
-      </div>
+      </Field>
 
+      {/*
+        The hint used to be the placeholder, which vanished the moment anyone
+        started typing — exactly when it was still needed. A floating label
+        needs `placeholder=" "` anyway, so it becomes persistent helper text
+        and is bound to the control with `aria-describedby`.
+      */}
       <div className="sm:col-span-2">
-        <label className={labelClass} htmlFor="message">
-          How can we help? <span className="text-brand">*</span>
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          required
-          rows={6}
-          placeholder="Number of sites, node count, the hours that matter, and the response time you need."
-          className={`${inputClass} mt-2.5 resize-y`}
-        />
+        <Field id="message" label="How can we help?" required>
+          <textarea
+            id="message"
+            name="message"
+            required
+            rows={6}
+            placeholder=" "
+            aria-describedby="message-hint"
+            className="field__input"
+          />
+        </Field>
+        <p id="message-hint" className="mt-2 text-[0.85rem] text-ink-muted">
+          Number of sites, node count, the hours that matter, and the response
+          time you need.
+        </p>
       </div>
 
       <div className="sm:col-span-2">
         <button
           type="submit"
-          className="group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white transition-colors hover:bg-brand-strong"
+          data-press="cta"
+          className="btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white"
         >
           Send enquiry
           <Send

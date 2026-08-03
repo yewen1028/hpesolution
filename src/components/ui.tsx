@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Media } from "@/components/media";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import type { IconName } from "@/lib/site";
 import { Parallax } from "./parallax";
+import { Reveal } from "./reveal";
+import { AnimatedText } from "./animated-text";
 
 const icons: Record<IconName, LucideIcon> = {
   ServerCog,
@@ -60,36 +62,62 @@ export function SectionHeading({
   lede,
   align = "left",
   tone = "dark",
+  animate = false,
+  underline = false,
 }: {
   eyebrow: string;
   title: string;
   lede?: string;
   align?: "left" | "center";
   tone?: "dark" | "light";
+  /**
+   * Splits the title into words and staggers them in on scroll.
+   *
+   * Opt-in, and deliberately not the default: most section headings are
+   * already inside a `<Reveal>`, and a block that fades up while its words
+   * also stagger reads as two animations fighting. A caller that passes
+   * `animate` must drop its own `<Reveal>` wrapper — this component then
+   * reveals the eyebrow and lede itself.
+   */
+  animate?: boolean;
+  /** Wipes the brand rule in under the title once the words have landed. */
+  underline?: boolean;
 }) {
+  const wrapper =
+    align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl";
+  const titleClass = `display-2 mt-5 ${tone === "light" ? "text-white" : ""}`;
+  const ledeClass = `lede mt-6 ${tone === "light" ? "text-white/70" : ""} ${
+    align === "center" ? "mx-auto" : ""
+  }`;
+  const eyebrowClass = `eyebrow ${tone === "light" ? "eyebrow-light" : ""}`;
+
+  if (animate) {
+    return (
+      <div className={wrapper}>
+        <Reveal as="p" className={eyebrowClass}>
+          {eyebrow}
+        </Reveal>
+        <AnimatedText
+          as="h2"
+          text={title}
+          className={titleClass}
+          underline={underline}
+          stagger={44}
+        />
+        {lede && (
+          <Reveal as="p" delay={220} className={ledeClass}>
+            {lede}
+          </Reveal>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={
-        align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl"
-      }
-    >
-      <p className={`eyebrow ${tone === "light" ? "eyebrow-light" : ""}`}>
-        {eyebrow}
-      </p>
-      <h2
-        className={`display-2 mt-5 ${tone === "light" ? "text-white" : ""}`}
-      >
-        {title}
-      </h2>
-      {lede && (
-        <p
-          className={`lede mt-6 ${
-            tone === "light" ? "text-white/70" : ""
-          } ${align === "center" ? "mx-auto" : ""}`}
-        >
-          {lede}
-        </p>
-      )}
+    <div className={wrapper}>
+      <p className={eyebrowClass}>{eyebrow}</p>
+      <h2 className={titleClass}>{title}</h2>
+      {lede && <p className={ledeClass}>{lede}</p>}
     </div>
   );
 }
@@ -108,7 +136,9 @@ export function ButtonLink({
   const base =
     "group inline-flex items-center gap-2.5 px-6 py-3.5 text-[0.925rem] font-semibold transition-colors";
   const styles = {
-    primary: "bg-brand text-white hover:bg-brand-strong",
+    // `btn-fill` wipes --color-brand-strong across from the entry edge; the
+    // colour swap it replaces was instant.
+    primary: "btn-fill bg-brand text-white",
     ghost: "border border-rule-strong text-ink hover:border-ink hover:bg-paper-warm",
     light: "bg-white text-ink hover:bg-brand hover:text-white",
   }[variant];
@@ -125,16 +155,21 @@ export function ButtonLink({
     </>
   );
 
+  // Only the primary variant compresses: it is the one that reads as a
+  // physical button. Ghost and light are surfaces, and scaling a hairline
+  // outline looks like a rendering fault.
+  const press = variant === "primary" ? "cta" : undefined;
+
   if (external) {
     return (
-      <a href={href} className={`${base} ${styles}`}>
+      <a href={href} data-press={press} className={`${base} ${styles}`}>
         {inner}
       </a>
     );
   }
 
   return (
-    <Link href={href} className={`${base} ${styles}`}>
+    <Link href={href} data-press={press} className={`${base} ${styles}`}>
       {inner}
     </Link>
   );
@@ -172,7 +207,7 @@ export function ParallaxBand({
   return (
     <section className={`relative isolate overflow-hidden ${className}`}>
       <Parallax speed={speed} className="absolute inset-x-0 -z-10">
-        <Image
+        <Media
           src={image}
           alt={alt}
           fill

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { Media } from "@/components/media";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
+import { FolderOpen } from "lucide-react";
+import { CounterText } from "@/components/counter";
+import { EmptyState } from "@/components/empty-state";
 import { Container, SectionHeading } from "@/components/ui";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { caseStudies } from "@/lib/site";
@@ -47,6 +50,16 @@ export default function CaseStudyPage() {
                 />
               </Reveal>
 
+              {items.length === 0 ? (
+                <div className="mt-16">
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="No published engagements yet"
+                    body={`We have not published a ${discipline.toLowerCase()} engagement for this discipline yet. The work is running — the write-ups follow once clients approve them.`}
+                    action={{ href: "/contact", label: "Ask about this work" }}
+                  />
+                </div>
+              ) : (
               <ul className="mt-16 space-y-px bg-rule">
                 {items.map((study, i) => (
                   <Reveal
@@ -57,7 +70,7 @@ export default function CaseStudyPage() {
                   >
                     <article className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
                       <div className="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-64">
-                        <Image
+                        <Media
                           src={study.image}
                           alt={study.imageAlt}
                           fill
@@ -81,7 +94,7 @@ export default function CaseStudyPage() {
                                 {metric.label}
                               </dt>
                               <dd className="tabular mt-1.5 font-display text-2xl font-semibold text-ink">
-                                {metric.value}
+                                <CounterText>{metric.value}</CounterText>
                               </dd>
                             </div>
                           ))}
@@ -91,6 +104,7 @@ export default function CaseStudyPage() {
                   </Reveal>
                 ))}
               </ul>
+              )}
             </Container>
           </section>
         );

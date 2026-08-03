@@ -4,6 +4,7 @@ import { Reveal } from "@/components/reveal";
 import { Container, SectionHeading } from "@/components/ui";
 import { CoverageMap } from "@/components/coverage-map";
 import { NetworkMap } from "@/components/network-map";
+import { MapStage } from "@/components/map-intro";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { allCentres } from "@/lib/site";
 
@@ -41,7 +42,13 @@ export default function CoverageMapPage() {
           {/* NetworkMap is a server component passed through as a prop, so its
               SVG is prerendered even though the stage around it is client-side. */}
           <div className="mt-16">
-            <CoverageMap networkMap={<NetworkMap />} />
+            <MapStage
+              label="Coverage map"
+              pendingLabel="Locating centres"
+              completeLabel="Map ready"
+            >
+              <CoverageMap networkMap={<NetworkMap />} />
+            </MapStage>
           </div>
         </Container>
       </section>

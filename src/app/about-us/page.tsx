@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { Media } from "@/components/media";
 import { Compass, Target, Handshake } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Parallax } from "@/components/parallax";
@@ -101,7 +101,7 @@ export default function AboutPage() {
             <Reveal delay={120}>
               <div className="relative h-[24rem] overflow-hidden lg:h-[32rem]">
                 <Parallax speed={70} className="absolute inset-x-0">
-                  <Image
+                  <Media
                     src="/media/svc-managed-services.jpg"
                     alt="Engineer checking a tablet beside racked servers"
                     fill
