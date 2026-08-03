@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Clock, Headset, MapPin, Package, Wrench } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
-import { Container, SectionHeading } from "@/components/ui";
+import { ButtonLink, Container, SectionHeading } from "@/components/ui";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { contact, regions } from "@/lib/site";
 
@@ -72,7 +72,7 @@ export default function ServiceCentrePage() {
                 <ul className="grid gap-x-10 sm:grid-cols-2">
                   {region.centres.map((centre) => (
                     <li
-                      key={centre}
+                      key={centre.name}
                       className="flex items-center gap-3 border-b border-rule py-4 text-[0.975rem] text-ink-soft"
                     >
                       <MapPin
@@ -81,13 +81,25 @@ export default function ServiceCentrePage() {
                         className="shrink-0 text-brand"
                         aria-hidden="true"
                       />
-                      {centre}
+                      {centre.name}
                     </li>
                   ))}
                 </ul>
               </Reveal>
             ))}
           </div>
+
+          <Reveal delay={160}>
+            <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-rule pt-10">
+              <ButtonLink href="/service-centre/map">
+                Open the coverage map
+              </ButtonLink>
+              <p className="text-[0.9rem] text-ink-muted">
+                Prefer to see it geographically? Every centre is plotted on an
+                interactive map.
+              </p>
+            </div>
+          </Reveal>
         </Container>
       </section>
 

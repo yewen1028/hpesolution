@@ -583,38 +583,75 @@ export const caseStudies: CaseStudy[] = [
   },
 ];
 
-export type Region = { name: string; centres: string[] };
+/**
+ * A service centre. Coordinates are town-centre positions, accurate enough to
+ * place a marker on a national map and no more — they are not branch addresses.
+ * Taken from the `HPE - refined` draft's Leaflet dataset.
+ */
+export type Centre = {
+  name: string;
+  lat: number;
+  lng: number;
+  /**
+   * Position in the network map's 800x380 viewBox — the same space as
+   * `NETMAP_DOTS`. Kept alongside lat/lng so both maps read one dataset.
+   */
+  nx: number;
+  ny: number;
+  /** Puchong doubles as head office; both maps give it a distinct marker. */
+  hq?: boolean;
+};
+
+export type Region = { name: string; centres: Centre[] };
 
 export const regions: Region[] = [
   {
     name: "Peninsular Malaysia",
     centres: [
-      "Alor Setar",
-      "Penang Island",
-      "Ipoh",
-      "Puchong (KL)",
-      "Seremban",
-      "Melaka",
-      "Johor Bahru",
-      "Kuantan",
-      "Kuala Terengganu",
-      "Kota Bharu",
+      // Head office leads the directory; the rest of the list runs north to
+      // south down the peninsula, then up the east coast.
+      {
+        name: "Puchong (KL)",
+        lat: 3.108,
+        lng: 101.618,
+        nx: 88.3,
+        ny: 270.8,
+        hq: true,
+      },
+      { name: "Alor Setar", lat: 6.122, lng: 100.372, nx: 38.7, ny: 150.8 },
+      { name: "Penang Island", lat: 5.415, lng: 100.338, nx: 37.3, ny: 179.0 },
+      { name: "Ipoh", lat: 4.598, lng: 101.082, nx: 66.9, ny: 211.5 },
+      { name: "Seremban", lat: 2.718, lng: 101.935, nx: 100.9, ny: 286.3 },
+      { name: "Melaka", lat: 2.188, lng: 102.248, nx: 113.4, ny: 307.4 },
+      { name: "Johor Bahru", lat: 1.492, lng: 103.758, nx: 173.5, ny: 335.1 },
+      { name: "Kuantan", lat: 3.818, lng: 103.328, nx: 156.3, ny: 242.5 },
+      {
+        name: "Kuala Terengganu",
+        lat: 5.332,
+        lng: 103.142,
+        nx: 148.9,
+        ny: 182.3,
+      },
+      { name: "Kota Bharu", lat: 6.128, lng: 102.242, nx: 113.1, ny: 150.6 },
     ],
   },
   {
     name: "Sabah, Sarawak & Labuan",
     centres: [
-      "Kuching",
-      "Sibu",
-      "Bintulu",
-      "Miri",
-      "Labuan",
-      "Kota Kinabalu",
-      "Sandakan",
-      "Tawau",
+      { name: "Kuching", lat: 1.548, lng: 110.328, nx: 434.9, ny: 332.9 },
+      { name: "Sibu", lat: 2.298, lng: 111.818, nx: 494.2, ny: 303.0 },
+      { name: "Bintulu", lat: 3.168, lng: 113.038, nx: 542.8, ny: 268.4 },
+      { name: "Miri", lat: 4.398, lng: 113.998, nx: 581.0, ny: 219.5 },
+      { name: "Labuan", lat: 5.318, lng: 115.238, nx: 630.4, ny: 182.8 },
+      { name: "Kota Kinabalu", lat: 5.978, lng: 116.068, nx: 663.4, ny: 156.6 },
+      { name: "Sandakan", lat: 5.838, lng: 118.068, nx: 743.0, ny: 162.1 },
+      { name: "Tawau", lat: 4.248, lng: 117.888, nx: 735.8, ny: 225.4 },
     ],
   },
 ];
+
+/** Flat list for the map, which does not care about the regional grouping. */
+export const allCentres: Centre[] = regions.flatMap((r) => r.centres);
 
 export const partners: string[] = [
   "AMP",

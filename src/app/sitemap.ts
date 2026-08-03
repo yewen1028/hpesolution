@@ -18,5 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       priority: 0.7,
     })),
+    // Not in `navigation` — reached from the service-centre section, not the nav.
+    { url: `${BASE}/service-centre/map`, lastModified, priority: 0.6 },
   ];
 }

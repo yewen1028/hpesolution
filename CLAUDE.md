@@ -116,6 +116,68 @@ so a same-path replacement will keep serving the old picture:
 rm -rf .next/cache/images
 ```
 
+## Coverage map
+
+`/service-centre/map` carries **two** maps behind a switch, following the draft.
+Reached from the service-centre band on the home page and from the
+`/service-centre` directory. Both read one dataset — `regions[].centres` in
+`src/lib/site.ts`, which holds `lat`/`lng` for the geographic map and `nx`/`ny`
+for the network map. Coordinates are town-centre positions, not branch
+addresses.
+
+**Network map** (`components/network-map.tsx`, the default view) is a server
+component: SVG and CSS, no JavaScript, so it paints on the first frame.
+
+- The dot field is one `<path>` of 1,949 zero-length dashes with a round
+  linecap, in `src/lib/netmap-dots.ts`. It is ~31 KB of markup that compresses
+  about 10:1, so the page is ordinary over the wire. Keep it inline — an
+  external asset is one more thing that can fail to render.
+- Arc geometry is derived from the coordinates at build time. The draft built
+  them with DOM calls; there is no reason to.
+- **The static state is the complete state**: arcs rest fully drawn and nodes
+  visible, with the animation only replaying that arrival. Reduced motion
+  switches all of it off, and the map still has to read.
+
+**Geographic map** is Leaflet, constructed only when that view is selected.
+
+- Leaflet touches `window` on import, so `components/coverage-map.tsx` imports
+  it **inside** `useEffect`. That keeps the route prerendering like every other.
+- Markers are `L.divIcon`, not Leaflet's default: the stock icon resolves image
+  paths relative to its own CSS and breaks under bundling. The pin is a round
+  badge (`.sc-pin` in `globals.css`) carrying a lucide glyph — `map-pin`, or
+  `building-2` plus a pulse ring for Puchong. The two glyphs are **inlined as
+  SVG strings** in `coverage-map.tsx` because `divIcon` takes HTML, not a React
+  node; re-copy them from `lucide-react` if that dependency is upgraded.
+- Three marker states — rest, hover, selected — and the selected one is driven
+  through `setIcon`, never by adding a class to the element. Leaflet re-creates
+  marker DOM on zoom and would wipe it.
+- Only the selected centre's tooltip is `permanent`. Panning and the state
+  layer's tooltip churn can close it, so a `zoomend moveend dragend` handler
+  re-opens it; that handler is registered once and reads the selection through
+  `activeRef`.
+- Opens at zoom 6, not the draft's 5: Malaysia's ~19° of longitude is only
+  ~430px at zoom 5 and reads as a small island in the middle of a wide stage.
+  Zoom 6 needs ~865px to fit the country, so a container narrower than 880px
+  opens at 5 instead of showing a cropped Malaysia.
+- Clicking a **pin** only selects — it deliberately does not `setView`, so the
+  whole country stays in frame. Clicking a **directory entry** selects *and*
+  flies, to `max(zoom, 7)`.
+- State boundaries come from `public/geo/malaysia-states.json`, fetched lazily
+  and drawn under the markers (`bringToBack`), with an orange hover fill and
+  the state name on a sticky tooltip. The tiles carry no labels, so this is
+  what makes the map read as Malaysia. It is GADM 4.1 level-1, reduced to
+  `name` + geometry and simplified (RDP, ~1.1 km; islets under ~50 km² dropped)
+  from 343 KB to 45 KB. Serving it from `public/` rather than GADM's host —
+  which the draft fetches live — keeps CARTO the only runtime third party and
+  means a slow academic server can never hold up the map. A failed fetch is
+  swallowed; the markers stand on their own.
+- Tiles come from CARTO — the site's only runtime third-party request. The OSM
+  and CARTO attribution control is required by their terms; leave it in place.
+
+The centre directory under the maps is server-rendered and is the real content;
+both maps are enhancement. Selecting a centre there switches to the geographic
+map and flies to it.
+
 ## Contact form
 
 `components/enquiry-form.tsx` composes a structured message and hands it to the

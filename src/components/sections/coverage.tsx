@@ -1,6 +1,11 @@
 import { MapPin } from "lucide-react";
 import { Reveal } from "@/components/reveal";
-import { ParallaxBand, Container, SectionHeading } from "@/components/ui";
+import {
+  ButtonLink,
+  ParallaxBand,
+  Container,
+  SectionHeading,
+} from "@/components/ui";
 import { regions } from "@/lib/site";
 
 const totalCentres = regions.reduce((n, r) => n + r.centres.length, 0);
@@ -37,7 +42,7 @@ export function Coverage() {
               <ul className="mt-2 grid gap-x-8 sm:grid-cols-2">
                 {region.centres.map((centre) => (
                   <li
-                    key={centre}
+                    key={centre.name}
                     className="flex items-center gap-3 border-b border-white/8 py-3.5 text-[0.95rem] text-white/75"
                   >
                     <MapPin
@@ -46,13 +51,24 @@ export function Coverage() {
                       className="shrink-0 text-brand"
                       aria-hidden="true"
                     />
-                    {centre}
+                    {centre.name}
                   </li>
                 ))}
               </ul>
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={160}>
+          <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <ButtonLink href="/service-centre/map" variant="light">
+              View the coverage map
+            </ButtonLink>
+            <p className="text-[0.9rem] text-white/55">
+              See every centre plotted, and find the one nearest your sites.
+            </p>
+          </div>
+        </Reveal>
       </Container>
     </ParallaxBand>
   );
