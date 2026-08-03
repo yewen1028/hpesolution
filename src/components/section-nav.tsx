@@ -16,7 +16,8 @@ export type SectionLink = { id: string; label: string };
  * depends on scroll direction, so the naive version highlights the wrong entry
  * when scrolling up. `rootMargin` pulls the detection band below the fixed
  * header and up from the bottom, so a section counts as current while it
- * occupies the upper part of the viewport.
+ * occupies the upper part of the viewport — and it must be built from resolved
+ * numbers, since IntersectionObserver rejects CSS expressions.
  *
  * Renders as a plain anchor list. With no JavaScript it is still a working
  * table of contents — the highlight is the only thing that depends on script.
@@ -39,6 +40,24 @@ export function SectionNav({
 
     if (elements.length === 0) return;
 
+    /*
+     * `rootMargin` is parsed by IntersectionObserver, not by the CSS engine, so
+     * it takes literal px and % only — `calc()` and `var()` throw
+     * "rootMargin must be specified in pixels or percent" and the observer is
+     * never constructed. The header height therefore has to be resolved to a
+     * number here rather than handed over as a CSS expression.
+     */
+    const headerH =
+      parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--header-h",
+        ),
+      ) || 76;
+
+    // Header height off the top, 55% off the bottom: a section is "current"
+    // while it holds the upper portion of the viewport.
+    const rootMargin = `-${headerH + 8}px 0px -55% 0px`;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -56,12 +75,7 @@ export function SectionNav({
 
         if (current) setActiveId(current.id);
       },
-      {
-        // Header height off the top, 55% off the bottom: a section is "current"
-        // while it holds the upper portion of the viewport.
-        rootMargin: "calc(var(--header-h) * -1 - 8px) 0px -55% 0px",
-        threshold: [0, 0.01, 0.25],
-      },
+      { rootMargin, threshold: [0, 0.01, 0.25] },
     );
 
     for (const el of elements) observer.observe(el);
