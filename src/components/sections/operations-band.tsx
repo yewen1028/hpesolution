@@ -31,9 +31,9 @@ export function OperationsBand() {
         <div className="grid gap-16 lg:grid-cols-2 lg:gap-24">
           <div>
             <Reveal>
-              <p className="eyebrow eyebrow-light">Service level</p>
+              <p className="eyebrow eyebrow-light">Service Level Assurance</p>
               <h2 className="display-2 mt-5 text-white">
-                Pick the response time the business can actually absorb.
+                Support coverage built around your operating hours.
               </h2>
               <p className="lede mt-6 text-white/70">
                 {principles.commitment} Coverage is written into the contract

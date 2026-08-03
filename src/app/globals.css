@@ -195,3 +195,105 @@
   opacity: 1;
   transform: none;
 }
+
+/* --- Partner marquee ----------------------------------------------------- */
+
+/*
+ * One track holding two identical sets of bubbles; translating it -50% lands
+ * set two exactly where set one started, so the loop has no seam.
+ *
+ * Spacing is a margin on each bubble rather than flex `gap`. A gap would be
+ * counted 2n-1 times across the track, so half the track width would no longer
+ * equal one set and the loop would slip a fraction further every cycle.
+ *
+ * There is deliberately no `animation-play-state: paused` on hover: pointing at
+ * a bubble highlights that bubble only, and the carousel keeps moving. Hover
+ * styling therefore belongs on the item, never on the track.
+ */
+.marquee {
+  position: relative;
+  overflow: hidden;
+}
+
+/*
+ * The edge fades are painted gradients, not `mask-image`.
+ *
+ * Masking a wide, continuously animated layer is the one thing in this
+ * component that low-end integrated graphics get wrong: the compositor can drop
+ * the masked strip entirely, so the carousel renders as blank space. Two small
+ * overlays cost nothing and always paint.
+ */
+.marquee::before,
+.marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: clamp(1.5rem, 7vw, 6rem);
+  pointer-events: none;
+}
+
+.marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--color-paper-warm), transparent);
+}
+
+.marquee::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--color-paper-warm), transparent);
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee-drift var(--marquee-duration, 42s) linear infinite;
+}
+
+/*
+ * Left to right: the track starts shifted one full set to the left and slides
+ * back to zero. Both sets are identical, so the wrap at the end of each cycle
+ * is invisible.
+ *
+ * No `will-change: transform` — it pins a compositor layer as wide as the whole
+ * track for the life of the page, which is real memory on a low-end machine and
+ * buys nothing that the translate3d here does not already get.
+ */
+@keyframes marquee-drift {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/*
+ * Reduced motion: `animation-name: none` stops the drift outright. The global
+ * bail-out above only clamps duration and iteration count, which would snap the
+ * track to its -50% end state and leave the row visibly offset.
+ */
+/*
+ * Reduced motion. `animation-name: none` stops the drift outright — the global
+ * bail-out further up only clamps duration and iteration count, which would
+ * snap the track to its end state and leave the row visibly offset.
+ *
+ * `[data-js="on"]` means PartnerCarousel has taken the transform over with
+ * requestAnimationFrame, because Windows' "Animation effects" toggle reports as
+ * reduced motion and is commonly off on low-powered laptops. In that case the
+ * strip is still moving, so it must stay a clipped single-line track rather
+ * than becoming a scrollable row.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+  }
+
+  .marquee__track {
+    animation: none;
+  }
+
+  .marquee[data-js="on"] {
+    overflow-x: hidden;
+  }
+}

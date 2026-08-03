@@ -22,7 +22,7 @@ export default function CaseStudyPage() {
     <>
       <PageHero
         eyebrow="Case study"
-        title="The engagements, at the scale they were run."
+        title="Proven at nationwide scale, across every sector."
         lede="Node counts, outlet counts and response windows describe this work better than adjectives do. These are the contracts that shaped how we staff and stock the network."
         image="/media/case-telco.jpg"
         imageAlt="Telecommunications and network infrastructure equipment"

@@ -42,7 +42,7 @@ export default function ServiceCentrePage() {
     <>
       <PageHero
         eyebrow="Service centre"
-        title="Eighteen centres, from Alor Setar to Tawau."
+        title="18 support centres nationwide."
         lede="Nationwide coverage is not a marketing line for a maintenance contract — it is the difference between a four-hour response and a four-hour flight."
         image="/media/coverage-kl.jpg"
         imageAlt="Aerial view of the Kuala Lumpur skyline at night"
@@ -55,7 +55,7 @@ export default function ServiceCentrePage() {
           <Reveal>
             <SectionHeading
               eyebrow="Coverage"
-              title={`${totalCentres} locations under one escalation path`}
+              title={`${totalCentres} locations, one standard of service`}
               lede="Every centre works to the same ticketing, escalation and reporting procedure, so which one takes your call changes nothing about how it is handled."
             />
           </Reveal>
@@ -97,7 +97,7 @@ export default function ServiceCentrePage() {
           <Reveal>
             <SectionHeading
               eyebrow="At every centre"
-              title="What the network actually gives you"
+              title="What every service centre delivers"
             />
           </Reveal>
           <ul className="mt-14 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">

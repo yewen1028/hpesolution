@@ -11,8 +11,8 @@ import { services } from "@/lib/site";
  * exactly — one column each at sm, two columns for the panel at lg.
  */
 export function ServicesGrid({
-  eyebrow = "What we do",
-  title = "Seven services, one accountable team",
+  eyebrow = "Our services",
+  title = "Seven service lines, one support partner",
   lede = "Most clients start with one contract and add scope as it proves itself. Each service stands alone, and each is measured against the same service level commitment.",
 }: {
   eyebrow?: string;

@@ -151,6 +151,7 @@ export function ParallaxBand({
   speed = 110,
   className = "",
   overlay = "linear-gradient(180deg, rgb(16 21 27 / 0.86), rgb(16 21 27 / 0.74))",
+  eager = false,
   children,
 }: {
   image: string;
@@ -158,6 +159,14 @@ export function ParallaxBand({
   speed?: number;
   className?: string;
   overlay?: string;
+  /**
+   * Opt out of lazy loading for a band that measures as the LCP element.
+   * Deliberately not `priority`: that also injects a preload link, which on a
+   * slow connection competes with the hero image above it. `eager` only stops
+   * the band being deferred, which is what makes it a late LCP in the first
+   * place.
+   */
+  eager?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -168,6 +177,7 @@ export function ParallaxBand({
           alt={alt}
           fill
           sizes="100vw"
+          loading={eager ? "eager" : "lazy"}
           className="object-cover"
         />
       </Parallax>

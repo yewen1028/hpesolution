@@ -32,15 +32,15 @@ export function Hero() {
         <div className="max-w-4xl">
           <Reveal>
             <p className="eyebrow eyebrow-light">
-              IT support &amp; managed services · Malaysia
+              IT support &amp; managed services · Nationwide Malaysia
             </p>
           </Reveal>
 
           <Reveal delay={80}>
             <h1 className="display-1 mt-7 text-white">
-              Someone has to answer
+              Malaysia&apos;s established
               <br />
-              when the network stops.
+              IT support service provider.
             </h1>
           </Reveal>
 

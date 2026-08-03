@@ -58,7 +58,15 @@ hardcode hex values.
   safety-net timer**. Content starts hidden in CSS, so anything animated needs
   that net or it can stay invisible. Keep the `<noscript>` override in
   `layout.tsx` in sync.
-- Everything bails out under `prefers-reduced-motion: reduce`.
+- Everything bails out under `prefers-reduced-motion: reduce` — with one
+  deliberate exception, `components/partner-carousel.tsx`. Windows reports
+  reduced motion whenever `SPI_GETCLIENTAREAANIMATION` is 0, which is routinely
+  the case on low-powered laptops, and a carousel that has stopped reads as a
+  broken section rather than a considerate one. It therefore drives its own
+  transform from `requestAnimationFrame` when CSS animation is disabled. The
+  draft in `HPE - refined/hpe-enhanced-editing.html` does the same thing for the
+  same reason. Do not copy this pattern elsewhere without the same
+  justification.
 
 ## Splash screen
 
@@ -81,6 +89,23 @@ committing, and update the `alt` text with it.
 The background video is lazy-loaded by `components/video-band.tsx` — it only
 fetches once near the viewport and never plays under reduced motion, so the
 poster has to stand on its own.
+
+### Partner logos
+
+`public/media/logos/` — partner brand marks for the business-partner carousel,
+downloaded from Wikimedia Commons by `scripts/fetch-logos.mjs` as rendered PNGs
+and registered in `partnerLogos` in `src/lib/site.ts`.
+
+The same eye-check rule applies, and it bites harder here: searching Commons for
+"Ruckus Networks" returns a photo of their head office, and Simple Icons' `amp`
+is Google AMP, not the cabling brand. **Open every file before committing it.**
+
+Eleven of the seventeen partners have a mark. AMP, Cyberoam, Dintek, Peplink,
+Ruckus and Sangfor have none that could be sourced, and render as typographic
+wordmarks in the same bubble. To add one, drop the file in and add a line to
+`partnerLogos` — the carousel needs no change. The authoritative source is the
+logo pack each principal issues to authorised partners; prefer it over Commons,
+and check each principal's brand guidelines for usage terms.
 
 ### Replacing an image at an existing path
 

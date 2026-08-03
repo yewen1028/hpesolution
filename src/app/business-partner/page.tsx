@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { Container, SectionHeading } from "@/components/ui";
-import { Partners } from "@/components/sections/partners";
+import { PartnerMarquee } from "@/components/sections/partner-marquee";
 import { ContactCta } from "@/components/sections/contact-cta";
 
 export const metadata: Metadata = {
@@ -39,7 +39,7 @@ export default function BusinessPartnerPage() {
     <>
       <PageHero
         eyebrow="Business partner"
-        title="Accreditation is what makes the warranty real."
+        title="Authorised Support Partner to leading manufacturers."
         lede="We are appointed as an Authorised Support Partner by PC, server and network manufacturers. That appointment is what lets us carry their parts, close their claims and stand behind the SLA they promised their customers."
         image="/media/svc-sourcing.jpg"
         imageAlt="Warehouse racking stocked to floor-to-ceiling height"
@@ -51,7 +51,7 @@ export default function BusinessPartnerPage() {
           <Reveal>
             <SectionHeading
               eyebrow="Where the partnerships sit"
-              title="Four domains, one integration practice"
+              title="Our technology domains"
               lede="Sourcing and support are the same conversation. These are the areas where our vendor relationships translate into equipment we can specify, deploy and then service ourselves."
             />
           </Reveal>
@@ -84,7 +84,7 @@ export default function BusinessPartnerPage() {
         </Container>
       </section>
 
-      <Partners />
+      <PartnerMarquee />
       <ContactCta />
     </>
   );

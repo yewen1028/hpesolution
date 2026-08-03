@@ -9,7 +9,7 @@ export function Partners() {
         <Reveal>
           <SectionHeading
             eyebrow="Business partners"
-            title="Accredited on the platforms we support"
+            title="Authorised by the principals we support"
             lede="Warranty fulfilment and managed security only work when the vendor relationship is real. These are the principals and distributors whose products we are authorised to carry, deploy and repair."
           />
         </Reveal>

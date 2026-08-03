@@ -28,7 +28,7 @@ export default function AboutPage() {
     <>
       <PageHero
         eyebrow="About us"
-        title="Ten years of keeping other people's systems up."
+        title="More than 10 years in IT support and maintenance."
         lede="HPE Solutions began as an IT support provider and grew into an IT solutions organisation with a nationwide support network. The work has not changed shape — it has changed scale."
         image="/media/band-workspace.jpg"
         imageAlt="Staff working at desks in an open-plan technology office"
@@ -70,7 +70,7 @@ export default function AboutPage() {
               <Reveal>
                 <SectionHeading
                   eyebrow="Who we are"
-                  title="An IT support business, first and last."
+                  title="A full-fledged professional IT team."
                 />
               </Reveal>
               <Reveal delay={80}>
@@ -120,8 +120,8 @@ export default function AboutPage() {
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="What we hold to"
-              title="Three statements we are willing to be measured against"
+              eyebrow="What we stand for"
+              title="Our vision, mission and commitment"
             />
           </Reveal>
           <ul className="mt-14 grid gap-px bg-rule lg:grid-cols-3">

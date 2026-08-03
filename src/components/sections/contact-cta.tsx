@@ -11,7 +11,7 @@ export function ContactCta() {
           <Reveal>
             <p className="eyebrow">Get in touch</p>
             <h2 className="display-2 mt-5">
-              Tell us what breaks, and how fast it needs to be fixed.
+              Let us support your IT estate nationwide.
             </h2>
             <p className="lede mt-6 max-w-xl">
               Send us the estate — sites, node count, the hours that matter —

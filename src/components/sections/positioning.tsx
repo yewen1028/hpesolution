@@ -26,9 +26,9 @@ export function Positioning() {
 
           <div>
             <Reveal>
-              <p className="eyebrow">Why managed</p>
+              <p className="eyebrow">Why outsource</p>
               <h2 className="display-2 mt-5">
-                Five pressures that push IT support out of house.
+                Five reasons to move to managed IT support.
               </h2>
               <p className="lede mt-6">
                 None of these are new. What has changed is how quickly each one

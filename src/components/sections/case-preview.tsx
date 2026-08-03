@@ -13,7 +13,7 @@ export function CasePreview() {
           <Reveal>
             <SectionHeading
               eyebrow="Case study"
-              title="Work at the scale it was actually delivered"
+              title="Supporting principals and corporate clients nationwide"
               lede="A representative slice of the contracts running today, described by the numbers that defined them."
             />
           </Reveal>

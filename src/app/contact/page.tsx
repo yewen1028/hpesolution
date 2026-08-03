@@ -19,7 +19,7 @@ export default function ContactPage() {
     <>
       <PageHero
         eyebrow="Contact"
-        title="Start with the estate, not the brochure."
+        title="Talk to our team about your IT support."
         lede="Send us the sites, the node count and the hours that matter. We will come back with a coverage model, a tier and a response time you can hold us to."
         image="/media/contact-support.jpg"
         imageAlt="Aisle of racked servers in a datacentre"
@@ -111,7 +111,7 @@ export default function ContactPage() {
               <Reveal>
                 <SectionHeading
                   eyebrow="Enquiry"
-                  title="Tell us what you need supported"
+                  title="Send us your enquiry"
                 />
               </Reveal>
               <Reveal delay={100}>

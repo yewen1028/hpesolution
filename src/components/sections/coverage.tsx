@@ -10,6 +10,9 @@ export function Coverage() {
     <ParallaxBand
       image="/media/coverage-kl.jpg"
       alt="Aerial view of the Kuala Lumpur skyline at night"
+      // Measures as the LCP element on slower machines, where the sections
+      // above it paint as text almost immediately.
+      eager
       overlay="linear-gradient(180deg, rgb(16 21 27 / 0.93), rgb(16 21 27 / 0.88))"
     >
       <Container className="py-24 sm:py-32">
@@ -17,7 +20,7 @@ export function Coverage() {
           <SectionHeading
             tone="light"
             eyebrow="Service centres"
-            title={`${totalCentres} centres, one escalation path`}
+            title={`${totalCentres} support centres nationwide`}
             lede="Coverage is what turns a four-hour SLA from a number into a commitment. Every centre carries loaner and replacement stock, and every ticket escalates through the same route regardless of which one takes it."
           />
         </Reveal>
