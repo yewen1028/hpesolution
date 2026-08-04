@@ -43,7 +43,7 @@ export default function ServiceCentrePage() {
       <PageHero
         eyebrow="Service centre"
         title="18 support centres nationwide."
-        lede="Nationwide coverage is not a marketing line for a maintenance contract — it is the difference between a four-hour response and a four-hour flight."
+        lede="Nationwide coverage is not a marketing line for a maintenance contract. It is the difference between a four-hour response and a four-hour flight."
         image="/media/coverage-kl.jpg"
         imageAlt="Aerial view of the Kuala Lumpur skyline at night"
         crumbs={[{ label: "Service Centre" }]}
@@ -54,7 +54,6 @@ export default function ServiceCentrePage() {
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="Coverage"
               title={`${totalCentres} locations, one standard of service`}
               lede="Every centre works to the same ticketing, escalation and reporting procedure, so which one takes your call changes nothing about how it is handled."
             />
@@ -92,7 +91,7 @@ export default function ServiceCentrePage() {
           <Reveal delay={160}>
             <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-rule pt-10">
               <ButtonLink href="/service-centre/map">
-                Open the coverage map
+                View the coverage map
               </ButtonLink>
               <p className="text-[0.9rem] text-ink-muted">
                 Prefer to see it geographically? Every centre is plotted on an
@@ -108,7 +107,6 @@ export default function ServiceCentrePage() {
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="At every centre"
               title="What every service centre delivers"
             />
           </Reveal>

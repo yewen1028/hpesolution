@@ -2,13 +2,13 @@ import { Reveal } from "@/components/reveal";
 import { Container, SectionHeading } from "@/components/ui";
 import { PartnerCarousel } from "@/components/partner-carousel";
 
+// Tighter than the reading sections: this is a logo strip, not prose.
 export function Partners() {
   return (
-    <section className="border-t border-rule bg-paper-warm py-24 sm:py-32">
+    <section className="border-t border-rule bg-paper-warm py-20 sm:py-24">
       <Container>
         <Reveal>
           <SectionHeading
-            eyebrow="Business partners"
             title="Authorised by the principals we support"
             lede="Warranty fulfilment and managed security only work when the vendor relationship is real. These are the principals and distributors whose products we are authorised to carry, deploy and repair."
           />

@@ -191,7 +191,7 @@ export const services: Service[] = [
     title: "Project Deployment",
     short: "Full project management from IT assessment through to rollout.",
     summary:
-      "We manage IT deployments from small office refreshes to nationwide rollouts, covering network devices, servers, storage, desktops, laptops, software, systems and applications — new installations, upgrades and migrations alike.",
+      "We manage IT deployments from small office refreshes to nationwide rollouts, covering network devices, servers, storage, desktops, laptops, software, systems and applications: new installations, upgrades and migrations alike.",
     icon: "Boxes",
     image: "/media/svc-project-deployment.jpg",
     imageAlt: "Technician working at a rack in a server room",
@@ -267,7 +267,7 @@ export const services: Service[] = [
       },
       {
         title: "Disaster recovery helpdesk",
-        body: "A standby helpdesk that can take over call centre functionality during a disruption — the model proven through the pandemic.",
+        body: "A standby helpdesk that can take over call centre functionality during a disruption. The model was proven through the pandemic.",
       },
     ],
     benefits: [
@@ -294,7 +294,7 @@ export const services: Service[] = [
     title: "IT Staffing",
     short: "Contracted IT hardware resource, matched to the skill set you need.",
     summary:
-      "IT hardware support staffing on long-term or short-term contract, sourced against the skill set and years of experience the role actually requires — with backfill built in.",
+      "IT hardware support staffing on long-term or short-term contract, sourced against the skill set and years of experience the role actually requires, with backfill built in.",
     icon: "Users",
     image: "/media/svc-staffing.jpg",
     imageAlt: "Two engineers working on cabling at a network rack",
@@ -341,7 +341,7 @@ export const services: Service[] = [
     title: "Authorised Warranty Provider",
     short: "Appointed ASP fulfilling principal warranty across 18 centres.",
     summary:
-      "We are an appointed Authorised Support Partner for PC, server and network manufacturers, carrying parts on their behalf and fulfilling hardware and software warranty within the committed SLA — on-site, or as a walk-in claim at any of our 18 service centres.",
+      "We are an appointed Authorised Support Partner for PC, server and network manufacturers, carrying parts on their behalf and fulfilling hardware and software warranty within the committed SLA, either on-site or as a walk-in claim at any of our 18 service centres.",
     icon: "ShieldCheck",
     image: "/media/svc-warranty.jpg",
     imageAlt: "A memory module being fitted into an opened laptop chassis",
@@ -506,7 +506,7 @@ export const caseStudies: CaseStudy[] = [
     sector: "Banking",
     discipline: "IT Management & Support",
     title: "Principal contract maintenance for a major Malaysian bank",
-    body: "An 8 × 5 × 2-hour principal contract maintenance engagement covering roughly 25,000 nodes nationwide — servers, desktops, laptops, printers and network devices — across the bank's branch and office estate.",
+    body: "An 8 × 5 × 2-hour principal contract maintenance engagement covering roughly 25,000 nodes nationwide (servers, desktops, laptops, printers and network devices) across the bank's branch and office estate.",
     metrics: [
       { value: "25,000", label: "Nodes under contract" },
       { value: "8×5×2h", label: "Response commitment" },
@@ -578,7 +578,7 @@ export const caseStudies: CaseStudy[] = [
     sector: "Oil & Gas",
     discipline: "Project Management & Deployment",
     title: "Active Directory migration and estate-wide encryption",
-    body: "Microsoft Active Directory migration and Windows operating system upgrades across two projects of 10,000 and 2,000 end users, plus BitLocker encryption and installation reaching 30,000 end users — completed inside a six-month window.",
+    body: "Microsoft Active Directory migration and Windows operating system upgrades across two projects of 10,000 and 2,000 end users, plus BitLocker encryption and installation reaching 30,000 end users, all completed inside a six-month window.",
     metrics: [
       { value: "30,000", label: "Users reached" },
       { value: "6 months", label: "Delivery window" },

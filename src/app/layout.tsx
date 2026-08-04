@@ -27,8 +27,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://hpe.com.my"),
   title: {
-    default: `${company.name} — ${company.tagline}`,
-    template: `%s — ${company.name}`,
+    default: `${company.name} · ${company.tagline}`,
+    template: `%s · ${company.name}`,
   },
   description:
     "HPE Solutions delivers IT support and managed services, project deployment, helpdesk, staffing and authorised warranty fulfilment from 18 service centres across Malaysia.",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_MY",
     siteName: company.name,
-    title: `${company.name} — ${company.tagline}`,
+    title: `${company.name} · ${company.tagline}`,
     description:
       "IT support and managed services, project deployment, helpdesk, staffing and warranty fulfilment, delivered nationwide under SLA.",
   },

@@ -65,7 +65,22 @@ export function SectionHeading({
   animate = false,
   underline = false,
 }: {
-  eyebrow: string;
+  /**
+   * Optional, and it should stay rare.
+   *
+   * An eyebrow above every section heading produces a templated rhythm: the
+   * reader stops seeing the labels and starts seeing the pattern. The rule
+   * this site now follows is roughly one per three sections, and the test is
+   * whether the eyebrow carries something the headline does not. "Our
+   * services" over "Seven service lines, one support partner" fails it.
+   * "Service Level Assurance" over "Support coverage built around your
+   * operating hours" passes: SLA is the contractual term, and the headline
+   * never says it.
+   *
+   * Where a section sits on the page already tells the reader what kind of
+   * section it is. Most of the time the honest answer is no label at all.
+   */
+  eyebrow?: string;
   title: string;
   lede?: string;
   align?: "left" | "center";
@@ -85,7 +100,10 @@ export function SectionHeading({
 }) {
   const wrapper =
     align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl";
-  const titleClass = `display-2 mt-5 ${tone === "light" ? "text-white" : ""}`;
+  // No eyebrow means no gap to close above the title.
+  const titleClass = `display-2 ${eyebrow ? "mt-5" : ""} ${
+    tone === "light" ? "text-white" : ""
+  }`;
   const ledeClass = `lede mt-6 ${tone === "light" ? "text-white/70" : ""} ${
     align === "center" ? "mx-auto" : ""
   }`;
@@ -94,9 +112,11 @@ export function SectionHeading({
   if (animate) {
     return (
       <div className={wrapper}>
-        <Reveal as="p" className={eyebrowClass}>
-          {eyebrow}
-        </Reveal>
+        {eyebrow && (
+          <Reveal as="p" className={eyebrowClass}>
+            {eyebrow}
+          </Reveal>
+        )}
         <AnimatedText
           as="h2"
           text={title}
@@ -115,7 +135,7 @@ export function SectionHeading({
 
   return (
     <div className={wrapper}>
-      <p className={eyebrowClass}>{eyebrow}</p>
+      {eyebrow && <p className={eyebrowClass}>{eyebrow}</p>}
       <h2 className={titleClass}>{title}</h2>
       {lede && <p className={ledeClass}>{lede}</p>}
     </div>

@@ -82,16 +82,16 @@ export function EnquiryForm() {
 
     const body = [
       `Name: ${get("name")}`,
-      `Company: ${get("company") || "—"}`,
+      `Company: ${get("company") || "-"}`,
       `Email: ${get("email")}`,
-      `Phone: ${get("phone") || "—"}`,
-      `Service of interest: ${get("service") || "—"}`,
+      `Phone: ${get("phone") || "-"}`,
+      `Service of interest: ${get("service") || "-"}`,
       "",
       "Enquiry:",
       get("message"),
     ].join("\n");
 
-    const subject = `Website enquiry — ${get("service") || "General"} — ${get("name")}`;
+    const subject = `Website enquiry · ${get("service") || "General"} · ${get("name")}`;
 
     setStatus("opening");
 

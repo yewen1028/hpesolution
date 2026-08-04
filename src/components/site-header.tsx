@@ -112,7 +112,7 @@ export function SiteHeader() {
         <Link
           href="/"
           className="shrink-0"
-          aria-label={`${"HPE Solutions"} — home`}
+          aria-label={`${"HPE Solutions"} · home`}
         >
           <Image
             src="/hpe-logo.png"

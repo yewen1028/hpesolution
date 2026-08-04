@@ -57,7 +57,7 @@ export function Hero() {
           <Reveal delay={160}>
             <p className="lede mt-8 max-w-2xl text-white/72">
               HPE Solutions has spent over a decade keeping Malaysian
-              infrastructure running — 70 full-time engineers, 18 service
+              infrastructure running: 70 full-time engineers, 18 service
               centres, and more than 50,000 customer nodes under contract.
               Support is delivered against a written SLA, not a best effort.
             </p>

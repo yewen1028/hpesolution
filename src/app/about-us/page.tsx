@@ -29,7 +29,7 @@ export default function AboutPage() {
       <PageHero
         eyebrow="About us"
         title="More than 10 years in IT support and maintenance."
-        lede="HPE Solutions began as an IT support provider and grew into an IT solutions organisation with a nationwide support network. The work has not changed shape — it has changed scale."
+        lede="HPE Solutions began as an IT support provider and grew into an IT solutions organisation with a nationwide support network. The work has not changed shape, it has changed scale."
         image="/media/band-workspace.jpg"
         imageAlt="Staff working at desks in an open-plan technology office"
         crumbs={[{ label: "About Us" }]}
@@ -69,7 +69,6 @@ export default function AboutPage() {
             <div>
               <Reveal>
                 <SectionHeading
-                  eyebrow="Who we are"
                   title="A full-fledged professional IT team."
                 />
               </Reveal>
@@ -89,8 +88,8 @@ export default function AboutPage() {
                     or Kota Bharu is what the network was built for.
                   </p>
                   <p>
-                    Behind it sit 70 full-time professional support staff —
-                    permanent employees rather than a contractor pool — carrying
+                    Behind it sit 70 full-time professional support staff,
+                    permanent employees rather than a contractor pool, carrying
                     the manufacturer accreditations for the platforms we are
                     appointed to service.
                   </p>
@@ -120,7 +119,6 @@ export default function AboutPage() {
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="What we stand for"
               title="Our vision, mission and commitment"
             />
           </Reveal>

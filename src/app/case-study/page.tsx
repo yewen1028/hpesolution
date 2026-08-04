@@ -55,7 +55,7 @@ export default function CaseStudyPage() {
                   <EmptyState
                     icon={FolderOpen}
                     title="No published engagements yet"
-                    body={`We have not published a ${discipline.toLowerCase()} engagement for this discipline yet. The work is running — the write-ups follow once clients approve them.`}
+                    body={`We have not published a ${discipline.toLowerCase()} engagement for this discipline yet. The work is running; the write-ups follow once clients approve them.`}
                     action={{ href: "/contact", label: "Ask about this work" }}
                   />
                 </div>

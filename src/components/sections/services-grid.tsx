@@ -13,7 +13,9 @@ import { services } from "@/lib/site";
  * exactly — one column each at sm, two columns for the panel at lg.
  */
 export function ServicesGrid({
-  eyebrow = "Our services",
+  // No default eyebrow. "Our services" over "Seven service lines" is the
+  // headline said twice; the caller can still pass one where it earns itself.
+  eyebrow,
   title = "Seven service lines, one support partner",
   lede = "Most clients start with one contract and add scope as it proves itself. Each service stands alone, and each is measured against the same service level commitment.",
 }: {
@@ -21,6 +23,7 @@ export function ServicesGrid({
   title?: string;
   lede?: string;
 }) {
+
   return (
     <section className="py-24 sm:py-32">
       <Container>
@@ -109,7 +112,7 @@ export function ServicesGrid({
               </h3>
               <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-white/65">
                 Send us the estate and we will tell you which of these actually
-                applies — and which you can leave alone.
+                applies, and which you can leave alone.
               </p>
               <span className="mt-8 inline-flex items-center gap-2 text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-brand">
                 Talk to our team

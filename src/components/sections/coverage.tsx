@@ -40,12 +40,11 @@ export function Coverage() {
       <DisplayWatermark tone="light">{totalCentres}</DisplayWatermark>
 
       <Container className="relative z-10 py-24 sm:py-32">
-        {/* `animate` reveals the eyebrow and lede itself — no <Reveal> here. */}
+        {/* `animate` reveals the lede itself, so no <Reveal> wrapper here. */}
         <SectionHeading
           tone="light"
           animate
           underline
-          eyebrow="Service centres"
           title={`${totalCentres} support centres nationwide`}
           lede="Coverage is what turns a four-hour SLA from a number into a commitment. Every centre carries loaner and replacement stock, and every ticket escalates through the same route regardless of which one takes it."
         />

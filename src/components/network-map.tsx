@@ -85,7 +85,7 @@ export function NetworkMap() {
                 r={centre.hq ? 4.2 : 3}
               />
               {/* Native tooltip: no JS, and it reaches the accessibility tree. */}
-              <title>{centre.hq ? `${centre.name} — head office` : centre.name}</title>
+              <title>{centre.hq ? `${centre.name} · head office` : centre.name}</title>
             </g>
           ))}
         </g>

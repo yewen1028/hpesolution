@@ -70,7 +70,6 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
                 <ServiceIcon name={service.icon} size={26} />
               </span>
               <SectionHeading
-                eyebrow="Features"
                 title={service.featureHeading}
               />
             </div>
@@ -120,7 +119,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           <Container>
             <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
               <Reveal>
-                <SectionHeading eyebrow="Scope" title={block.heading} />
+                <SectionHeading title={block.heading} />
               </Reveal>
               <Reveal delay={100}>
                 <ul className="grid gap-x-12 sm:grid-cols-2">
@@ -212,7 +211,6 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="Benefits"
               title="What changes once this is contracted out"
             />
           </Reveal>
@@ -240,7 +238,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
       <section className="border-t border-rule py-24 sm:py-32">
         <Container>
           <Reveal>
-            <SectionHeading eyebrow="Also from HPE" title="Related services" />
+            <SectionHeading title="Related services" />
           </Reveal>
           <ul className="mt-12 grid border-t border-rule md:grid-cols-3">
             {others.map((other, i) => (

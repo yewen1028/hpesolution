@@ -22,7 +22,7 @@ export function TextMarquee({
   items,
   duration = 48,
   tone = "light",
-  separator = "—",
+  separator = "·",
   className = "",
 }: {
   items: string[];

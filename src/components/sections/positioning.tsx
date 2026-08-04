@@ -36,8 +36,7 @@ export function Positioning() {
 
           <div>
             <Reveal>
-              <p className="eyebrow">Why outsource</p>
-              <h2 className="display-2 mt-5">
+              <h2 className="display-2">
                 Five reasons to move to managed IT support.
               </h2>
               <p className="lede mt-6">

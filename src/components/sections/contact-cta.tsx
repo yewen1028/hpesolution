@@ -15,13 +15,25 @@ const sectorPhrases = Array.from(
   new Set(caseStudies.map((study) => study.sector)),
 ).map((sector) => `${sector} estate.`);
 
+/*
+ * Deliberately the airiest band on the page. Every other section runs at
+ * py-24/32; the page's closing moment is the one place worth spending the
+ * extra space, and a uniform rhythm from top to bottom is what makes a layout
+ * read as generated rather than composed.
+ */
 export function ContactCta() {
   return (
-    <section className="border-t border-rule py-24 sm:py-32">
+    <section className="border-t border-rule py-28 sm:py-40">
       <Container>
         <div className="grid gap-14 lg:grid-cols-[1.15fr_1fr] lg:gap-24">
           <Reveal>
-            <p className="eyebrow">Get in touch</p>
+            {/*
+              No eyebrow. This band closes all eight pages, which made "Get in
+              touch" the single most repeated string on the site, and it sits
+              directly above a headline that already invites contact and a list
+              of three email addresses and a phone number. The label was the
+              only part of the section carrying no information.
+            */}
             {/*
               The rotating half is real: every phrase is a sector HPE actually
               has a published engagement in, read from `caseStudies` rather than
@@ -29,7 +41,7 @@ export function ContactCta() {
               two sections up. "estate" is the section's own word — the lede
               below already says "Send us the estate".
             */}
-            <h2 className="display-2 mt-5">
+            <h2 className="display-2">
               Let us support your{" "}
               <Typewriter
                 phrases={sectorPhrases}
@@ -38,12 +50,18 @@ export function ContactCta() {
               />
             </h2>
             <p className="lede mt-6 max-w-xl">
-              Send us the estate — sites, node count, the hours that matter —
-              and we will come back with a coverage model and a response time
-              you can hold us to.
+              Send us the estate: sites, node count, the hours that matter. We
+              will come back with a coverage model and a response time you can
+              hold us to.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <ButtonLink href="/contact">Start a conversation</ButtonLink>
+              {/*
+                One label per intent. The hero and the services grid both send
+                the visitor to /contact under "Talk to our team"; a third
+                wording for the same destination reads as three different
+                offers rather than one repeated invitation.
+              */}
+              <ButtonLink href="/contact">Talk to our team</ButtonLink>
               <ButtonLink
                 href={`tel:${contact.phoneDial}`}
                 variant="ghost"

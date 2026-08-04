@@ -9,7 +9,7 @@ import { contact, regions } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Reach HPE Solutions in Puchong, Selangor — sales, technical support and HR contacts, plus nationwide service centre coverage.",
+    "Reach HPE Solutions in Puchong, Selangor: sales, technical support and HR contacts, plus nationwide service centre coverage.",
 };
 
 const totalCentres = regions.reduce((n, r) => n + r.centres.length, 0);
@@ -99,7 +99,7 @@ export default function ContactPage() {
               <Reveal delay={160}>
                 <p className="mt-8 border-l-2 border-brand pl-5 text-[0.95rem] leading-relaxed text-ink-soft">
                   For faults on an existing contract, go straight to the 24 × 7
-                  helpdesk on the number above — it reaches the ticketing queue
+                  helpdesk on the number above. It reaches the ticketing queue
                   directly, wherever the fault sits across our {totalCentres}{" "}
                   centres.
                 </p>
@@ -110,7 +110,6 @@ export default function ContactPage() {
             <div>
               <Reveal>
                 <SectionHeading
-                  eyebrow="Enquiry"
                   title="Send us your enquiry"
                 />
               </Reveal>

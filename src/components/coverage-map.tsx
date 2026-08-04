@@ -81,7 +81,7 @@ function pinIcon(L: Leaflet, centre: Centre, isActive: boolean): DivIcon {
 }
 
 const tooltipText = (centre: Centre) =>
-  centre.hq ? `${centre.name} — head office` : centre.name;
+  centre.hq ? `${centre.name} · head office` : centre.name;
 
 /**
  * The selected centre keeps its label up permanently; everything else labels
@@ -350,7 +350,7 @@ export function CoverageMap({ networkMap }: { networkMap: React.ReactNode }) {
       <p className="mt-4 text-[0.8rem] text-ink-muted">
         {view === "network"
           ? "Every arc is a dispatch route from the Puchong head office. Select a centre below to place it geographically."
-          : "Hover a state to name it; select a centre to locate it. Markers show town centres, not branch addresses — call ahead before a walk-in."}
+          : "Hover a state to name it; select a centre to locate it. Markers show town centres, not branch addresses. Call ahead before a walk-in."}
       </p>
 
       {/* Directory. Server-rendered markup inside a client component, so the

@@ -16,13 +16,12 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Services"
         title="Complete IT services, from sourcing to support."
-        lede="Seven service lines covering the full life of an IT estate — from sourcing and deployment through daily support, warranty fulfilment and eventual relocation."
+        lede="Seven service lines covering the full life of an IT estate, from sourcing and deployment through daily support, warranty fulfilment and eventual relocation."
         image="/media/band-network-rack.jpg"
         imageAlt="Network equipment racks in a datacentre aisle"
         crumbs={[{ label: "Services" }]}
       />
       <ServicesGrid
-        eyebrow="Service lines"
         title="What our services cover"
         lede="Each service is priced and measured on its own terms. Most clients combine two or three, with a single point of escalation across all of them."
       />

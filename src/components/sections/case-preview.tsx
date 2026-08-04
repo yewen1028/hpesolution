@@ -14,7 +14,6 @@ export function CasePreview() {
         <div className="flex flex-wrap items-end justify-between gap-8">
           <Reveal>
             <SectionHeading
-              eyebrow="Case study"
               title="Supporting principals and corporate clients nationwide"
               lede="A representative slice of the contracts running today, described by the numbers that defined them."
             />

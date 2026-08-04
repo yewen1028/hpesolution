@@ -8,7 +8,7 @@ import { ContactCta } from "@/components/sections/contact-cta";
 export const metadata: Metadata = {
   title: "Business Partner",
   description:
-    "The principals and distributors HPE Solutions is accredited to deploy, support and repair — including Cisco, Fortinet, Huawei, Microsoft, Sophos, Veeam and HP Enterprise.",
+    "The principals and distributors HPE Solutions is accredited to deploy, support and repair, including Cisco, Fortinet, Huawei, Microsoft, Sophos, Veeam and HP Enterprise.",
 };
 
 const domains = [
@@ -50,7 +50,6 @@ export default function BusinessPartnerPage() {
         <Container>
           <Reveal>
             <SectionHeading
-              eyebrow="Where the partnerships sit"
               title="Our technology domains"
               lede="Sourcing and support are the same conversation. These are the areas where our vendor relationships translate into equipment we can specify, deploy and then service ourselves."
             />
