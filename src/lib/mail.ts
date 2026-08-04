@@ -2,7 +2,7 @@ import "server-only";
 
 import nodemailer, { type Transporter } from "nodemailer";
 
-import type { Enquiry } from "@/lib/enquiry";
+import { ENQUIRY_TO as DEFAULT_TO, type Enquiry } from "@/lib/enquiry";
 
 export type { Enquiry };
 
@@ -16,8 +16,12 @@ export type { Enquiry };
  * anyone ever imports it from a client component.
  */
 
-/** Where enquiries land. Overridable so staging can point somewhere harmless. */
-export const ENQUIRY_TO = process.env.ENQUIRY_TO ?? "yewen1028@gmail.com";
+/**
+ * Where enquiries land. Server-side `ENQUIRY_TO` wins so staging can point
+ * somewhere harmless without touching the client bundle; otherwise it is the
+ * one address shared with the form's `mailto:` fallback.
+ */
+export const ENQUIRY_TO = process.env.ENQUIRY_TO ?? DEFAULT_TO;
 
 /**
  * The envelope sender. This must be an address the SMTP account is allowed to

@@ -12,6 +12,21 @@
  * client form needs these types.
  */
 
+/**
+ * Where an enquiry goes. One constant, deliberately.
+ *
+ * There used to be two: the server action mailed `ENQUIRY_TO` while the
+ * `mailto:` fallback in the form was hardcoded to the site's public sales
+ * address. With no SMTP credentials configured, every enquiry took the
+ * fallback, so in practice nothing reached the real destination and the
+ * mismatch was invisible in code review. Both paths now read this.
+ *
+ * `NEXT_PUBLIC_` because the client half needs it too. That is not a leak: the
+ * address is rendered into a `mailto:` link either way.
+ */
+export const ENQUIRY_TO =
+  process.env.NEXT_PUBLIC_ENQUIRY_TO ?? "yewen1028@gmail.com";
+
 export type Enquiry = {
   name: string;
   company: string;

@@ -5,10 +5,12 @@ import { useFormStatus } from "react-dom";
 import { Send } from "lucide-react";
 import { SuccessCheck } from "@/components/success-check";
 import { submitEnquiry } from "@/app/actions/enquiry";
-import { initialEnquiryState, type EnquiryState } from "@/lib/enquiry";
+import {
+  ENQUIRY_TO,
+  initialEnquiryState,
+  type EnquiryState,
+} from "@/lib/enquiry";
 import { services } from "@/lib/site";
-
-const SALES = "sales@hpe.com.my";
 
 /**
  * One field: floating label, and a brand rule that draws in from the left on
@@ -152,7 +154,7 @@ export function EnquiryForm() {
 
     const subject = `Website enquiry · ${get("service") || "General"} · ${get("name")}`;
 
-    return `mailto:${SALES}?subject=${encodeURIComponent(
+    return `mailto:${ENQUIRY_TO}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
   }
@@ -326,9 +328,9 @@ export function EnquiryForm() {
             "Thank you. Your enquiry is on its way, and we will reply within one business day."}
           {state.status === "invalid" && state.message}
           {state.status === "error" &&
-            `${state.message} Please use the button above to send it from your own mail client, or email ${SALES} directly.`}
+            `${state.message} Please use the button above to send it from your own mail client, or email ${ENQUIRY_TO} directly.`}
           {state.status === "unconfigured" &&
-            `This site is not yet set up to send mail directly. Use the button above to send the same enquiry from your mail client, or email ${SALES}.`}
+            `This site is not yet set up to send mail directly. Use the button above to send the same enquiry from your mail client, or email ${ENQUIRY_TO}.`}
         </p>
       </div>
     </form>
