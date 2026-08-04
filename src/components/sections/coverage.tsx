@@ -20,6 +20,14 @@ export function Coverage() {
     <ParallaxBand
       image="/media/coverage-kl.jpg"
       alt="Aerial view of the Kuala Lumpur skyline at night"
+      /*
+       * Aperture, not drift. The hero already spends the drift figure on a
+       * full-bleed dark photo band, and this section is the same shape — two
+       * bands doing the same thing read as one effect used twice rather than
+       * as rhythm. Pinning the skyline also suits what the band is about: the
+       * map holds still while the list of centres travels across it.
+       */
+      variant="aperture"
       // Measures as the LCP element on slower machines, where the sections
       // above it paint as text almost immediately.
       eager

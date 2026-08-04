@@ -165,6 +165,17 @@
   transform: translate3d(0, var(--py, 0px), 0);
 }
 
+/*
+ * The aperture variant. Same engine, opposite reading: --pw cancels the
+ * section's own scroll instead of lagging behind it, so the picture holds
+ * still and the band travels across it. Unset, the layer sits at the top of
+ * the frame and the band is an ordinary photographic panel.
+ */
+[data-parallax-window] {
+  will-change: transform;
+  transform: translate3d(0, var(--pw, 0px), 0);
+}
+
 /* --- Section fold -------------------------------------------------------- */
 
 /*
@@ -209,7 +220,8 @@
     transition: none;
   }
 
-  [data-parallax] {
+  [data-parallax],
+  [data-parallax-window] {
     transform: none !important;
     will-change: auto;
   }

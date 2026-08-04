@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/lib/site";
-import { Parallax } from "./parallax";
+import { Parallax, ParallaxWindow } from "./parallax";
 import { Reveal } from "./reveal";
 import { AnimatedText } from "./animated-text";
 
@@ -179,11 +179,21 @@ export function ButtonLink({
  * Full-bleed photographic band with a parallax layer behind the content.
  * The photo is always tinted so type keeps its contrast regardless of the
  * image underneath it.
+ *
+ * Two figures are available, and a page should not spend both:
+ *
+ *   `drift`     the photo lags inside the moving section. This is the hero's
+ *               figure, and a hero is where it belongs — it is the gentler of
+ *               the two and it reads at a glance.
+ *   `aperture`  the photo is pinned to the viewport and the section travels
+ *               over it. Stronger, and it wants a band with enough height for
+ *               the picture to be uncovered gradually.
  */
 export function ParallaxBand({
   image,
   alt,
   speed = 110,
+  variant = "drift",
   className = "",
   overlay = "linear-gradient(180deg, rgb(16 21 27 / 0.86), rgb(16 21 27 / 0.74))",
   eager = false,
@@ -191,7 +201,9 @@ export function ParallaxBand({
 }: {
   image: string;
   alt: string;
+  /** `drift` only. */
   speed?: number;
+  variant?: "drift" | "aperture";
   className?: string;
   overlay?: string;
   /**
@@ -206,16 +218,29 @@ export function ParallaxBand({
 }) {
   return (
     <section className={`relative isolate overflow-hidden ${className}`}>
-      <Parallax speed={speed} className="absolute inset-x-0 -z-10">
-        <Media
-          src={image}
-          alt={alt}
-          fill
-          sizes="100vw"
-          loading={eager ? "eager" : "lazy"}
-          className="object-cover"
-        />
-      </Parallax>
+      {variant === "aperture" ? (
+        <ParallaxWindow className="absolute inset-0 -z-10">
+          <Media
+            src={image}
+            alt={alt}
+            fill
+            sizes="100vw"
+            loading={eager ? "eager" : "lazy"}
+            className="object-cover"
+          />
+        </ParallaxWindow>
+      ) : (
+        <Parallax speed={speed} className="absolute inset-x-0 -z-10">
+          <Media
+            src={image}
+            alt={alt}
+            fill
+            sizes="100vw"
+            loading={eager ? "eager" : "lazy"}
+            className="object-cover"
+          />
+        </Parallax>
+      )}
       <div
         className="absolute inset-0 -z-10"
         style={{ background: overlay }}
