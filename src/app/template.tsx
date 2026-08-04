@@ -37,6 +37,32 @@ export default function Template({ children }: { children: ReactNode }) {
     // Layout effect, so this lands before the browser paints the new page and
     // the animation starts from its `from` keyframe rather than mid-flight.
     ref.current?.setAttribute("data-page-enter", "");
+
+    /*
+     * Land the new page at the top, instantly.
+     *
+     * `html { scroll-behavior: smooth }` is set for the in-page section
+     * anchors, but the App Router's scroll reset obeys it as well. Navigating
+     * from deep inside a long page therefore swapped the content immediately
+     * and then *animated* the viewport back up over thousands of pixels, which
+     * reads as the link having done nothing at all — the header is fixed, so
+     * for most of that scroll the screen looks unchanged.
+     *
+     * Smooth is suppressed for this one frame only, so anchor links keep it.
+     */
+    if (window.location.hash) return; // A hash target owns the scroll instead.
+
+    const root = document.documentElement;
+    const previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+
+    // Restored after the frame in which the router does its own scrolling, so
+    // that call is instant too rather than re-animating what we just undid.
+    const frame = requestAnimationFrame(() => {
+      root.style.scrollBehavior = previous;
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return <div ref={ref}>{children}</div>;

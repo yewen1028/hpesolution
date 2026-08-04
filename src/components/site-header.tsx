@@ -109,9 +109,22 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-full max-w-[88rem] items-center gap-6 px-5 sm:px-8">
+        {/*
+          `flex items-center` rather than the default inline box: an <img> in
+          an inline anchor sits on a text baseline, so the anchor was a few
+          pixels taller than the logo with dead space under it.
+
+          `-m-2 p-2` adds 8px of hit area on every side without moving anything
+          in the layout. The logo is 32px tall, dropping to 28px once the header
+          shrinks past the hero, which is under every tap-target guideline
+          going; this takes it to 48px and 44px.
+
+          `relative z-10` keeps it above anything else inside the header, the
+          services flyout included.
+        */}
         <Link
           href="/"
-          className="shrink-0"
+          className="relative z-10 -m-2 flex shrink-0 items-center p-2"
           aria-label={`${"HPE Solutions"} · home`}
         >
           <Image
