@@ -151,6 +151,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
           data-active={choice === value ? "" : undefined}
           onClick={() => applyTheme(value)}
           data-press="toggle"
+          data-ripple=""
           className="theme-toggle__option"
         >
           <Icon size={15} strokeWidth={2} aria-hidden="true" />

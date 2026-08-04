@@ -167,6 +167,7 @@ export function SiteHeader() {
                     onClick={() => setServicesOpen((v) => !v)}
                     aria-expanded={servicesOpen}
                     aria-controls="services-menu"
+                    data-ripple=""
                     data-active={isActive(item.href) ? "" : undefined}
                     className={`nav-link flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                       isActive(item.href)
@@ -253,6 +254,8 @@ export function SiteHeader() {
 
         <a
           href={`tel:${contact.phoneDial}`}
+          data-press="cta"
+          data-ripple=""
           className="hidden items-center gap-2 bg-brand px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-strong lg:ml-3 lg:flex"
         >
           <Phone size={15} strokeWidth={2.25} aria-hidden="true" />
@@ -264,6 +267,7 @@ export function SiteHeader() {
           onClick={() => setMobileOpen((v) => !v)}
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav"
+          data-ripple=""
           className="ml-auto flex h-11 w-11 items-center justify-center text-ink lg:hidden"
         >
           <span className="sr-only">
@@ -320,6 +324,8 @@ export function SiteHeader() {
 
             <a
               href={`tel:${contact.phoneDial}`}
+              data-press="cta"
+              data-ripple=""
               className="mt-6 flex items-center justify-center gap-2 bg-brand px-5 py-4 font-semibold text-white"
             >
               <Phone size={17} strokeWidth={2.25} aria-hidden="true" />

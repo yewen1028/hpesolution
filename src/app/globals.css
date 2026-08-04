@@ -1295,6 +1295,52 @@
   }
 }
 
+/* --- Button ripple -------------------------------------------------------- */
+
+/*
+ * Magic UI's **Ripple Button** (21st.dev/magicui/ripple-button). `press.tsx`
+ * appends the span at the click point and sizes it to reach the furthest
+ * corner; this is only how it looks.
+ *
+ * `currentColor` is the whole trick: the ripple is white inside a brand
+ * button, near-black inside a ghost one, and correct in both themes, without a
+ * single per-variant rule.
+ *
+ * `isolation` plus `z-index: -1` puts it above the host's own background and
+ * the fill wipe, but underneath the label — an overlay across the text is the
+ * part of a Material ripple that reads as cheap.
+ */
+/*
+ * `:where()` so this carries zero specificity. The hosts need a containing
+ * block, but `.back-to-top` is `position: fixed` and a plain `[data-ripple]`
+ * rule ties with it on specificity — which would leave the button's position
+ * decided by whichever rule happened to come later in the file. At zero
+ * specificity any component rule wins, whatever the order.
+ */
+:where([data-ripple]) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.24;
+  transform: scale(0);
+  pointer-events: none;
+  animation: ripple 620ms var(--ease-out-quint) forwards;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 /* --- Services flyout ------------------------------------------------------ */
 
 /*

@@ -28,8 +28,50 @@ import { useEffect } from "react";
  *
  * Mount once, in the root layout.
  */
+/**
+ * Magic UI's **Ripple Button** (21st.dev/magicui/ripple-button): a circle that
+ * grows out of the exact point that was clicked.
+ *
+ * It earns its place because the scale compression above cannot cover
+ * everything. The comment on `ButtonLink` puts it plainly — scaling a hairline
+ * outline reads as a rendering fault — so ghost buttons, the header's own
+ * controls and the back-to-top had no click feedback at all. A ripple is
+ * indifferent to whether the thing it is in has a fill or an outline.
+ *
+ * A real element rather than a pseudo-element, because the buttons that most
+ * need this already spend both: `.btn-fill` uses `::before` and `.btn-shine`
+ * uses `::after`. It is removed on `animationend`, so nothing accumulates.
+ */
+function spawnRipple(host: HTMLElement, e: PointerEvent) {
+  const rect = host.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // The circle has to reach the corner furthest from the click, or a press
+  // near one edge leaves the opposite corner untouched.
+  const diameter =
+    2 *
+    Math.max(
+      Math.hypot(x, y),
+      Math.hypot(rect.width - x, y),
+      Math.hypot(x, rect.height - y),
+      Math.hypot(rect.width - x, rect.height - y),
+    );
+
+  const span = document.createElement("span");
+  span.className = "ripple";
+  span.style.width = `${diameter}px`;
+  span.style.height = `${diameter}px`;
+  span.style.left = `${x - diameter / 2}px`;
+  span.style.top = `${y - diameter / 2}px`;
+
+  span.addEventListener("animationend", () => span.remove(), { once: true });
+  host.appendChild(span);
+}
+
 export function PressProvider() {
   useEffect(() => {
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let pressed: HTMLElement | null = null;
 
     const release = () => {
@@ -43,9 +85,17 @@ export function PressProvider() {
       // new tab, neither of which should look like a press.
       if (e.button !== 0) return;
 
-      const target = (e.target as Element | null)?.closest<HTMLElement>(
-        "[data-press]",
-      );
+      const origin = e.target as Element | null;
+
+      // The ripple is opt-in per element and independent of the scale press,
+      // because the elements that want one are largely the ones that cannot
+      // take the other.
+      if (!still) {
+        const rippleHost = origin?.closest<HTMLElement>("[data-ripple]");
+        if (rippleHost) spawnRipple(rippleHost, e);
+      }
+
+      const target = origin?.closest<HTMLElement>("[data-press]");
       if (!target) return;
 
       release();

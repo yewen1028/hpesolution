@@ -50,7 +50,9 @@ export default function Error({
             <button
               type="button"
               onClick={reset}
-              className="btn-fill group inline-flex items-center gap-2.5 bg-brand px-6 py-3.5 text-[0.925rem] font-semibold text-white"
+              data-press="cta"
+              data-ripple=""
+              className="btn-fill btn-shine group inline-flex items-center gap-2.5 bg-brand px-6 py-3.5 text-[0.925rem] font-semibold text-white"
             >
               Try again
               <RotateCw

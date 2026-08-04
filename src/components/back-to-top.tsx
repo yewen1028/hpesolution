@@ -53,6 +53,7 @@ export function BackToTop() {
       ref={ref}
       type="button"
       onClick={toTop}
+      data-ripple=""
       className="back-to-top"
       aria-label="Back to top"
     >

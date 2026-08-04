@@ -161,14 +161,24 @@ export function ButtonLink({
 
   if (external) {
     return (
-      <a href={href} data-press={press} className={`${base} ${styles}`}>
+      <a
+        href={href}
+        data-press={press}
+        data-ripple=""
+        className={`${base} ${styles}`}
+      >
         {inner}
       </a>
     );
   }
 
   return (
-    <Link href={href} data-press={press} className={`${base} ${styles}`}>
+    <Link
+      href={href}
+      data-press={press}
+      data-ripple=""
+      className={`${base} ${styles}`}
+    >
       {inner}
     </Link>
   );

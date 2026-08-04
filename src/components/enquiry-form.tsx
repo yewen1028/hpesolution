@@ -80,8 +80,9 @@ function SubmitButton({ state }: { state: EnquiryState }) {
       type="submit"
       data-press={pending ? undefined : "cta"}
       data-status={pending ? "opening" : sent ? "sent" : "idle"}
+      data-ripple=""
       disabled={pending}
-      className="submit-button btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white disabled:cursor-default"
+      className="submit-button btn-fill btn-shine group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white disabled:cursor-default"
     >
       {pending && (
         <>
@@ -309,6 +310,7 @@ export function EnquiryForm() {
               onClick={() => {
                 window.location.href = mailtoHref();
               }}
+              data-ripple=""
               className="inline-flex items-center gap-2 border border-rule-strong px-5 py-3 text-[0.9rem] font-semibold text-ink transition-colors hover:border-ink hover:bg-paper-warm"
             >
               Open your mail client instead
