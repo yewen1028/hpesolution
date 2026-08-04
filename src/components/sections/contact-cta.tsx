@@ -12,7 +12,10 @@ import { caseStudies, contact } from "@/lib/site";
  * sector the site cannot evidence.
  */
 const sectorPhrases = Array.from(
-  new Set(caseStudies.map((study) => study.sector)),
+  // `estateLabel` where the badge's own label does not read as an adjective:
+  // the case-study badges carry hpe.com.my's wording ("Bank", "Telco
+  // Provider"), and "your Bank estate" is not a sentence.
+  new Set(caseStudies.map((study) => study.estateLabel ?? study.sector)),
 ).map((sector) => `${sector} estate.`);
 
 /*
@@ -46,7 +49,10 @@ export function ContactCta() {
               <Typewriter
                 phrases={sectorPhrases}
                 className="text-brand"
-                screenReaderText="banking, retail, telecommunications, media, aviation, oil and gas and government estate, nationwide."
+                // Must stay in step with `sectorPhrases` above: a screen
+                // reader gets this instead of the rotation, so it announcing a
+                // sector the page no longer claims is worse than no list.
+                screenReaderText="banking, retail, telecommunications, media, hospitality, oil and gas and government estate, nationwide."
               />
             </h2>
             <p className="lede mt-6 max-w-xl">

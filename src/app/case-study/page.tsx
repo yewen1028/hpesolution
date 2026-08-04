@@ -7,7 +7,7 @@ import { CounterText } from "@/components/counter";
 import { EmptyState } from "@/components/empty-state";
 import { Container, SectionHeading } from "@/components/ui";
 import { ContactCta } from "@/components/sections/contact-cta";
-import { caseStudies } from "@/lib/site";
+import { caseStudies, engagementGroups } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Case Study",
@@ -109,6 +109,54 @@ export default function CaseStudyPage() {
           </section>
         );
       })}
+
+      {/*
+        The other four headings from hpe.com.my's case study page. The source
+        lists these as short capability statements tagged with the client's
+        sector, with no node counts or response windows, so they are rendered
+        as the hairline list they are rather than dressed up as engagements
+        with metrics they do not have.
+      */}
+      <section className="border-t border-rule py-24 sm:py-32">
+        <Container>
+          <Reveal>
+            <SectionHeading
+              title="Further engagements"
+              lede="Support partner appointments, helpdesk and staffing contracts, and sourcing work, listed by the sector each was delivered for."
+            />
+          </Reveal>
+
+          <div className="mt-16 grid gap-px bg-rule lg:grid-cols-2">
+            {engagementGroups.map((group, gi) => (
+              <Reveal
+                key={group.name}
+                delay={(gi % 2) * 90}
+                className="bg-paper p-8 lg:p-10"
+              >
+                <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">
+                  {group.name}
+                </h3>
+                <ul className="mt-6 border-t border-rule">
+                  {group.items.map((item) => (
+                    <li key={item.body} className="border-b border-rule py-4">
+                      <p className="text-[0.95rem] leading-relaxed text-ink-soft">
+                        {item.body}
+                      </p>
+                      {item.sectors.length > 0 && (
+                        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                          {item.sectors.map((sector) => (
+                            <span key={sector}>{sector}</span>
+                          ))}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            ))}
+          </div>
+        </Container>
+      </section>
 
       <ContactCta />
     </>

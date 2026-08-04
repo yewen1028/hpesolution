@@ -495,6 +495,12 @@ export type CaseStudy = {
   sector: string;
   title: string;
   discipline: "IT Management & Support" | "Project Management & Deployment";
+  /**
+   * Wording for the contact band's rotating "your ___ estate" line. The badge
+   * uses hpe.com.my's own sector label, and "Bank estate" / "Telco Provider
+   * estate" do not read as English. Optional, and it defaults to `sector`.
+   */
+  estateLabel?: string;
   body: string;
   metrics: { value: string; label: string }[];
   image: string;
@@ -503,10 +509,11 @@ export type CaseStudy = {
 
 export const caseStudies: CaseStudy[] = [
   {
-    sector: "Banking",
+    sector: "Bank",
+    estateLabel: "Banking",
     discipline: "IT Management & Support",
     title: "Principal contract maintenance for a major Malaysian bank",
-    body: "An 8 × 5 × 2-hour principal contract maintenance engagement covering roughly 25,000 nodes nationwide (servers, desktops, laptops, printers and network devices) across the bank's branch and office estate.",
+    body: "Principal contract maintenance (8 × 5 × 2 hours) for a major Malaysian bank on their daily support and maintenance, business as usual, covering approximately 25,000 nodes nationwide across servers, desktops, laptops, printers and network devices.",
     metrics: [
       { value: "25,000", label: "Nodes under contract" },
       { value: "8×5×2h", label: "Response commitment" },
@@ -518,7 +525,7 @@ export const caseStudies: CaseStudy[] = [
     sector: "Retail",
     discipline: "IT Management & Support",
     title: "24 × 7 outlet support across 2,500 retail sites",
-    body: "24 × 7 × 4-hour maintenance for outlet servers, POS systems, network devices, 3G/4G modems and WiFi at 2,500 outlets nationwide, where an unattended till failure is lost trading rather than a ticket.",
+    body: "24 × 7 × 4-hour maintenance support for a retail customer across 2,500 outlets nationwide, covering outlet servers, POS systems, network devices, 3G and 4G modems and WiFi.",
     metrics: [
       { value: "2,500", label: "Outlets covered" },
       { value: "24×7×4h", label: "Response commitment" },
@@ -527,10 +534,11 @@ export const caseStudies: CaseStudy[] = [
     imageAlt: "Card payment terminal held out across a grocery checkout counter",
   },
   {
-    sector: "Telecommunications",
+    sector: "Telco Provider",
+    estateLabel: "Telecommunications",
     discipline: "IT Management & Support",
     title: "Nationwide network equipment maintenance for enterprise clients",
-    body: "24 × 7 four-hour maintenance on Cisco routers and switches, Peplink load balancers and Riverbed WAN optimisers for enterprise and retail end clients, including airports and educational institutions.",
+    body: "Nationwide 24 × 7 × 4-hour maintenance for Cisco routers and switches, Peplink link load balancers, Riverbed WAN optimisers and modems, serving enterprise and retail end customers including airports, electronics and furniture retailers, colleges and universities.",
     metrics: [
       { value: "24×7×4h", label: "Response commitment" },
       { value: "Nationwide", label: "Coverage" },
@@ -541,8 +549,8 @@ export const caseStudies: CaseStudy[] = [
   {
     sector: "Media",
     discipline: "IT Management & Support",
-    title: "Broadcast encoder and decoder support",
-    body: "24 × 7 × 4-hour maintenance on video and voice encoder and decoder network equipment for one of Malaysia's media providers, where downtime is measurable on air.",
+    title: "Video and voice encoder and decoder support",
+    body: "24 × 7 × 4-hour maintenance support for video and voice encoder and decoder network equipment.",
     metrics: [
       { value: "24×7×4h", label: "Response commitment" },
       { value: "Broadcast", label: "Equipment class" },
@@ -551,10 +559,10 @@ export const caseStudies: CaseStudy[] = [
     imageAlt: "Operator running a video switcher beside a multiview monitor",
   },
   {
-    sector: "Aviation & Hospitality",
+    sector: "Hospitality",
     discipline: "IT Management & Support",
     title: "Wireless and broadband support for an airline provider",
-    body: "24 × 7 × 4-hour maintenance across wireless and broadband, both dedicated and wireless links, for one of the country's airline providers.",
+    body: "24 × 7 × 4-hour maintenance support on wireless and broadband, dedicated and wireless, for one of the airline providers.",
     metrics: [
       { value: "24×7×4h", label: "Response commitment" },
       { value: "Wireless + WAN", label: "Scope" },
@@ -563,10 +571,11 @@ export const caseStudies: CaseStudy[] = [
     imageAlt: "Aircraft on stand at an airport at sunset",
   },
   {
-    sector: "Banking",
+    sector: "Bank",
+    estateLabel: "Banking",
     discipline: "Project Management & Deployment",
-    title: "Annual IT asset inventory and OS migration",
-    body: "Yearly IT asset inventory, audit and preventive maintenance covering more than 25,000 client desktops and laptops across Malaysia and Bangkok, carried out alongside Windows operating system migration and a desktop and laptop refresh.",
+    title: "IT asset inventory, SCCM audit and OS migration",
+    body: "Completed IT asset inventory, SCCM auditing, preventive maintenance, Windows operating system migration and a desktop and laptop refresh, covering more than 25,000 client desktops and laptops, printers, network switches and servers across Malaysia and Bangkok.",
     metrics: [
       { value: "25,000+", label: "Endpoints audited" },
       { value: "2", label: "Countries" },
@@ -590,13 +599,95 @@ export const caseStudies: CaseStudy[] = [
     sector: "Government",
     discipline: "Project Management & Deployment",
     title: "Asset inventory and estate hardening",
-    body: "Asset inventory management, antivirus upgrades, software patching and physical asset maintenance services delivered to government agencies.",
+    body: "Preventive maintenance services covering asset inventory management, antivirus upgrades, software patching and physical maintenance.",
     metrics: [
       { value: "Patching", label: "Estate hardening" },
       { value: "Inventory", label: "Asset management" },
     ],
     image: "/media/case-government.jpg",
     imageAlt: "Perdana Putra government complex at the head of the Putrajaya boulevard",
+  },
+];
+
+/**
+ * The other four headings on hpe.com.my's case study page.
+ *
+ * The site carried only "IT Management & Support" and "Project Management &
+ * Deployment" and silently dropped these, which is most of what the page
+ * actually says HPE has done.
+ *
+ * They are modelled separately because the source presents them differently:
+ * short capability statements tagged with the client's sector, with no node
+ * counts, response windows or engagement narrative. Forcing them into
+ * `CaseStudy` would mean inventing metrics and images for twenty entries that
+ * have neither, which is the opposite of matching the source.
+ */
+export type EngagementGroup = {
+  name: string;
+  items: { body: string; sectors: string[] }[];
+};
+
+export const engagementGroups: EngagementGroup[] = [
+  {
+    name: "Authorised Support Partner",
+    items: [
+      { body: "On-site support for leasing PCs for a government body.", sectors: ["Government"] },
+      { body: "On-site warranty and out-of-warranty support nationwide.", sectors: ["Nationwide"] },
+      {
+        body: "Walk-in warranty and out-of-warranty support at nationwide service centres.",
+        sectors: ["Nationwide"],
+      },
+    ],
+  },
+  {
+    name: "IT Helpdesk Management",
+    items: [
+      {
+        body: "Manpower to run a corporate client's in-house helpdesk.",
+        sectors: ["Technology Provider", "Oil & Gas"],
+      },
+      { body: "Disaster recovery call centre.", sectors: ["Telco Provider"] },
+    ],
+  },
+  {
+    name: "IT Staffing Management",
+    items: [
+      {
+        body: "Long-term IT staffing for corporate clients, supporting in-house operations.",
+        sectors: ["Oil & Gas", "Logistics", "Conglomerate", "Technology Provider"],
+      },
+      { body: "Short-term IT staff for daily support needs.", sectors: ["Oil & Gas"] },
+      {
+        body: "Backfill resources for corporate clients needing emergency cover for staff on medical leave, or for short-term projects.",
+        sectors: ["Oil & Gas"],
+      },
+      {
+        body: "Project deployment staffing across nationwide rollouts.",
+        sectors: ["Automotive", "Home Appliance"],
+      },
+      {
+        body: "Resources fulfilled via ticketing, for customers needing minimum and ad-hoc support from time to time.",
+        sectors: ["Retail", "Oil & Gas", "University", "Consumer Product Manufacturer"],
+      },
+      { body: "Payroll arrangements with a fixed mark-up on senior resources.", sectors: [] },
+    ],
+  },
+  {
+    name: "Total IT Solution / IT Sourcing",
+    items: [
+      {
+        body: "IT sourcing, solutions, services, support and sales for digital transformation.",
+        sectors: ["Healthcare"],
+      },
+      { body: "Desktop, laptop, server and network equipment provision.", sectors: [] },
+      { body: "Load balancer, analyser, firewall and server provision.", sectors: [] },
+      { body: "Warranty support for network equipment and servers.", sectors: [] },
+      { body: "WiFi solutions for warehouses and factories.", sectors: ["Manufacturing"] },
+      { body: "UPS supply.", sectors: ["Datacentre"] },
+      { body: "Infrastructure and cabling services.", sectors: [] },
+      { body: "Telco Metro-E supply.", sectors: ["Manufacturing"] },
+      { body: "Short-term laptop and desktop leasing.", sectors: ["Logistics"] },
+    ],
   },
 ];
 
