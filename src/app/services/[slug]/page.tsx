@@ -7,6 +7,7 @@ import { Reveal } from "@/components/reveal";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
 import { SectionNav } from "@/components/section-nav";
+import { ScrollTimeline } from "@/components/scroll-timeline";
 import { getService, services } from "@/lib/site";
 
 export function generateStaticParams() {
@@ -75,26 +76,37 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
             </div>
           </Reveal>
 
-          <ul className="mt-14 grid border-t border-rule md:grid-cols-2">
-            {service.features.map((feature, i) => (
-              <Reveal
-                as="li"
-                key={feature.title}
-                delay={(i % 2) * 90}
-                className="border-b border-rule py-8 pr-0 md:[&:nth-child(odd)]:border-r md:[&:nth-child(odd)]:pr-12 md:[&:nth-child(even)]:pl-12"
-              >
-                <h3 className="flex items-baseline gap-4 font-display text-lg font-semibold text-ink">
-                  <span className="tabular text-[0.8rem] font-semibold tracking-[0.1em] text-brand">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  {feature.title}
-                </h3>
-                <p className="mt-3 pl-[2.4rem] text-[0.95rem] leading-relaxed text-ink-soft">
-                  {feature.body}
-                </p>
-              </Reveal>
-            ))}
-          </ul>
+          {/*
+            Sequential features render as a scroll-linked timeline; catalogue
+            features keep the two-column grid. The flag lives in `site.ts` with
+            the content it describes.
+          */}
+          {service.featureFlow ? (
+            <div className="mt-14 border-t border-rule pt-10">
+              <ScrollTimeline steps={service.features} />
+            </div>
+          ) : (
+            <ul className="mt-14 grid border-t border-rule md:grid-cols-2">
+              {service.features.map((feature, i) => (
+                <Reveal
+                  as="li"
+                  key={feature.title}
+                  delay={(i % 2) * 90}
+                  className="border-b border-rule py-8 pr-0 md:[&:nth-child(odd)]:border-r md:[&:nth-child(odd)]:pr-12 md:[&:nth-child(even)]:pl-12"
+                >
+                  <h3 className="flex items-baseline gap-4 font-display text-lg font-semibold text-ink">
+                    <span className="tabular text-[0.8rem] font-semibold tracking-[0.1em] text-brand">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {feature.title}
+                  </h3>
+                  <p className="mt-3 pl-[2.4rem] text-[0.95rem] leading-relaxed text-ink-soft">
+                    {feature.body}
+                  </p>
+                </Reveal>
+              ))}
+            </ul>
+          )}
         </Container>
       </section>
 

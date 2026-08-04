@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { DrawIcon } from "@/components/draw-icon";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
 import { services } from "@/lib/site";
 
@@ -40,7 +41,14 @@ export function ServicesGrid({
                 className="group flex h-full flex-col p-8 transition-colors duration-300 hover:bg-paper-warm lg:p-10"
               >
                 <span className="flex h-12 w-12 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
-                  <ServiceIcon name={service.icon} />
+                  {/*
+                    Offset per column so a row of three does not draw in
+                    lockstep. `i % 3` matches the Reveal delay above it, so the
+                    stroke starts as the card finishes arriving.
+                  */}
+                  <DrawIcon delay={(i % 3) * 90}>
+                    <ServiceIcon name={service.icon} />
+                  </DrawIcon>
                 </span>
 
                 {/*

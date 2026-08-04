@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Send } from "lucide-react";
+import { SuccessCheck } from "@/components/success-check";
 import { services } from "@/lib/site";
 
 const SALES = "sales@hpe.com.my";
@@ -49,12 +50,29 @@ function Field({
 }
 
 /**
+ * idle → opening → sent.
+ *
+ * `opening` is a real state, not a fake loading bar: handing a `mailto:` to the
+ * OS takes a visible beat, and on a slow machine the mail client can take a
+ * second or two to surface. Without it the button appears to do nothing.
+ */
+type Status = "idle" | "opening" | "sent";
+
+/** How long `opening` holds before the confirmation replaces it. */
+const OPENING_MS = 750;
+
+/**
  * There is no backend on this site, so the form composes a structured message
  * and hands it to the visitor's mail client. Nothing is silently dropped, and
  * the visitor keeps a copy of what they sent.
  */
 export function EnquiryForm() {
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+
+  // A pending timer must not outlive the component, or React warns about a
+  // state update after unmount when someone navigates away mid-submit.
+  const timerRef = useRef(0);
+  useEffect(() => () => window.clearTimeout(timerRef.current), []);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,11 +93,22 @@ export function EnquiryForm() {
 
     const subject = `Website enquiry — ${get("service") || "General"} — ${get("name")}`;
 
+    setStatus("opening");
+
+    /*
+     * Fired immediately and synchronously inside the submit handler, exactly as
+     * before. Deferring it into the timeout below would move the navigation out
+     * of the user gesture, which some browsers block for `mailto:`. The visual
+     * state is what waits — never the hand-off.
+     */
     window.location.href = `mailto:${SALES}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
 
-    setSent(true);
+    timerRef.current = window.setTimeout(
+      () => setStatus("sent"),
+      OPENING_MS,
+    );
   }
 
   return (
@@ -178,22 +207,55 @@ export function EnquiryForm() {
       <div className="sm:col-span-2">
         <button
           type="submit"
-          data-press="cta"
-          className="btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white"
+          data-press={status === "opening" ? undefined : "cta"}
+          data-status={status}
+          /*
+           * Locked only while the hand-off is in flight — a second click there
+           * would fire another `mailto:` and stack a second timer. Once `sent`,
+           * it unlocks again on purpose: if the mail client never surfaced, the
+           * visitor needs to be able to try once more.
+           */
+          disabled={status === "opening"}
+          className="submit-button btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white disabled:cursor-default"
         >
-          Send enquiry
-          <Send
-            size={16}
-            strokeWidth={2.25}
-            aria-hidden="true"
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-          />
+          {status === "idle" && (
+            <>
+              Send enquiry
+              <Send
+                size={16}
+                strokeWidth={2.25}
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:translate-x-0.5"
+              />
+            </>
+          )}
+
+          {status === "opening" && (
+            <>
+              Opening mail client
+              <span className="submit-spinner" aria-hidden="true" />
+            </>
+          )}
+
+          {status === "sent" && (
+            <span className="submit-state--sent inline-flex items-center gap-2.5">
+              Enquiry ready
+              <SuccessCheck size={18} />
+            </span>
+          )}
         </button>
 
+        {/*
+          The live region is a sibling of the button and holds only text. The
+          checkmark is `aria-hidden` inside the button, so the outcome is
+          announced once, in words, rather than as a graphic.
+        */}
         <p aria-live="polite" className="mt-4 text-[0.875rem] text-ink-muted">
-          {sent
-            ? `Your mail client should now be open with the enquiry ready to send to ${SALES}. If nothing happened, email us directly.`
-            : `Submitting opens your mail client with the enquiry addressed to ${SALES}.`}
+          {status === "idle" &&
+            `Submitting opens your mail client with the enquiry addressed to ${SALES}.`}
+          {status === "opening" && "Handing the enquiry to your mail client…"}
+          {status === "sent" &&
+            `Your mail client should now be open with the enquiry ready to send to ${SALES}. If nothing happened, email us directly.`}
         </p>
       </div>
     </form>

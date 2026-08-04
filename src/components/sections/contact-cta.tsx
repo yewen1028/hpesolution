@@ -1,7 +1,19 @@
 import { Mail, MapPin, Phone } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink, Container } from "@/components/ui";
-import { contact } from "@/lib/site";
+import { Typewriter } from "@/components/typewriter";
+import { DrawIcon } from "@/components/draw-icon";
+import { caseStudies, contact } from "@/lib/site";
+
+/*
+ * Derived from the case studies, deduplicated and kept in their published
+ * order. Adding an engagement in a new sector adds a phrase here for free;
+ * removing the last one in a sector drops it, so the line can never claim a
+ * sector the site cannot evidence.
+ */
+const sectorPhrases = Array.from(
+  new Set(caseStudies.map((study) => study.sector)),
+).map((sector) => `${sector} estate.`);
 
 export function ContactCta() {
   return (
@@ -10,8 +22,20 @@ export function ContactCta() {
         <div className="grid gap-14 lg:grid-cols-[1.15fr_1fr] lg:gap-24">
           <Reveal>
             <p className="eyebrow">Get in touch</p>
+            {/*
+              The rotating half is real: every phrase is a sector HPE actually
+              has a published engagement in, read from `caseStudies` rather than
+              typed in here, so the claim cannot drift from the case studies
+              two sections up. "estate" is the section's own word — the lede
+              below already says "Send us the estate".
+            */}
             <h2 className="display-2 mt-5">
-              Let us support your IT estate nationwide.
+              Let us support your{" "}
+              <Typewriter
+                phrases={sectorPhrases}
+                className="text-brand"
+                screenReaderText="banking, retail, telecommunications, media, aviation, oil and gas and government estate, nationwide."
+              />
             </h2>
             <p className="lede mt-6 max-w-xl">
               Send us the estate — sites, node count, the hours that matter —
@@ -34,7 +58,9 @@ export function ContactCta() {
             <dl className="border-t border-rule">
               <div className="flex gap-5 border-b border-rule py-6">
                 <dt className="shrink-0 pt-0.5 text-brand">
-                  <MapPin size={19} strokeWidth={1.75} aria-hidden="true" />
+                  <DrawIcon>
+                    <MapPin size={19} strokeWidth={1.75} aria-hidden="true" />
+                  </DrawIcon>
                   <span className="sr-only">Office</span>
                 </dt>
                 <dd>
@@ -50,7 +76,9 @@ export function ContactCta() {
 
               <div className="flex gap-5 border-b border-rule py-6">
                 <dt className="shrink-0 pt-0.5 text-brand">
-                  <Phone size={19} strokeWidth={1.75} aria-hidden="true" />
+                  <DrawIcon delay={110}>
+                    <Phone size={19} strokeWidth={1.75} aria-hidden="true" />
+                  </DrawIcon>
                   <span className="sr-only">Telephone</span>
                 </dt>
                 <dd>
@@ -69,7 +97,10 @@ export function ContactCta() {
                   className="flex gap-5 border-b border-rule py-6"
                 >
                   <dt className="shrink-0 pt-0.5 text-brand">
-                    <Mail size={19} strokeWidth={1.75} aria-hidden="true" />
+                    {/* Three of these render, so they share one offset. */}
+                    <DrawIcon delay={220}>
+                      <Mail size={19} strokeWidth={1.75} aria-hidden="true" />
+                    </DrawIcon>
                     <span className="sr-only">{email.label}</span>
                   </dt>
                   <dd>

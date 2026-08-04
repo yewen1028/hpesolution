@@ -2147,3 +2147,414 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
     transition: none;
   }
 }
+
+/* --- Typewriter ----------------------------------------------------------- */
+
+/*
+ * The cursor is a pseudo-element, not a character in the string. Appending "|"
+ * to the text would mean the caret is part of what gets typed and deleted, and
+ * it would land in any copy-paste of the heading.
+ */
+.typewriter {
+  position: relative;
+  white-space: pre-wrap;
+}
+
+.typewriter::after {
+  content: "";
+  display: inline-block;
+  width: 0.06em;
+  /* Cap height rather than a full line box, so the caret sits on the baseline
+     of the display face instead of overshooting it. */
+  height: 0.78em;
+  margin-left: 0.06em;
+  vertical-align: -0.04em;
+  background: var(--color-brand);
+  animation: typewriter-blink 1.06s step-end infinite;
+}
+
+/*
+ * `step-end` rather than a fade: a real caret is on or off. Easing it produces
+ * a pulsing glow, which reads as a loading indicator instead of a cursor.
+ */
+@keyframes typewriter-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* While actively typing the caret holds steady — a caret that blinks mid-word
+   looks like the text is stalling. */
+.typewriter[data-typing]::after {
+  animation: none;
+  opacity: 1;
+}
+
+/*
+ * Reduced motion: the component returns before rewinding, so the full
+ * server-rendered phrase stays. The caret would be the only thing moving, so it
+ * goes too.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .typewriter::after {
+    display: none;
+  }
+}
+
+/* Scripting off: nothing is typing, so nothing should appear to be. */
+.no-js .typewriter::after {
+  display: none;
+}
+
+/* --- Icon draw-in --------------------------------------------------------- */
+
+/*
+ * Stroke-drawing for lucide icons. `DrawIcon` sets `pathLength="1"` on every
+ * drawable child, so a dasharray of 1 is exactly one stroke on any shape and
+ * no geometry has to be measured.
+ *
+ * Both rules are gated on `[data-draw]`, which only JavaScript adds. Without it
+ * — no script, reduced motion, observer never fires — the icon renders solid,
+ * which is the state the server sent.
+ */
+.draw-icon {
+  display: inline-flex;
+}
+
+.draw-icon[data-draw] svg :is(path, line, polyline, polygon, circle, ellipse, rect) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  /*
+   * Fill is animated separately and later. Several lucide glyphs have a filled
+   * counterpart; fading it in only after the outline lands stops a solid shape
+   * appearing before the line that should contain it.
+   */
+  transition:
+    stroke-dashoffset var(--draw-duration, 900ms) cubic-bezier(0.5, 0, 0.2, 1),
+    fill-opacity calc(var(--draw-duration, 900ms) * 0.4) linear;
+  transition-delay: calc(
+    var(--draw-delay, 0ms) + var(--i, 0) * var(--draw-stagger, 90ms)
+  );
+  fill-opacity: 0;
+}
+
+.draw-icon[data-draw="shown"] svg :is(path, line, polyline, polygon, circle, ellipse, rect) {
+  stroke-dashoffset: 0;
+  fill-opacity: 1;
+}
+
+/*
+ * The easing is the same curve the network map's arcs use — quick to establish
+ * the stroke, slow to land it, which is how a drawn line actually behaves.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Belt and braces: DrawIcon returns before arming, but a preference changed
+     mid-session must not strand a rewound icon. */
+  .draw-icon[data-draw] svg :is(path, line, polyline, polygon, circle, ellipse, rect) {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+    transition: none;
+  }
+}
+
+.no-js .draw-icon[data-draw] svg :is(path, line, polyline, polygon, circle, ellipse, rect) {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  fill-opacity: 1;
+}
+
+/* --- Odometer ------------------------------------------------------------- */
+
+/*
+ * Each digit is a window one numeral tall over a strip ten numerals tall. The
+ * strip is translated by -10% per unit, so digit `d` sits in the window at
+ * `translateY(calc(var(--d) * -10%))` — the percentage is of the strip's own
+ * height, which is exactly ten digits, so no measurement is needed and the
+ * component works at any font size.
+ */
+.odometer {
+  display: inline-flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  /* Without this the wheels shift horizontally as digits change width. */
+  font-feature-settings: "tnum";
+}
+
+.odometer__visual {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.odometer__fixed {
+  display: inline-block;
+}
+
+.odometer__wheel {
+  display: inline-block;
+  overflow: hidden;
+  /* One digit tall. `1em` would clip descenders on the display face, and
+     numerals have none, so the line box is the right measure. */
+  height: 1lh;
+  line-height: inherit;
+}
+
+.odometer__strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--d, 0) * -10%));
+  /*
+   * Overshoot-free easing. A spring or back-ease would bounce past the numeral
+   * and show a sliver of the neighbouring digit through the window, which is
+   * the one artefact that gives this effect away.
+   */
+  transition: transform var(--odo-duration, 700ms) cubic-bezier(0.22, 1, 0.36, 1);
+  /* Right-hand wheels lead; the stagger grows leftward. */
+  transition-delay: calc(var(--place, 0) * var(--odo-stagger, 55ms));
+}
+
+.odometer__num {
+  display: block;
+  height: 1lh;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The number is still correct — only the roll between values is dropped. */
+  .odometer__strip {
+    transition: none;
+  }
+}
+
+/* --- Submit states -------------------------------------------------------- */
+
+/*
+ * Success checkmark. The ring draws first over 520ms, the tick follows at 380ms
+ * starting 300ms in — overlapping slightly so the two marks read as one gesture
+ * rather than a sequence of two.
+ */
+.success-check__ring,
+.success-check__tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: success-draw 520ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
+}
+
+.success-check__tick {
+  animation-duration: 380ms;
+  animation-delay: 300ms;
+}
+
+@keyframes success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Entrance for the whole confirmation. A short overshoot past 1 and back —
+ * enough to register as an arrival, well short of a cartoon bounce on a
+ * business form.
+ */
+.submit-state--sent {
+  animation: submit-pop 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+@keyframes submit-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.045);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The pending spinner. */
+.submit-spinner {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: submit-spin 620ms linear infinite;
+}
+
+@keyframes submit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+ * The button must not resize as its label changes, or the layout jumps twice
+ * during a single submit. Idle is the widest of the three labels, so the box is
+ * pinned to that.
+ */
+.submit-button {
+  min-width: 13.5rem;
+  justify-content: center;
+}
+
+.submit-button[data-status="sent"] {
+  background: #1a7f4b;
+}
+
+.submit-button[data-status="sent"]::before {
+  /* Kills the brand fill wipe: green is the state now, not a hover colour. */
+  display: none;
+}
+
+/*
+ * Reduced motion: every state is still distinguishable — the tick, the green,
+ * the spinner's presence — but nothing draws, pops or spins.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .success-check__ring,
+  .success-check__tick {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .submit-state--sent {
+    animation: none;
+  }
+
+  .submit-spinner {
+    animation-duration: 2s;
+  }
+}
+
+/* --- Scroll timeline ------------------------------------------------------ */
+
+/*
+ * The complete state is the default: full rail, every step active. `data-armed`
+ * is added by ScrollTimeline and is the only thing that dims anything, so no
+ * JavaScript, reduced motion, or a zero-height measurement all leave the
+ * section fully readable.
+ */
+.timeline {
+  position: relative;
+  /* Room for the rail and its nodes. */
+  padding-left: 3.25rem;
+}
+
+.timeline__rail {
+  position: absolute;
+  left: 0.6875rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-rule);
+}
+
+.timeline__rail-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-brand);
+  transform-origin: top;
+  /* Ungated default: complete. */
+  transform: scaleY(1);
+}
+
+.timeline[data-armed] .timeline__rail-fill {
+  transform: scaleY(var(--timeline-progress, 0));
+}
+
+.timeline__step {
+  position: relative;
+  padding-block: 1.75rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.timeline__step:last-of-type {
+  border-bottom: 0;
+}
+
+/* The dot, centred on the rail. */
+.timeline__node {
+  position: absolute;
+  left: -2.9375rem;
+  /* Aligns with the first line of the step's heading rather than the box. */
+  top: 2.35rem;
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--color-brand);
+  border-radius: 50%;
+  background: var(--color-brand);
+  transition:
+    background-color 300ms var(--ease-out-quint),
+    transform 300ms var(--ease-out-quint);
+}
+
+.timeline[data-armed] .timeline__node {
+  background: var(--color-paper);
+  transform: scale(0.72);
+}
+
+.timeline[data-armed] [data-reached] .timeline__node {
+  background: var(--color-brand);
+  transform: scale(1);
+}
+
+.timeline__index {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-brand);
+  transition: color 300ms var(--ease-out-quint);
+}
+
+.timeline__body {
+  margin-top: 0.5rem;
+}
+
+/*
+ * Unreached steps are dimmed, never hidden. Someone scanning the page ahead of
+ * the scroll position still has to be able to read what is coming — this is a
+ * progress indicator, not a paywall.
+ */
+.timeline[data-armed] .timeline__step {
+  opacity: 0.45;
+  transition: opacity 350ms var(--ease-out-quint);
+}
+
+.timeline[data-armed] [data-reached] {
+  opacity: 1;
+}
+
+.timeline[data-armed] .timeline__step:not([data-reached]) .timeline__index {
+  color: var(--color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Belt and braces: the component returns before arming, but a preference
+     changed mid-session must not strand a dimmed, half-drawn timeline. */
+  .timeline[data-armed] .timeline__rail-fill {
+    transform: scaleY(1);
+  }
+
+  .timeline[data-armed] .timeline__step,
+  .timeline[data-armed] .timeline__node {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .timeline[data-armed] .timeline__node {
+    background: var(--color-brand);
+  }
+}

@@ -83,6 +83,13 @@ export type Service = {
   image: string;
   imageAlt: string;
   featureHeading: string;
+  /**
+   * True when `features` describe a sequence rather than a catalogue. Only
+   * these render as a scroll-linked timeline — drawing a progressive line
+   * through "Helpdesk models" or "Solution areas" would assert an order that
+   * does not exist in the content.
+   */
+  featureFlow?: boolean;
   features: { title: string; body: string }[];
   benefits: { title: string; body: string }[];
   /** Optional ordered checklist, used where the source scope is procedural. */
@@ -102,6 +109,7 @@ export const services: Service[] = [
     image: "/media/svc-managed-services.jpg",
     imageAlt: "Engineer checking a tablet beside racked servers",
     featureHeading: "How the contract runs",
+    featureFlow: true,
     features: [
       {
         title: "Fault ticketing and escalation",
@@ -180,6 +188,7 @@ export const services: Service[] = [
     image: "/media/svc-project-deployment.jpg",
     imageAlt: "Technician working at a rack in a server room",
     featureHeading: "What a deployment looks like",
+    featureFlow: true,
     features: [
       {
         title: "Project kick-start",
