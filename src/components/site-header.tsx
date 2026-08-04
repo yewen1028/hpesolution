@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu, Phone, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { ArrowRight, ChevronDown, Menu, Phone, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ServiceIcon } from "@/components/service-icon";
 import { contact, navigation, services } from "@/lib/site";
 
 export function SiteHeader() {
@@ -165,6 +166,7 @@ export function SiteHeader() {
                     type="button"
                     onClick={() => setServicesOpen((v) => !v)}
                     aria-expanded={servicesOpen}
+                    aria-controls="services-menu"
                     data-active={isActive(item.href) ? "" : undefined}
                     className={`nav-link flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                       isActive(item.href)
@@ -183,26 +185,59 @@ export function SiteHeader() {
                     />
                   </button>
 
+                  {/*
+                    The panel unfolds around its own top edge while the rows
+                    arrive behind it, later and travelling further. Two rates,
+                    one gesture: that difference is the whole effect, and it is
+                    why the rows are not simply faded in with the panel.
+
+                    The stagger is a CSS cascade off `--i` rather than a timer
+                    per row, so the eight delays cost nothing and cannot drift
+                    out of step with the panel.
+                  */}
                   {servicesOpen && (
-                    <div className="absolute right-0 top-[calc(100%+0.75rem)] w-88 border border-rule bg-paper p-2 shadow-[0_24px_60px_-24px_rgb(20_24_29/0.28)]">
+                    <div
+                      id="services-menu"
+                      className="svc-menu absolute right-0 top-[calc(100%+0.75rem)] w-[27rem] border border-rule bg-paper p-2 shadow-[0_24px_60px_-24px_rgb(20_24_29/0.28)]"
+                    >
                       <Link
                         href="/services"
-                        className="block px-4 py-3 text-[0.9rem] font-semibold text-ink hover:bg-paper-warm"
+                        style={{ "--i": 0 } as CSSProperties}
+                        className="svc-menu__item group flex items-center justify-between gap-3 px-4 py-3 text-[0.9rem] font-semibold text-ink transition-colors hover:bg-paper-warm"
                       >
                         All services
+                        <ArrowRight
+                          size={14}
+                          strokeWidth={2.25}
+                          aria-hidden="true"
+                          className="text-brand transition-transform duration-300 group-hover:translate-x-1"
+                        />
                       </Link>
+
                       <div className="my-1 h-px bg-rule" />
-                      {services.map((service) => (
+
+                      {services.map((service, i) => (
                         <Link
                           key={service.slug}
                           href={`/services/${service.slug}`}
-                          className="block px-4 py-2.5 hover:bg-paper-warm"
+                          style={{ "--i": i + 1 } as CSSProperties}
+                          className="svc-menu__item group flex items-start gap-3.5 px-4 py-2.5 transition-colors hover:bg-paper-warm"
                         >
-                          <span className="block text-[0.9rem] font-medium text-ink">
-                            {service.title}
+                          {/*
+                            The same bordered glyph the services grid uses, at
+                            two thirds the size. The menu and the grid are two
+                            views of one list and should look like it.
+                          */}
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+                            <ServiceIcon name={service.icon} size={15} />
                           </span>
-                          <span className="mt-0.5 block text-[0.8rem] leading-snug text-ink-muted">
-                            {service.short}
+                          <span className="min-w-0">
+                            <span className="block text-[0.9rem] font-medium text-ink">
+                              {service.title}
+                            </span>
+                            <span className="mt-0.5 block text-[0.8rem] leading-snug text-ink-muted">
+                              {service.short}
+                            </span>
                           </span>
                         </Link>
                       ))}

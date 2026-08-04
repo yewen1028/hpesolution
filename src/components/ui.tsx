@@ -1,45 +1,14 @@
 import { Media } from "@/components/media";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Boxes,
-  Headset,
-  Network,
-  ServerCog,
-  ShieldCheck,
-  Users,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
-import type { IconName } from "@/lib/site";
+import { ArrowRight } from "lucide-react";
 import { Parallax, ParallaxWindow } from "./parallax";
 import { Reveal } from "./reveal";
 import { AnimatedText } from "./animated-text";
 
-const icons: Record<IconName, LucideIcon> = {
-  ServerCog,
-  Boxes,
-  Headset,
-  Users,
-  ShieldCheck,
-  Network,
-  Wrench,
-};
-
-export function ServiceIcon({
-  name,
-  size = 22,
-  className,
-}: {
-  name: IconName;
-  size?: number;
-  className?: string;
-}) {
-  const Icon = icons[name];
-  return (
-    <Icon size={size} strokeWidth={1.5} className={className} aria-hidden="true" />
-  );
-}
+// Lives in its own module so client components can take the glyphs without
+// pulling this file's parallax and reveal tree with them. Re-exported so every
+// existing `import { ServiceIcon } from "@/components/ui"` keeps working.
+export { ServiceIcon } from "./service-icon";
 
 /** Page-width container. One horizontal rhythm across the whole site. */
 export function Container({

@@ -1295,6 +1295,65 @@
   }
 }
 
+/* --- Services flyout ------------------------------------------------------ */
+
+/*
+ * The panel unfolds around its own top edge, hinged under the trigger, while
+ * the rows arrive behind it — later, and travelling further.
+ *
+ * The two rates are the point. A panel and its contents moving as one block is
+ * a box appearing; moving at different speeds reads as depth, because the rows
+ * are still catching up when the panel has already landed. It is the same
+ * parallax idea the page bands use, at the scale of a menu.
+ *
+ * `backwards` rather than `both`: the fill applies the opening keyframe before
+ * the animation starts, then lets each element settle back to its natural,
+ * untransformed state. Holding the final keyframe would leave a permanent
+ * `perspective()` on the panel, which makes it a containing block for anything
+ * positioned inside it.
+ */
+.svc-menu {
+  transform-origin: top right;
+  animation: svc-menu-in 380ms var(--ease-out-quint) backwards;
+}
+
+@keyframes svc-menu-in {
+  from {
+    opacity: 0;
+    transform: perspective(900px) translateY(-10px) rotateX(-10deg) scale(0.98);
+  }
+}
+
+.svc-menu__item {
+  /*
+   * Stagger by cascade, off the `--i` each row carries. Eight rows, 42ms
+   * apart, starting once the panel is most of the way open. No timers, and the
+   * sequence cannot drift out of step with the panel that frames it.
+   */
+  animation: svc-menu-item-in 420ms var(--ease-out-quint) backwards;
+  animation-delay: calc(90ms + var(--i, 0) * 42ms);
+}
+
+@keyframes svc-menu-item-in {
+  from {
+    opacity: 0;
+    /* Further than the panel travelled, and diagonally, so the rows read as
+       sitting behind it rather than printed on it. */
+    transform: translate3d(-14px, 10px, 0);
+  }
+}
+
+/*
+ * The flyout is navigation, so it may not depend on motion to be usable: with
+ * reduced motion it simply is where it is, fully opaque, the moment it opens.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .svc-menu,
+  .svc-menu__item {
+    animation: none;
+  }
+}
+
 /* --- Card spotlight ------------------------------------------------------- */
 
 /*
