@@ -158,9 +158,19 @@ export function ButtonLink({
   const styles = {
     // `btn-fill` wipes --color-brand-strong across from the entry edge; the
     // colour swap it replaces was instant.
-    primary: "btn-fill bg-brand text-white",
+    primary: "btn-fill btn-shine bg-brand text-white",
     ghost: "border border-rule-strong text-ink hover:border-ink hover:bg-paper-warm",
-    light: "bg-white text-ink hover:bg-brand hover:text-white",
+    /*
+     * A white chip on a band that is dark in both themes, so both of its
+     * colours have to be theme-independent. `text-ink` was themed and inverted
+     * to off-white in dark mode, leaving white text on a white button.
+     *
+     * The hover keeps the fixed ink rather than switching to white: #14181d on
+     * the brand orange is 6.5:1 in the light theme and 7.7:1 in the dark one,
+     * where white on the same orange is 3.0:1 and 2.4:1 and fails AA at this
+     * text size in both.
+     */
+    light: "bg-white text-ink-fixed hover:bg-brand hover:text-ink-fixed",
   }[variant];
 
   const inner = (

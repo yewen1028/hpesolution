@@ -8,6 +8,7 @@ import { ScrollProgress } from "@/components/scroll-progress";
 import { BackToTop } from "@/components/back-to-top";
 import { themeBootScript } from "@/components/theme-toggle";
 import { PressProvider } from "@/components/press";
+import { SpotlightProvider } from "@/components/spotlight";
 import { company, contact } from "@/lib/site";
 import "./globals.css";
 import "./splash.css";
@@ -98,6 +99,8 @@ export default function RootLayout({
 
         {/* One delegated pointer listener drives every [data-press] element. */}
         <PressProvider />
+        {/* And one more for the cursor spotlight on [data-spotlight] cards. */}
+        <SpotlightProvider />
 
         <SiteHeader />
         <ScrollProgress />

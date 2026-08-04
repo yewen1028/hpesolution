@@ -39,9 +39,16 @@ export function ServicesGrid({
               delay={(i % 3) * 90}
               className="border-b border-r border-rule"
             >
+              {/*
+                `data-spotlight` is the hover target, so it goes on the link
+                rather than the cell: the wash should follow the pointer across
+                the surface the visitor is actually pointing at, and the cell
+                also owns the shared hairlines.
+              */}
               <Link
                 href={`/services/${service.slug}`}
                 data-press="card"
+                data-spotlight=""
                 className="group flex h-full flex-col p-8 transition-colors duration-300 hover:bg-paper-warm lg:p-10"
               >
                 <span className="flex h-12 w-12 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
@@ -105,6 +112,7 @@ export function ServicesGrid({
               href="/contact"
               data-press="card"
               data-tone="dark"
+              data-spotlight=""
               className="group relative flex h-full flex-col justify-center p-8 lg:p-10"
             >
               <h3 className="display-3 max-w-md text-white">

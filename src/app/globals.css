@@ -15,6 +15,21 @@
   --color-ink-soft: #3f464f;
   --color-ink-muted: #6d7480;
 
+  /*
+   * Ink for a surface that stays light in BOTH themes.
+   *
+   * `--color-ink` inverts to an off-white under `[data-theme="dark"]`, which is
+   * correct for the page but wrong for the handful of elements that sit on a
+   * permanently white chip over a permanently dark band — the `light` button
+   * variant on the hero, the SLA band and the coverage band. Pairing the
+   * literal `bg-white` with the themed `--color-ink` there produced off-white
+   * text on white: the button was legible in the light theme and completely
+   * invisible in the dark one.
+   *
+   * Deliberately NOT overridden in the dark block below. That is the point.
+   */
+  --color-ink-fixed: #14181d;
+
   --color-paper: #ffffff;
   --color-paper-warm: #faf8f6;
   --color-paper-deep: #10151b;
@@ -323,6 +338,12 @@
   [data-parallax-window] {
     transform: none !important;
     will-change: auto;
+  }
+
+  /* Both 21st.dev effects are decoration: switched off, not merely shortened. */
+  .btn-shine::after,
+  [data-spotlight]::before {
+    display: none;
   }
 
   [data-stage] {
@@ -1221,6 +1242,103 @@
 .btn-fill:focus-visible::before {
   transform: scaleX(1);
   transform-origin: left;
+}
+
+/* --- Button shine --------------------------------------------------------- */
+
+/*
+ * Magic UI's **Shiny Button** (21st.dev/magicui/shiny-button): a glare that
+ * pans across the face on hover.
+ *
+ * CSS rather than the published framer-motion version, because it layers onto
+ * `.btn-fill` and the two have to share one element. The fill wipes the darker
+ * orange across as a background; this rides above it at the same negative
+ * z-index, so it passes over the fill and still sits under the label.
+ *
+ * Primary buttons only. This is the site's single accented action per view,
+ * and a glare on every surface would be exactly the kind of decoration the
+ * rest of the design system avoids.
+ */
+/*
+ * Carries its own containment rather than relying on `.btn-fill` for it. The
+ * two are always paired today, but a bare `.btn-shine` with a -1 pseudo-element
+ * and no stacking context would paint the glare behind the button entirely.
+ */
+.btn-shine {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgb(255 255 255 / 0.34) 50%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+}
+
+.btn-shine:hover::after,
+.btn-shine:focus-visible::after {
+  animation: btn-shine 760ms var(--ease-out-quint);
+}
+
+@keyframes btn-shine {
+  to {
+    transform: translateX(130%);
+  }
+}
+
+/* --- Card spotlight ------------------------------------------------------- */
+
+/*
+ * Magic UI's **Magic Card** (21st.dev/magicui/magic-card). `spotlight.tsx`
+ * writes --spot-x / --spot-y from one delegated pointermove listener; this
+ * draws the wash from them.
+ *
+ * The brand is at 12% and fades to nothing well before the edge, which keeps
+ * it an accent under the cursor rather than an orange panel. Unset, both
+ * custom properties fall back to the card's centre and the whole thing is
+ * invisible at `opacity: 0`, so a card with no script behaves exactly as it
+ * did before.
+ */
+[data-spotlight] {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-spotlight]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(
+    16rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--color-brand) 12%, transparent),
+    transparent 68%
+  );
+  transition: opacity 0.4s var(--ease-out-quint);
+}
+
+[data-spotlight]:hover::before,
+[data-spotlight]:focus-within::before {
+  opacity: 1;
+}
+
+/* On the near-black CTA panel the same wash needs more strength to register. */
+[data-spotlight][data-tone="dark"]::before {
+  background: radial-gradient(
+    18rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--color-brand) 26%, transparent),
+    transparent 70%
+  );
 }
 
 /* --- Nav links ------------------------------------------------------------ */
