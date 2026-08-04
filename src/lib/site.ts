@@ -98,6 +98,19 @@ export type Service = {
   tiers?: { name: string; coverage: string; response: string }[];
 };
 
+/**
+ * The four SLA tiers, exactly as hpe.com.my publishes them on the IT managed
+ * services page. Exported because the home page's Service Level Assurance band
+ * shows the same table: two copies drift, and one of them did — the remote
+ * tier's commitment is "SBD/3BD/5BD", not an unspecified ad-hoc arrangement.
+ */
+export const supportTiers = [
+  { name: "Elite", coverage: "24 × 7", response: "4-hour response" },
+  { name: "Premium", coverage: "8 × 5", response: "4-hour response" },
+  { name: "Standard", coverage: "8 × 5", response: "Next business day" },
+  { name: "Remote", coverage: "8 × 5", response: "Same, 3 or 5 business days" },
+];
+
 export const services: Service[] = [
   {
     slug: "it-managed-services",
@@ -153,12 +166,7 @@ export const services: Service[] = [
         ],
       },
     ],
-    tiers: [
-      { name: "Elite", coverage: "24 × 7", response: "4-hour response" },
-      { name: "Premium", coverage: "8 × 5", response: "4-hour response" },
-      { name: "Standard", coverage: "8 × 5", response: "Next business day" },
-      { name: "Remote", coverage: "8 × 5", response: "Scheduled or ad-hoc" },
-    ],
+    tiers: supportTiers,
     benefits: [
       {
         title: "Cost-effective",
@@ -289,7 +297,7 @@ export const services: Service[] = [
       "IT hardware support staffing on long-term or short-term contract, sourced against the skill set and years of experience the role actually requires — with backfill built in.",
     icon: "Users",
     image: "/media/svc-staffing.jpg",
-    imageAlt: "A team gathered around a laptop in an office",
+    imageAlt: "Two engineers working on cabling at a network rack",
     featureHeading: "Staffing arrangements",
     features: [
       {
@@ -336,7 +344,7 @@ export const services: Service[] = [
       "We are an appointed Authorised Support Partner for PC, server and network manufacturers, carrying parts on their behalf and fulfilling hardware and software warranty within the committed SLA — on-site, or as a walk-in claim at any of our 18 service centres.",
     icon: "ShieldCheck",
     image: "/media/svc-warranty.jpg",
-    imageAlt: "A device stripped down to its individual components",
+    imageAlt: "A memory module being fitted into an opened laptop chassis",
     featureHeading: "Claim handling",
     features: [
       {
@@ -387,7 +395,7 @@ export const services: Service[] = [
       "Total IT solution and sourcing built on our system integration experience and our partnerships with leading technology providers, delivering tested, cost-effective integrated infrastructure.",
     icon: "Network",
     image: "/media/svc-sourcing.jpg",
-    imageAlt: "Warehouse racking stocked to floor-to-ceiling height",
+    imageAlt: "Numbered ports and link LEDs across the face of a rack switch",
     featureHeading: "Solution areas",
     features: [
       {
@@ -516,7 +524,7 @@ export const caseStudies: CaseStudy[] = [
       { value: "24×7×4h", label: "Response commitment" },
     ],
     image: "/media/case-retail.jpg",
-    imageAlt: "Supermarket aisle with stocked produce displays",
+    imageAlt: "Card payment terminal held out across a grocery checkout counter",
   },
   {
     sector: "Telecommunications",
@@ -540,7 +548,7 @@ export const caseStudies: CaseStudy[] = [
       { value: "Broadcast", label: "Equipment class" },
     ],
     image: "/media/case-media.jpg",
-    imageAlt: "Television broadcast control room with monitor wall",
+    imageAlt: "Operator running a video switcher beside a multiview monitor",
   },
   {
     sector: "Aviation & Hospitality",
@@ -558,25 +566,25 @@ export const caseStudies: CaseStudy[] = [
     sector: "Banking",
     discipline: "Project Management & Deployment",
     title: "Annual IT asset inventory and OS migration",
-    body: "Yearly IT asset inventory and audit covering more than 25,000 desktops and laptops across Malaysia and Thailand, carried out alongside Windows operating system migrations.",
+    body: "Yearly IT asset inventory, audit and preventive maintenance covering more than 25,000 client desktops and laptops across Malaysia and Bangkok, carried out alongside Windows operating system migration and a desktop and laptop refresh.",
     metrics: [
       { value: "25,000+", label: "Endpoints audited" },
       { value: "2", label: "Countries" },
     ],
     image: "/media/case-audit.jpg",
-    imageAlt: "Review session around a boardroom table",
+    imageAlt: "Laptops stacked on their shipping cartons",
   },
   {
     sector: "Oil & Gas",
     discipline: "Project Management & Deployment",
     title: "Active Directory migration and estate-wide encryption",
-    body: "Active Directory migration and Windows upgrades for 10,000 users, plus BitLocker encryption and specialised installations reaching 30,000 users — delivered inside a six-month window.",
+    body: "Microsoft Active Directory migration and Windows operating system upgrades across two projects of 10,000 and 2,000 end users, plus BitLocker encryption and installation reaching 30,000 end users — completed inside a six-month window.",
     metrics: [
       { value: "30,000", label: "Users reached" },
       { value: "6 months", label: "Delivery window" },
     ],
     image: "/media/case-oil-gas.jpg",
-    imageAlt: "Aerial view of a heavy industrial extraction site",
+    imageAlt: "Aerial view of an oil refinery with storage spheres and flare stacks",
   },
   {
     sector: "Government",
@@ -588,7 +596,7 @@ export const caseStudies: CaseStudy[] = [
       { value: "Inventory", label: "Asset management" },
     ],
     image: "/media/case-government.jpg",
-    imageAlt: "Parliament building exterior with landscaped grounds",
+    imageAlt: "Perdana Putra government complex at the head of the Putrajaya boulevard",
   },
 ];
 

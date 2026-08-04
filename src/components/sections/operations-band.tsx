@@ -4,14 +4,9 @@ import { SectionDivider } from "@/components/section-divider";
 import { AnimatedText } from "@/components/animated-text";
 import { BackgroundVideo } from "@/components/video-band";
 import { ButtonLink, Container } from "@/components/ui";
-import { principles } from "@/lib/site";
-
-const tiers = [
-  { name: "Elite", coverage: "24 × 7", response: "4-hour response" },
-  { name: "Premium", coverage: "8 × 5", response: "4-hour response" },
-  { name: "Standard", coverage: "8 × 5", response: "Next business day" },
-  { name: "Remote", coverage: "8 × 5", response: "Scheduled or ad-hoc" },
-];
+// One table, one source. This band and the IT managed services page publish
+// the same four tiers; they used to be typed out twice and had already drifted.
+import { principles, supportTiers as tiers } from "@/lib/site";
 
 export function OperationsBand() {
   return (

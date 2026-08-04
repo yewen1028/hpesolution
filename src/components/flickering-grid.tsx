@@ -1,0 +1,200 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
+/* ---------------------------------------------------------------------------
+   Flickering grid — the Magic UI background component published on 21st.dev
+   (21st.dev/magicui/flickering-grid), rebuilt here against its documented prop
+   surface: squareSize, gridGap, color, maxOpacity, flickerChance.
+
+   Three things differ from the published component, all of them house rules:
+
+   - **It is drawn on a canvas, not as SVG rects.** At this square size a band
+     this wide is several thousand cells; as DOM nodes that is a style
+     recalculation every frame. One canvas is one paint.
+   - **It stops when it is not on screen.** An `IntersectionObserver` parks the
+     rAF loop, so a background at the bottom of the page costs nothing while
+     you are reading the top of it.
+   - **Reduced motion gets the grid, not nothing.** The field is painted once at
+     a settled opacity and left there. The same principle as the network map:
+     the static state is the complete state, and the animation only ever
+     replays an arrival.
+
+   It is decorative — `aria-hidden`, and the panel it sits behind carries its
+   own contrast without it.
+--------------------------------------------------------------------------- */
+
+export function FlickeringGrid({
+  squareSize = 4,
+  gridGap = 6,
+  flickerChance = 0.3,
+  color = "#f26f21",
+  maxOpacity = 0.3,
+  className = "",
+}: {
+  /** Cell edge in CSS pixels. */
+  squareSize?: number;
+  /** Gap between cells in CSS pixels. */
+  gridGap?: number;
+  /** Probability per second that a given cell picks a new opacity. */
+  flickerChance?: number;
+  /** Any CSS colour; resolved to rgb once via a 1×1 scratch canvas. */
+  color?: string;
+  /** Ceiling for a cell's opacity. */
+  maxOpacity?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /*
+     * Resolve the colour once, up front.
+     *
+     * A canvas `fillStyle` cannot take `var(--color-brand)` — it is not a CSS
+     * colour, it is a substitution the cascade performs — and an unparseable
+     * value leaves `fillStyle` at its previous setting, which is opaque black.
+     * On the near-black panel this component was written for, that failure is
+     * completely silent: a grid of black squares on black. So a token is read
+     * off the document first, and only the resolved value reaches the canvas.
+     */
+    let resolved = color.trim();
+    const token = /^var\(\s*(--[\w-]+)\s*\)$/.exec(resolved);
+    if (token) {
+      resolved = getComputedStyle(document.documentElement)
+        .getPropertyValue(token[1])
+        .trim();
+    }
+
+    // `fillStyle` normalises whatever survives that to "#rrggbb", and refuses
+    // to change at all if it is not a colour — so compare, and fall back to the
+    // brand orange rather than painting an invisible grid.
+    context.fillStyle = "#000000";
+    context.fillStyle = resolved;
+    const hex =
+      context.fillStyle === "#000000" && resolved !== "#000000"
+        ? "#f26f21"
+        : (context.fillStyle as string);
+    const rgb = `${parseInt(hex.slice(1, 3), 16)},${parseInt(
+      hex.slice(3, 5),
+      16,
+    )},${parseInt(hex.slice(5, 7), 16)}`;
+
+    let cols = 0;
+    let rows = 0;
+    let squares = new Float32Array(0);
+    let dpr = 1;
+
+    function resize() {
+      const { width, height } = parent!.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas!.width = Math.ceil(width * dpr);
+      canvas!.height = Math.ceil(height * dpr);
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+
+      const step = squareSize + gridGap;
+      cols = Math.ceil(width / step);
+      rows = Math.ceil(height / step);
+
+      squares = new Float32Array(cols * rows);
+      for (let i = 0; i < squares.length; i++) {
+        // Reduced motion gets a flat, quiet field rather than a random one:
+        // a frozen random pattern reads as an artefact, an even one reads as
+        // texture.
+        squares[i] = still ? maxOpacity * 0.55 : Math.random() * maxOpacity;
+      }
+      draw();
+    }
+
+    function draw() {
+      const step = (squareSize + gridGap) * dpr;
+      const size = squareSize * dpr;
+      context!.clearRect(0, 0, canvas!.width, canvas!.height);
+
+      for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) {
+          const opacity = squares[x * rows + y];
+          if (opacity <= 0.01) continue;
+          context!.fillStyle = `rgba(${rgb},${opacity})`;
+          context!.fillRect(x * step, y * step, size, size);
+        }
+      }
+    }
+
+    if (still) {
+      resize();
+      const observer = new ResizeObserver(resize);
+      observer.observe(parent);
+      return () => observer.disconnect();
+    }
+
+    let frame = 0;
+    let last = 0;
+    let visible = false;
+
+    function tick(now: number) {
+      frame = requestAnimationFrame(tick);
+      // Seconds since the previous frame, clamped so a backgrounded tab does
+      // not come back and reroll the entire field at once.
+      const delta = Math.min((now - last) / 1000, 0.1);
+      last = now;
+
+      const chance = flickerChance * delta;
+      let changed = false;
+      for (let i = 0; i < squares.length; i++) {
+        if (Math.random() < chance) {
+          squares[i] = Math.random() * maxOpacity;
+          changed = true;
+        }
+      }
+      if (changed) draw();
+    }
+
+    const seen = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting === visible) return;
+        visible = entry.isIntersecting;
+        if (visible) {
+          last = performance.now();
+          frame = requestAnimationFrame(tick);
+        } else if (frame) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        }
+      },
+      { rootMargin: "120px" },
+    );
+
+    const sized = new ResizeObserver(resize);
+    resize();
+    sized.observe(parent);
+    seen.observe(parent);
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      sized.disconnect();
+      seen.disconnect();
+    };
+  }, [squareSize, gridGap, flickerChance, color, maxOpacity]);
+
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 ${className}`}
+    />
+  );
+}

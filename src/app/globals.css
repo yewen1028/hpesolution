@@ -165,6 +165,39 @@
   transform: translate3d(0, var(--py, 0px), 0);
 }
 
+/* --- Section fold -------------------------------------------------------- */
+
+/*
+ * `components/scroll-fold.tsx` writes two 0–1 scalars; everything below is
+ * derived from them, so the whole figure is one transform and one opacity.
+ *
+ * The hinge sits on the section's own top edge. On the way in the section
+ * rises the last --fold-rise pixels into place and resolves from 0.35 opacity;
+ * on the way out it tips back around that hinge, shrinks slightly and dims —
+ * the section closing behind you rather than merely scrolling away.
+ *
+ * The selector is `[data-fold="on"]`, set by the component after mount. Unset,
+ * every declaration here is inert and the section renders flat and opaque,
+ * which is what a visitor with scripting off gets.
+ */
+[data-fold="on"] {
+  --fold-rise: 48px;
+
+  transform-origin: 50% 0%;
+  transform: perspective(2000px)
+    translate3d(0, calc((1 - var(--fold-enter, 1)) * var(--fold-rise)), 0)
+    rotateX(calc(var(--fold-exit, 0) * -7deg))
+    scale(calc(1 - var(--fold-exit, 0) * 0.09));
+  /*
+   * Floors at 0.35 entering and 0.4 leaving. A section is never allowed to
+   * reach zero: if the rAF loop stalls mid-figure the content still reads.
+   */
+  opacity: calc(
+    (0.35 + 0.65 * var(--fold-enter, 1)) * (1 - 0.6 * var(--fold-exit, 0))
+  );
+  will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -178,6 +211,12 @@
 
   [data-parallax] {
     transform: none !important;
+    will-change: auto;
+  }
+
+  [data-fold="on"] {
+    transform: none !important;
+    opacity: 1 !important;
     will-change: auto;
   }
 

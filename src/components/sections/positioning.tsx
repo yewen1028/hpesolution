@@ -25,7 +25,7 @@ export function Positioning() {
               <Parallax speed={70} className="absolute inset-x-0">
                 <Media
                   src="/media/band-office.jpg"
-                  alt="Two colleagues working at computers in an open-plan office"
+                  alt="Colleagues working at desktop workstations in an open-plan office"
                   fill
                   sizes="(min-width: 1024px) 40vw, 100vw"
                   className="object-cover"

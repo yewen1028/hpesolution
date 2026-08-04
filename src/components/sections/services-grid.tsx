@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { DrawIcon } from "@/components/draw-icon";
+import { FlickeringGrid } from "@/components/flickering-grid";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
 import { services } from "@/lib/site";
 
@@ -79,13 +80,29 @@ export function ServicesGrid({
           <Reveal
             as="li"
             delay={180}
-            className="border-b border-r border-rule bg-paper-deep lg:col-span-2"
+            className="relative isolate overflow-hidden border-b border-r border-rule bg-paper-deep lg:col-span-2"
           >
+            {/*
+              The one place on the page a moving background belongs: a
+              near-black panel, where an orange field reads as the accent the
+              design system allows rather than a wash. The mask keeps it off
+              the copy — it resolves out of nothing on the left and only ever
+              reaches strength in the empty right half of the panel.
+            */}
+            <FlickeringGrid
+              className="-z-10 [mask-image:linear-gradient(to_right,transparent_35%,black)]"
+              squareSize={3}
+              gridGap={7}
+              flickerChance={0.24}
+              color="var(--color-brand)"
+              maxOpacity={0.34}
+            />
+
             <Link
               href="/contact"
               data-press="card"
               data-tone="dark"
-              className="group flex h-full flex-col justify-center p-8 lg:p-10"
+              className="group relative flex h-full flex-col justify-center p-8 lg:p-10"
             >
               <h3 className="display-3 max-w-md text-white">
                 Not sure which scope you need?

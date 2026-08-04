@@ -15,7 +15,7 @@ const PHOTOS = [
   // Full-bleed bands
   ["1148820", "hero-datacentre.jpg", 2400, "server blades and patch cabling"],
   ["325229", "band-network-rack.jpg", 2400, "datacentre rack aisle"],
-  ["12902992", "band-office.jpg", 2400, "two people working at office computers"],
+  ["12903158", "band-office.jpg", 2400, "open-plan office, staff at desktop workstations"],
   ["6804068", "band-workspace.jpg", 2000, "developers at desks in a tech office"],
   ["12267675", "coverage-kl.jpg", 2400, "Kuala Lumpur aerial skyline at night"],
 
@@ -23,21 +23,21 @@ const PHOTOS = [
   ["1181354", "svc-managed-services.jpg", 1600, "engineer with tablet beside server racks"],
   ["37605911", "svc-project-deployment.jpg", 1600, "IT technician working in a server room"],
   ["5453822", "svc-helpdesk.jpg", 1600, "helpdesk agent wearing a headset"],
-  ["3182812", "svc-staffing.jpg", 1600, "team gathered around a laptop"],
-  ["1476321", "svc-warranty.jpg", 1600, "device stripped down to components"],
-  ["4483610", "svc-sourcing.jpg", 1600, "warehouse racking stocked with goods"],
+  ["442151", "svc-staffing.jpg", 1600, "engineers working on a network rack"],
+  ["10558598", "svc-warranty.jpg", 1600, "memory module being fitted to an open laptop"],
+  ["2881227", "svc-sourcing.jpg", 1600, "ports and link LEDs on a rack switch"],
   ["6804586", "svc-value-added.jpg", 1600, "technician handling network cables"],
   ["5203849", "contact-support.jpg", 1600, "server room aisle"],
 
   // Case studies
   ["210607", "case-banking.jpg", 1400, "financial market ticker board"],
-  ["1181396", "case-audit.jpg", 1400, "boardroom review session"],
-  ["264636", "case-retail.jpg", 1400, "supermarket aisle"],
+  ["3550484", "case-audit.jpg", 1400, "laptops stacked on their shipping cartons"],
+  ["8422728", "case-retail.jpg", 1400, "card terminal at a grocery checkout"],
   ["19728112", "case-telco.jpg", 1400, "technicians working on a cell tower"],
-  ["33925166", "case-media.jpg", 1400, "television broadcast control room"],
+  ["33316597", "case-media.jpg", 1400, "operator at a video switcher and multiview monitor"],
   ["723240", "case-aviation.jpg", 1400, "aircraft on stand at sunset"],
-  ["2101137", "case-oil-gas.jpg", 1400, "heavy industrial extraction site"],
-  ["31969951", "case-government.jpg", 1400, "parliament building exterior"],
+  ["6767962", "case-oil-gas.jpg", 1400, "aerial view of an oil refinery"],
+  ["4610271", "case-government.jpg", 1400, "Perdana Putra, Putrajaya"],
 ];
 
 async function download(url, name) {
