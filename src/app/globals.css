@@ -176,6 +176,29 @@
   transform: translate3d(0, var(--pw, 0px), 0);
 }
 
+/* --- Masthead ------------------------------------------------------------ */
+
+/*
+ * The dark photographic banner at the top of every page: the home hero and
+ * `page-hero.tsx` both wear it.
+ *
+ * It lives here as one class because it used to live in two places as two
+ * hand-tuned inline gradients, and they drifted: the home page faded to 0.60
+ * at 46%, the inner pages to 0.66 at 50%. Close enough to look like a mistake
+ * rather than a decision when you navigate between them.
+ *
+ * The angle carries the tint across the reading column and lets the picture
+ * come through on the right, which is why it is 105deg and not vertical.
+ */
+.masthead-tint {
+  background: linear-gradient(
+    105deg,
+    rgb(16 21 27 / 0.94) 0%,
+    rgb(16 21 27 / 0.86) 46%,
+    rgb(16 21 27 / 0.6) 100%
+  );
+}
+
 /* --- Section fold -------------------------------------------------------- */
 
 /*

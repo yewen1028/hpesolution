@@ -1,6 +1,7 @@
 import { Media } from "@/components/media";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { AnimatedText } from "./animated-text";
 import { Parallax } from "./parallax";
 import { Reveal } from "./reveal";
 import { Container } from "./ui";
@@ -38,16 +39,20 @@ export function PageHero({
           className="object-cover"
         />
       </Parallax>
-      <div
-        className="absolute inset-0 -z-10"
-        aria-hidden="true"
-        style={{
-          background:
-            "linear-gradient(105deg, rgb(16 21 27 / 0.94) 0%, rgb(16 21 27 / 0.85) 50%, rgb(16 21 27 / 0.66) 100%)",
-        }}
-      />
+      {/* Shared with the home hero; see `.masthead-tint` in globals.css. */}
+      <div className="masthead-tint absolute inset-0 -z-10" aria-hidden="true" />
 
-      <Container className="pb-20 pt-16 sm:pb-28 sm:pt-20">
+      {/*
+        Deliberately one step shorter at the top than the home hero's
+        pt-24/32/40: the breadcrumb row and its mt-12 sit above the eyebrow
+        here and the home hero has neither, so equal padding would push the
+        title noticeably further down on inner pages. These numbers land the
+        eyebrow at roughly the same height on both. The `lg:` step exists so
+        inner pages scale with the viewport the way the home page already did;
+        without it they stopped growing at `sm` and looked cramped on a wide
+        screen next to the home page.
+      */}
+      <Container className="pb-20 pt-16 sm:pb-28 sm:pt-20 lg:pb-32 lg:pt-24">
         <Reveal>
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-1.5 text-[0.8rem] text-white/50">
@@ -75,16 +80,31 @@ export function PageHero({
           </nav>
         </Reveal>
 
+        {/*
+          Same rhythm and the same headline treatment as the home hero: the two
+          mastheads are the same component in the visitor's mind, and a title
+          that staggered word-by-word on the home page but merely faded in here
+          made every navigation feel like a different site. Gaps, lede opacity
+          and stagger timings are matched to `sections/hero.tsx` deliberately;
+          change them together or not at all.
+        */}
         <div className="mt-12 max-w-4xl">
           <Reveal>
             <p className="eyebrow eyebrow-light">{eyebrow}</p>
           </Reveal>
-          <Reveal delay={80}>
-            <h1 className="display-1 mt-6 text-white">{title}</h1>
-          </Reveal>
+
+          {/* Not wrapped in <Reveal>: AnimatedText carries its own observer. */}
+          <AnimatedText
+            as="h1"
+            text={title}
+            className="display-1 mt-7 text-white"
+            delay={80}
+            stagger={48}
+          />
+
           {lede && (
             <Reveal delay={160}>
-              <p className="lede mt-7 max-w-2xl text-white/70">{lede}</p>
+              <p className="lede mt-8 max-w-2xl text-white/72">{lede}</p>
             </Reveal>
           )}
         </div>

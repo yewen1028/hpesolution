@@ -24,14 +24,8 @@ export function Hero() {
         />
       </Parallax>
 
-      <div
-        className="absolute inset-0 -z-10"
-        aria-hidden="true"
-        style={{
-          background:
-            "linear-gradient(105deg, rgb(16 21 27 / 0.94) 0%, rgb(16 21 27 / 0.86) 46%, rgb(16 21 27 / 0.6) 100%)",
-        }}
-      />
+      {/* Shared with `page-hero.tsx`; see `.masthead-tint` in globals.css. */}
+      <div className="masthead-tint absolute inset-0 -z-10" aria-hidden="true" />
 
       <Container className="pb-20 pt-24 sm:pb-28 sm:pt-32 lg:pb-32 lg:pt-40">
         <div className="max-w-4xl">
