@@ -199,37 +199,113 @@
   );
 }
 
-/* --- Section fold -------------------------------------------------------- */
+/* --- Section stages ------------------------------------------------------ */
 
 /*
- * `components/scroll-fold.tsx` writes two 0–1 scalars; everything below is
- * derived from them, so the whole figure is one transform and one opacity.
+ * `components/scroll-stage.tsx` writes two 0–1 scalars, --stage-enter and
+ * --stage-exit, and stamps `data-stage` with the name of a figure. Everything
+ * below derives from those two numbers, so each figure costs one transform and
+ * one opacity, and adding a figure is a rule here rather than another listener.
  *
- * The hinge sits on the section's own top edge. On the way in the section
- * rises the last --fold-rise pixels into place and resolves from 0.35 opacity;
- * on the way out it tips back around that hinge, shrinks slightly and dims —
- * the section closing behind you rather than merely scrolling away.
+ * These exist as four distinct gestures on purpose. A single figure applied to
+ * every section is a template; the point of a scroll composition is that the
+ * page has a rhythm, which requires the beats to differ.
  *
- * The selector is `[data-fold="on"]`, set by the component after mount. Unset,
- * every declaration here is inert and the section renders flat and opaque,
- * which is what a visitor with scripting off gets.
+ * Every selector is `[data-stage="..."]`, set by the component after mount.
+ * Unset, all of this is inert and sections render flat and opaque, which is
+ * what a visitor with scripting off gets.
+ *
+ * The opacity formula is shared and floors at 0.35 entering, 0.4 leaving. A
+ * section is never allowed to reach zero: if the rAF loop stalls mid-figure,
+ * the content still reads.
  */
-[data-fold="on"] {
-  --fold-rise: 48px;
+[data-stage] {
+  --stage-rise: 48px;
+  --stage-opacity: calc(
+    (0.35 + 0.65 * var(--stage-enter, 1)) * (1 - 0.6 * var(--stage-exit, 0))
+  );
+  opacity: var(--stage-opacity);
+  will-change: transform, opacity;
+}
 
+/*
+ * FOLD. Hinged on its own top edge: rises the last --stage-rise pixels into
+ * place, then tips back around that hinge and shrinks as it leaves. The page
+ * closing behind you.
+ */
+[data-stage="fold"] {
   transform-origin: 50% 0%;
   transform: perspective(2000px)
-    translate3d(0, calc((1 - var(--fold-enter, 1)) * var(--fold-rise)), 0)
-    rotateX(calc(var(--fold-exit, 0) * -7deg))
-    scale(calc(1 - var(--fold-exit, 0) * 0.09));
+    translate3d(0, calc((1 - var(--stage-enter, 1)) * var(--stage-rise)), 0)
+    rotateX(calc(var(--stage-exit, 0) * -7deg))
+    scale(calc(1 - var(--stage-exit, 0) * 0.09));
+}
+
+/*
+ * ZOOM. No rotation at all, which is what separates it from the fold: the
+ * section settles forward out of the page and recedes straight back into it.
+ * The scale range is deliberately narrow — past about 8% the type visibly
+ * resamples on the way through.
+ */
+/* Translate first, then scale: the other order scales the travel distance too. */
+[data-stage="zoom"] {
+  transform: translate3d(0, calc((1 - var(--stage-enter, 1)) * 20px), 0)
+    scale(
+      calc(
+        (0.94 + 0.06 * var(--stage-enter, 1)) *
+          (1 - 0.05 * var(--stage-exit, 0))
+      )
+    );
+}
+
+/*
+ * CURTAIN. The only figure that does not move the section at all: it clips it.
+ * Content wipes open downward on the way in and closes from the top on the way
+ * out, so the section reads as an aperture in the page rather than a panel
+ * sliding through it.
+ *
+ * The exit only closes to 55%, not 100%. Clipping the whole thing shut while
+ * it is still partly on screen looks like a rendering fault rather than a
+ * transition.
+ */
+[data-stage="curtain"] {
   /*
-   * Floors at 0.35 entering and 0.4 leaving. A section is never allowed to
-   * reach zero: if the rAF loop stalls mid-figure the content still reads.
+   * The clip region is inflated by --curtain-pad on every side at rest, using
+   * the negative lengths `inset()` allows. A clip at exactly the border box
+   * would sit on top of anything that legitimately overflows the section, and
+   * the partner carousel inside this one lifts its bubbles on hover and casts
+   * a 36px shadow. Those would have been shaved off against an edge with no
+   * visible cause. The buffer disappears as the figure closes, because by then
+   * the clip is doing real work.
    */
-  opacity: calc(
-    (0.35 + 0.65 * var(--fold-enter, 1)) * (1 - 0.6 * var(--fold-exit, 0))
+  --curtain-pad: 64px;
+
+  clip-path: inset(
+    calc(
+        var(--stage-exit, 0) * 55% - (1 - var(--stage-exit, 0)) *
+          var(--curtain-pad)
+      )
+      calc(-1 * var(--curtain-pad))
+      calc(
+        (1 - var(--stage-enter, 1)) * 100% - var(--stage-enter, 1) *
+          var(--curtain-pad)
+      )
+      calc(-1 * var(--curtain-pad))
   );
-  will-change: transform, opacity;
+  will-change: clip-path, opacity;
+}
+
+/*
+ * RISE. Translation and fade, nothing else. The plainest of the four, and it
+ * closes the page for that reason: after three sections that rotate, scale and
+ * clip, one that simply arrives is the resolution.
+ */
+[data-stage="rise"] {
+  transform: translate3d(
+    0,
+    calc((1 - var(--stage-enter, 1)) * var(--stage-rise) * 1.4),
+    0
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -249,8 +325,9 @@
     will-change: auto;
   }
 
-  [data-fold="on"] {
+  [data-stage] {
     transform: none !important;
+    clip-path: none !important;
     opacity: 1 !important;
     will-change: auto;
   }
@@ -1251,6 +1328,29 @@ textarea.field__input {
 /* Textareas are top-aligned, so the label starts at the first line. */
 .field:has(textarea) .field__label {
   top: 1.2rem;
+}
+
+/*
+ * Invalid state, set by the server action's field errors.
+ *
+ * Colour is not the only signal: the message below the input says what is
+ * wrong in words, and the control carries `aria-invalid` with the message
+ * bound through `aria-describedby`. The border is the fast visual scan, not
+ * the information.
+ *
+ * The brand orange doubles as the error colour here rather than introducing a
+ * red. One accent, used consistently, is the rule this palette runs on, and a
+ * form that is asking for a correction is not an emergency.
+ */
+.field[data-invalid] .field__input {
+  border-color: var(--color-brand);
+}
+
+.field__error {
+  margin-top: 0.5rem;
+  font-size: 0.825rem;
+  line-height: 1.5;
+  color: var(--color-brand-strong);
 }
 
 /* The draw-in rule, over the bottom edge of the box border. */

@@ -4,7 +4,7 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 /* ---------------------------------------------------------------------------
    One rAF loop drives every scroll-linked layer on the page — parallax drift
-   and the section fold in `scroll-fold.tsx` both register here.
+   and the section stages in `scroll-stage.tsx` both register here.
 
    Layers register on mount and unregister on unmount, so route changes do not
    leak listeners. Every layer's `read` runs first and every layer's `write`

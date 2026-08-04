@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useActionState, useRef } from "react";
+import { useFormStatus } from "react-dom";
 import { Send } from "lucide-react";
 import { SuccessCheck } from "@/components/success-check";
+import { submitEnquiry } from "@/app/actions/enquiry";
+import { initialEnquiryState, type EnquiryState } from "@/lib/enquiry";
 import { services } from "@/lib/site";
 
 const SALES = "sales@hpe.com.my";
@@ -23,6 +26,7 @@ function Field({
   label,
   required = false,
   staticLabel = false,
+  error,
   className = "",
   children,
 }: {
@@ -31,6 +35,7 @@ function Field({
   required?: boolean;
   /** For controls with no `:placeholder-shown` state, i.e. <select>. */
   staticLabel?: boolean;
+  error?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -38,6 +43,7 @@ function Field({
     <div
       className={`field ${className}`}
       data-static-label={staticLabel ? "" : undefined}
+      data-invalid={error ? "" : undefined}
     >
       {children}
       <label className="field__label" htmlFor={id}>
@@ -45,39 +51,92 @@ function Field({
         {required && <span className="text-brand"> *</span>}
       </label>
       <span className="field__line" aria-hidden="true" />
+      {/*
+        Below the input, tied to it with `aria-describedby` at the call site.
+        Not a `title` and not a placeholder: both vanish exactly when the
+        person needs to read them.
+      */}
+      {error && (
+        <p id={`${id}-error`} className="field__error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 /**
- * idle → opening → sent.
- *
- * `opening` is a real state, not a fake loading bar: handing a `mailto:` to the
- * OS takes a visible beat, and on a slow machine the mail client can take a
- * second or two to surface. Without it the button appears to do nothing.
+ * Split out so it can call `useFormStatus`, which only reports the state of
+ * the nearest enclosing <form> from inside it.
  */
-type Status = "idle" | "opening" | "sent";
+function SubmitButton({ state }: { state: EnquiryState }) {
+  const { pending } = useFormStatus();
+  const sent = state.status === "sent";
 
-/** How long `opening` holds before the confirmation replaces it. */
-const OPENING_MS = 750;
+  return (
+    <button
+      type="submit"
+      data-press={pending ? undefined : "cta"}
+      data-status={pending ? "opening" : sent ? "sent" : "idle"}
+      disabled={pending}
+      className="submit-button btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white disabled:cursor-default"
+    >
+      {pending && (
+        <>
+          Sending enquiry
+          <span className="submit-spinner" aria-hidden="true" />
+        </>
+      )}
+
+      {!pending && sent && (
+        <span className="submit-state--sent inline-flex items-center gap-2.5">
+          Enquiry sent
+          <SuccessCheck size={18} />
+        </span>
+      )}
+
+      {!pending && !sent && (
+        <>
+          Send enquiry
+          <Send
+            size={16}
+            strokeWidth={2.25}
+            aria-hidden="true"
+            className="transition-transform duration-300 group-hover:translate-x-0.5"
+          />
+        </>
+      )}
+    </button>
+  );
+}
 
 /**
- * There is no backend on this site, so the form composes a structured message
- * and hands it to the visitor's mail client. Nothing is silently dropped, and
- * the visitor keeps a copy of what they sent.
+ * Posts the enquiry to `submitEnquiry`, which mails it from the server.
+ *
+ * The form works with scripting off: `action` takes the server action
+ * directly, so a submit without JavaScript is an ordinary POST and still
+ * sends. `useActionState` only adds the in-page result.
+ *
+ * Delivery is never a dead end. If the server has no SMTP credentials, or the
+ * mail host refuses, the visitor is offered the old `mailto:` hand-off with
+ * the same structured body, so an enquiry is never silently swallowed.
  */
 export function EnquiryForm() {
-  const [status, setStatus] = useState<Status>("idle");
+  const [state, formAction] = useActionState(
+    submitEnquiry,
+    initialEnquiryState,
+  );
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // A pending timer must not outlive the component, or React warns about a
-  // state update after unmount when someone navigates away mid-submit.
-  const timerRef = useRef(0);
-  useEffect(() => () => window.clearTimeout(timerRef.current), []);
+  const failed = state.status === "error" || state.status === "unconfigured";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-
+  /**
+   * Builds the `mailto:` from whatever is in the form right now. Read at click
+   * time rather than from `state`, so it still carries the visitor's text if
+   * they edited anything after the failed attempt.
+   */
+  function mailtoHref() {
+    const data = new FormData(formRef.current ?? undefined);
     const get = (key: string) => String(data.get(key) ?? "").trim();
 
     const body = [
@@ -93,33 +152,46 @@ export function EnquiryForm() {
 
     const subject = `Website enquiry · ${get("service") || "General"} · ${get("name")}`;
 
-    setStatus("opening");
-
-    /*
-     * Fired immediately and synchronously inside the submit handler, exactly as
-     * before. Deferring it into the timeout below would move the navigation out
-     * of the user gesture, which some browsers block for `mailto:`. The visual
-     * state is what waits — never the hand-off.
-     */
-    window.location.href = `mailto:${SALES}?subject=${encodeURIComponent(
+    return `mailto:${SALES}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
-
-    timerRef.current = window.setTimeout(
-      () => setStatus("sent"),
-      OPENING_MS,
-    );
   }
 
+  const v = state.values;
+
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2">
-      <Field id="name" label="Name" required>
+    <form
+      ref={formRef}
+      action={formAction}
+      className="grid gap-6 sm:grid-cols-2"
+    >
+      {/*
+        Honeypot. Hidden from sight, from the tab order and from assistive
+        tech, and named like a field a scraper would want to fill. Any value
+        here means a bot, and the action answers those with the success state
+        rather than an explanation.
+      */}
+      <div className="hidden" aria-hidden="true">
+        <label htmlFor="company_website">Company website</label>
+        <input
+          id="company_website"
+          name="company_website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
+      <Field id="name" label="Name" required error={state.errors?.name}>
         <input
           id="name"
           name="name"
           required
+          defaultValue={v?.name}
           autoComplete="name"
           placeholder=" "
+          aria-invalid={state.errors?.name ? true : undefined}
+          aria-describedby={state.errors?.name ? "name-error" : undefined}
           className="field__input"
         />
       </Field>
@@ -128,20 +200,24 @@ export function EnquiryForm() {
         <input
           id="company"
           name="company"
+          defaultValue={v?.company}
           autoComplete="organization"
           placeholder=" "
           className="field__input"
         />
       </Field>
 
-      <Field id="email" label="Email" required>
+      <Field id="email" label="Email" required error={state.errors?.email}>
         <input
           id="email"
           name="email"
           type="email"
           required
+          defaultValue={v?.email}
           autoComplete="email"
           placeholder=" "
+          aria-invalid={state.errors?.email ? true : undefined}
+          aria-describedby={state.errors?.email ? "email-error" : undefined}
           className="field__input"
         />
       </Field>
@@ -151,6 +227,7 @@ export function EnquiryForm() {
           id="phone"
           name="phone"
           type="tel"
+          defaultValue={v?.phone}
           autoComplete="tel"
           placeholder=" "
           className="field__input"
@@ -167,7 +244,7 @@ export function EnquiryForm() {
         <select
           id="service"
           name="service"
-          defaultValue=""
+          defaultValue={v?.service ?? ""}
           className="field__input"
         >
           <option value="">Select a service</option>
@@ -187,14 +264,23 @@ export function EnquiryForm() {
         and is bound to the control with `aria-describedby`.
       */}
       <div className="sm:col-span-2">
-        <Field id="message" label="How can we help?" required>
+        <Field
+          id="message"
+          label="How can we help?"
+          required
+          error={state.errors?.message}
+        >
           <textarea
             id="message"
             name="message"
             required
             rows={6}
+            defaultValue={v?.message}
             placeholder=" "
-            aria-describedby="message-hint"
+            aria-invalid={state.errors?.message ? true : undefined}
+            aria-describedby={
+              state.errors?.message ? "message-error" : "message-hint"
+            }
             className="field__input"
           />
         </Field>
@@ -205,45 +291,28 @@ export function EnquiryForm() {
       </div>
 
       <div className="sm:col-span-2">
-        <button
-          type="submit"
-          data-press={status === "opening" ? undefined : "cta"}
-          data-status={status}
-          /*
-           * Locked only while the hand-off is in flight — a second click there
-           * would fire another `mailto:` and stack a second timer. Once `sent`,
-           * it unlocks again on purpose: if the mail client never surfaced, the
-           * visitor needs to be able to try once more.
-           */
-          disabled={status === "opening"}
-          className="submit-button btn-fill group inline-flex items-center gap-2.5 bg-brand px-7 py-3.5 text-[0.925rem] font-semibold text-white disabled:cursor-default"
-        >
-          {status === "idle" && (
-            <>
-              Send enquiry
-              <Send
-                size={16}
-                strokeWidth={2.25}
-                aria-hidden="true"
-                className="transition-transform duration-300 group-hover:translate-x-0.5"
-              />
-            </>
-          )}
+        <div className="flex flex-wrap items-center gap-4">
+          <SubmitButton state={state} />
 
-          {status === "opening" && (
-            <>
-              Opening mail client
-              <span className="submit-spinner" aria-hidden="true" />
-            </>
+          {/*
+            A button, not a link with an href: the address has to be built from
+            what is in the fields at the moment it is clicked, not at the
+            moment this rendered. Someone who fixes a typo after a failed send
+            must get the corrected text, and reading the form during render
+            would freeze the old copy into the href.
+          */}
+          {failed && (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = mailtoHref();
+              }}
+              className="inline-flex items-center gap-2 border border-rule-strong px-5 py-3 text-[0.9rem] font-semibold text-ink transition-colors hover:border-ink hover:bg-paper-warm"
+            >
+              Open your mail client instead
+            </button>
           )}
-
-          {status === "sent" && (
-            <span className="submit-state--sent inline-flex items-center gap-2.5">
-              Enquiry ready
-              <SuccessCheck size={18} />
-            </span>
-          )}
-        </button>
+        </div>
 
         {/*
           The live region is a sibling of the button and holds only text. The
@@ -251,11 +320,15 @@ export function EnquiryForm() {
           announced once, in words, rather than as a graphic.
         */}
         <p aria-live="polite" className="mt-4 text-[0.875rem] text-ink-muted">
-          {status === "idle" &&
-            `Submitting opens your mail client with the enquiry addressed to ${SALES}.`}
-          {status === "opening" && "Handing the enquiry to your mail client…"}
-          {status === "sent" &&
-            `Your mail client should now be open with the enquiry ready to send to ${SALES}. If nothing happened, email us directly.`}
+          {state.status === "idle" &&
+            "We reply to enquiries within one business day."}
+          {state.status === "sent" &&
+            "Thank you. Your enquiry is on its way, and we will reply within one business day."}
+          {state.status === "invalid" && state.message}
+          {state.status === "error" &&
+            `${state.message} Please use the button above to send it from your own mail client, or email ${SALES} directly.`}
+          {state.status === "unconfigured" &&
+            `This site is not yet set up to send mail directly. Use the button above to send the same enquiry from your mail client, or email ${SALES}.`}
         </p>
       </div>
     </form>

@@ -180,6 +180,27 @@ map and flies to it.
 
 ## Contact form
 
-`components/enquiry-form.tsx` composes a structured message and hands it to the
-visitor's mail client via `mailto:`. There is no backend — if one is added,
-replace the `mailto:` with a server action and keep the `aria-live` status.
+`components/enquiry-form.tsx` posts to the `submitEnquiry` server action in
+`app/actions/enquiry.ts`, which validates and mails the enquiry through SMTP
+(`lib/mail.ts`, nodemailer). This is the site's only server-side code — every
+route still prerenders; the action is a separate POST endpoint.
+
+- **Configure it with `.env.local`; see `.env.example`.** `ENQUIRY_TO` is the
+  destination, `SMTP_*` the transport. Any SMTP host works, so switching
+  provider is env-only. Gmail needs an App Password, not the account password.
+- **`lib/mail.ts` imports `server-only`.** Importing it from a client component
+  is a build error rather than a leaked credential.
+- **The transporter is built lazily and cached.** Reading env at module scope
+  would run during `next build`, where the variables are absent, and fail the
+  build of nineteen pages over a credential none of them need.
+- **`From` is the SMTP account, never the visitor.** Sending as someone else's
+  address is a forgery and gets spam-filed. The visitor goes in `Reply-To`.
+- The action carries a honeypot, per-field validation, length caps and an
+  in-memory per-IP rate limit. It is a public POST endpoint that sends mail;
+  treat those as part of the feature. The rate limit is per-process, so it is
+  not a substitute for a platform limit under real abuse.
+- **Delivery is never a dead end.** With no credentials, or on a transport
+  failure, the visitor is offered the original `mailto:` hand-off carrying the
+  same structured body. Keep that fallback and keep the `aria-live` status.
+- The form works with scripting off: `action` takes the server action directly,
+  so a submit without JavaScript is an ordinary POST that still sends.
