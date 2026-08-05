@@ -40,7 +40,18 @@ export type StageVariant =
   /** Wipes open downward, then closes from the top. The section is an aperture. */
   | "curtain"
   /** Travels up into place and dims on the way out. The calm one. */
-  | "rise";
+  | "rise"
+  /**
+   * Crosses the page sideways: arrives from the right, settles, carries on to
+   * the left as it leaves. The only figure that moves on the horizontal axis,
+   * which is what keeps it distinct from the other four.
+   *
+   * It is only safe on a section with **no background and no border of its
+   * own** — anything with a fill would drag its edge across and leave a strip
+   * of the page showing down one side. `CasePreview` is `py-24` and nothing
+   * else, so only its contents travel.
+   */
+  | "pan";
 
 /** Viewport fraction the entry takes to resolve, measured from the fold. */
 const ENTER_SPAN = 0.3;

@@ -134,16 +134,17 @@ export function SiteHeader() {
       */}
       {servicesOpen && <div className="svc-scrim" aria-hidden="true" />}
 
-      <div className="mx-auto flex h-full max-w-[88rem] items-center gap-6 px-5 sm:px-8">
+      <div className="mx-auto flex h-full max-w-[88rem] items-center gap-4 px-5 sm:px-8">
         {/*
           `flex items-center` rather than the default inline box: an <img> in
           an inline anchor sits on a text baseline, so the anchor was a few
           pixels taller than the logo with dead space under it.
 
           `-m-2 p-2` adds 8px of hit area on every side without moving anything
-          in the layout. The logo is 32px tall, dropping to 28px once the header
-          shrinks past the hero, which is under every tap-target guideline
-          going; this takes it to 48px and 44px.
+          in the layout. The logo is 40px tall on a phone and 48px from `sm`,
+          dropping to 36px once the header shrinks past the hero; the padding
+          takes the target to 56px, 64px and 52px respectively, all clear of
+          every tap-target guideline going.
 
           `relative z-10` keeps it above anything else inside the header, the
           services flyout included.
@@ -163,7 +164,23 @@ export function SiteHeader() {
           />
         </Link>
 
-        <nav aria-label="Main" className="ml-auto hidden lg:block">
+        {/*
+          `xl`, not `lg`, and the arithmetic decides it rather than taste.
+
+          At 1024px the bar has 960px to work with. The logo is 156px, the six
+          nav items 659px, the two toggles 204px and the phone number 183px —
+          over 1200px of content. It never fitted: the links were being shrunk
+          by flexbox until "Business Partner" broke onto a second line inside a
+          40px-tall box. Below `xl` the whole set moves into the panel behind
+          the menu button, which holds all of it including the theme and
+          animation controls.
+
+          `ml-auto` appears exactly once in this row, here. With a second one on
+          the toggles the free space was split between the two, leaving the nav
+          stranded mid-bar; one puts every control after it flush right, and the
+          logo — first in the row, before the auto margin — does not move.
+        */}
+        <nav aria-label="Main" className="ml-auto hidden xl:block">
           {/*
             `relative` here rather than on the Services <li>, so the flyout
             hangs off the **nav's** right edge instead of the trigger's. The
@@ -174,7 +191,7 @@ export function SiteHeader() {
             the outside-click check walks the DOM tree — so `servicesRef`
             still contains it and dismissal is unaffected.
           */}
-          <ul className="relative flex items-center gap-1">
+          <ul className="relative flex items-center gap-2">
             {navigation.map((item) => {
               if (item.href !== "/services") {
                 return (
@@ -190,7 +207,7 @@ export function SiteHeader() {
                         `[data-ripple]` brings with it has nothing to clip.
                       */
                       data-ripple=""
-                      className={`nav-link rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
+                      className={`nav-link rounded px-3 py-2 text-[0.9rem] font-medium transition-colors ${
                         isActive(item.href)
                           ? "text-ink"
                           : "text-ink-soft hover:text-ink"
@@ -212,7 +229,7 @@ export function SiteHeader() {
                     data-ripple=""
                     data-active={isActive(item.href) ? "" : undefined}
                     data-open={servicesOpen ? "" : undefined}
-                    className={`nav-link flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
+                    className={`nav-link flex items-center gap-1.5 rounded px-3 py-2 text-[0.9rem] font-medium transition-colors ${
                       isActive(item.href)
                         ? "text-ink"
                         : "text-ink-soft hover:text-ink"
@@ -364,14 +381,16 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <MotionToggle className="ml-auto hidden lg:ml-4 lg:inline-flex" />
-        <ThemeToggle className="hidden lg:ml-2 lg:inline-flex" />
+        <MotionToggle className="hidden xl:ml-4 xl:inline-flex" />
+        <ThemeToggle className="hidden xl:ml-2 xl:inline-flex" />
 
         <a
           href={`tel:${contact.phoneDial}`}
           data-press="cta"
           data-ripple=""
-          className="hidden items-center gap-2 bg-brand px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-strong lg:ml-3 lg:flex"
+          /* `lg:h-10` is `--header-control-h`: this sits in the same row as the
+             nav links and the toggles and has to share their edges. */
+          className="hidden items-center gap-2 bg-brand px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-strong min-[1440px]:ml-3 min-[1440px]:flex min-[1440px]:h-10"
         >
           <Phone size={15} strokeWidth={2.25} aria-hidden="true" />
           {contact.phoneDisplay}
@@ -383,7 +402,7 @@ export function SiteHeader() {
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav"
           data-ripple=""
-          className="ml-auto flex h-11 w-11 items-center justify-center text-ink lg:hidden"
+          className="ml-auto flex h-11 w-11 items-center justify-center text-ink xl:hidden"
         >
           <span className="sr-only">
             {mobileOpen ? "Close menu" : "Open menu"}
@@ -399,7 +418,7 @@ export function SiteHeader() {
       {mobileOpen && (
         <div
           id="mobile-nav"
-          className="fixed inset-x-0 bottom-0 overflow-y-auto border-t border-rule bg-paper lg:hidden"
+          className="fixed inset-x-0 bottom-0 overflow-y-auto border-t border-rule bg-paper xl:hidden"
           style={{ top: "var(--header-h)" }}
         >
           <nav aria-label="Main" className="px-5 py-6 sm:px-8">

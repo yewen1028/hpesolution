@@ -10,6 +10,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { ArrowRight, Headset, Send, X } from "lucide-react";
+import { GridPattern } from "@/components/grid-pattern";
 import { answer, answerIntent, GREETING, type Reply } from "@/lib/chat";
 import { prefersReducedMotion } from "@/lib/motion";
 import { company, contact } from "@/lib/site";
@@ -262,27 +263,41 @@ export function ChatWidget() {
         inert={!open}
       >
         <header className="chat-panel__head">
-          <span className="chat-panel__avatar" aria-hidden="true">
-            <Headset size={17} strokeWidth={1.75} />
+          {/*
+            Ruled texture under the bar, at 12% of the header's own ink so it
+            inverts with the theme. Same Magic UI grid the service bands use —
+            it is the site's texture vocabulary, and it gives the header a
+            surface instead of a flat fill.
+          */}
+          <span className="chat-panel__head-grid" aria-hidden="true">
+            <GridPattern size={22} />
           </span>
+
+          <span className="chat-panel__avatar" aria-hidden="true">
+            <Headset size={18} strokeWidth={1.75} />
+          </span>
+
           <span className="chat-panel__id">
+            <span className="chat-panel__eyebrow">Support assistant</span>
             <strong>{company.name}</strong>
             <span className="chat-panel__status">
               <span className="chat-panel__live" aria-hidden="true" />
-              Assistant · replies instantly
+              Answers instantly · human hand-off any time
             </span>
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              fabRef.current?.focus();
-            }}
-            className="chat-panel__close"
-            aria-label="Close chat"
-          >
-            <X size={17} strokeWidth={2.25} aria-hidden="true" />
-          </button>
+
+          {/*
+            Replaces the close button rather than simply dropping it. The
+            launcher below is still the close control — it turns into an ✕
+            while the panel is open — and Escape has always worked; this makes
+            the keyboard route discoverable now that there is no button to
+            reach for.
+
+            Pointer devices only. On a touch screen there is no Esc key to
+            press and the launcher sits directly under your thumb, so the hint
+            would be a lie taking up space.
+          */}
+          <kbd className="chat-panel__esc">Esc</kbd>
         </header>
 
         <div

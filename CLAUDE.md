@@ -125,12 +125,18 @@ The same eye-check rule applies, and it bites harder here: searching Commons for
 "Ruckus Networks" returns a photo of their head office, and Simple Icons' `amp`
 is Google AMP, not the cabling brand. **Open every file before committing it.**
 
-Eleven of the seventeen partners have a mark. AMP, Cyberoam, Dintek, Peplink,
-Ruckus and Sangfor have none that could be sourced, and render as typographic
-wordmarks in the same bubble. To add one, drop the file in and add a line to
-`partnerLogos` — the carousel needs no change. The authoritative source is the
-logo pack each principal issues to authorised partners; prefer it over Commons,
-and check each principal's brand guidelines for usage terms.
+**Fifteen** of the seventeen partners have a mark — eleven 400px Commons
+renders plus four small favicons taken from the draft. Only **AMP** and
+**Cyberoam** have none that could be sourced, and they render as typographic
+wordmarks. To add one, drop the file in and add a line to `partnerLogos` — no
+component needs changing. The authoritative source is the logo pack each
+principal issues to authorised partners; prefer it over Commons, and check each
+principal's brand guidelines for usage terms.
+
+The home page renders this list on a curved path
+(`components/ui/marquee-along-svg-path.tsx`); `/business-partner` keeps the
+straight bubble strip in `components/partner-carousel.tsx`. A page picks one,
+never both.
 
 ### Replacing an image at an existing path
 

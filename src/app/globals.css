@@ -45,6 +45,22 @@
 
 :root {
   --header-h: 76px;
+
+  /*
+   * One height for every control in the header bar.
+   *
+   * Without it each control was only as tall as its own contents plus its own
+   * padding — nav links 33.4px, the toggles 30px, the phone CTA 37.4px. All
+   * three were centred, so their *centres* agreed, but no two shared a top or
+   * bottom edge. That is enough to look wrong: the underline under a nav link,
+   * the hairline around a toggle and the fill behind the CTA each sat at a
+   * different height, and the row read as ragged even though nothing was
+   * misaligned in the usual sense.
+   *
+   * 40px clears the tallest of them and leaves 18px either side in the 76px
+   * bar, 10px once it shrinks to 60px.
+   */
+  --header-control-h: 2.5rem;
 }
 
 @layer base {
@@ -52,6 +68,24 @@
     scroll-behavior: smooth;
     /* Parallax layers read this; JS keeps it in sync with scrollY. */
     scroll-padding-top: calc(var(--header-h) + 1rem);
+
+    /*
+     * This page scrolls one way. Nothing on a marketing site should ever be
+     * reachable by scrolling sideways, and every band here is either contained
+     * or deliberately full-bleed — so a horizontal scrollbar is always a bug,
+     * and this is the net under it.
+     *
+     * `clip`, not `hidden`. `overflow-x: hidden` forces the other axis to
+     * `auto` and makes the root a scroll container, which changes what
+     * `position: sticky` resolves against — the section nav and the services
+     * flyout both depend on that. `clip` cuts the paint without creating a
+     * scrollport, so nothing else moves.
+     *
+     * A net, not a licence: an element that overflows still needs fixing at
+     * source, because this hides the symptom on desktop and does nothing for
+     * the layout being wrong.
+     */
+    overflow-x: clip;
   }
 
   body {
@@ -321,6 +355,54 @@
     calc((1 - var(--stage-enter, 1)) * var(--stage-rise) * 1.4),
     0
   );
+}
+
+/*
+ * Per-card drift inside the case-study row. `--case-y` is written by the shared
+ * scroll loop from `components/case-parallax.tsx`; unset — no script, reduced
+ * motion — it resolves to 0 and the row is simply a row.
+ */
+.case-parallax {
+  transform: translate3d(0, var(--case-y, 0px), 0);
+  will-change: transform;
+}
+
+html[data-motion="reduced"] .case-parallax {
+  transform: none;
+}
+
+/*
+ * PAN. The one figure on the horizontal axis: the section arrives from the
+ * right, settles, and carries on to the left as it goes. Every other stage
+ * moves the page toward or away from the reader; this one moves across them,
+ * which is why it reads as a different beat rather than a fifth variation on
+ * the same idea.
+ *
+ * Only for a section with no fill and no border. A section with a background
+ * would drag its own edge sideways and open a strip of bare page down one
+ * side; with nothing but padding, the contents travel and the section does not
+ * visibly exist.
+ *
+ * The travel is smaller than the vertical figures use and smaller again on a
+ * phone — sideways movement has the viewport edge close by on both sides, and
+ * `html { overflow-x: clip }` would quietly cut anything that reached it.
+ */
+[data-stage="pan"] {
+  --stage-pan: 26px;
+  transform: translate3d(
+    calc(
+      (1 - var(--stage-enter, 1)) * var(--stage-pan) - var(--stage-exit, 0) *
+        var(--stage-pan)
+    ),
+    0,
+    0
+  );
+}
+
+@media (min-width: 1024px) {
+  [data-stage="pan"] {
+    --stage-pan: 48px;
+  }
 }
 
 html[data-motion="reduced"] {
@@ -1643,8 +1725,43 @@ html[data-motion="reduced"] {
  * `[data-active]` — so the active underline and the hover underline are the
  * same object and cannot disagree.
  */
+/*
+ * Every nav item is the same kind of box.
+ *
+ * The five page links are anchors and the Services trigger is a button that
+ * already carried `flex`, so they were not comparable: vertical padding does
+ * not contribute to the height of an *inline* box, so each anchor's `<li>` was
+ * only as tall as its line box while the Services `<li>` was line box plus
+ * 16px of padding. Three things followed from that one difference —
+ *
+ *   - the items sat at different heights in the bar;
+ *   - the underline is positioned against the bottom of `.nav-link`, and for
+ *     an inline element that is the padding box hanging *below* the line box,
+ *     so the anchors' rules were drawn lower than the button's and out of the
+ *     row entirely;
+ *   - `overflow: hidden` is ignored on inline boxes, so the click ripple these
+ *     links were given had nothing clipping it.
+ *
+ * `display: flex` settles all three: padding is in the layout, the box the
+ * underline hangs from is the box you see, and the ripple is contained.
+ */
 .nav-link {
   position: relative;
+  display: flex;
+  align-items: center;
+  /*
+   * A nav label never wraps. As a flex item this link will shrink when the row
+   * runs out of width, and a shrunk link breaks "Business Partner" over two
+   * lines inside a box with a fixed height — which is how a header that is
+   * merely too narrow ends up looking broken rather than tight. The breakpoints
+   * are what actually keep the row from overflowing; this makes sure the
+   * failure mode, if it ever happens again, is honest.
+   */
+  white-space: nowrap;
+  /* Shared with the toggles and the CTA, so every control in the bar has the
+     same top and bottom edge. The `py-2` in the markup is left in place as the
+     no-CSS fallback; with a height set it no longer decides anything. */
+  height: var(--header-control-h);
 }
 
 .nav-link::after {
@@ -1994,25 +2111,33 @@ html[data-motion="reduced"] {
     border-color 0.3s linear;
 }
 
+/*
+ * The lockup is a wide one — 390x120, so 3.25:1 — which means height is the
+ * only dial and every step in it costs three times as much width. These sizes
+ * are the largest the bar can carry: the link adds 8px of hit area on every
+ * side (`-m-2 p-2` in the markup), so the box around a 48px logo is 64px inside
+ * a 76px header, and 52px inside the 60px header once it shrinks. Going further
+ * would have the mark touching the rules above and below it.
+ */
 .site-header__logo {
-  height: 2rem;
+  height: 2.5rem;
   transition: height 0.32s var(--ease-out-quint);
 }
 
 @media (min-width: 640px) {
   .site-header__logo {
-    height: 2.25rem;
+    height: 3rem;
   }
 }
 
-/* Past the hero: 76px → 60px, logo 2.25rem → 1.75rem. */
+/* Past the hero: 76px → 60px, logo 3rem → 2.25rem. */
 .site-header[data-shrunk] {
   height: 60px;
   box-shadow: 0 1px 0 rgb(20 24 29 / 0.04), 0 10px 30px -22px rgb(20 24 29 / 0.5);
 }
 
 .site-header[data-shrunk] .site-header__logo {
-  height: 1.75rem;
+  height: 2.25rem;
 }
 
 /* --- Scroll progress ------------------------------------------------------ */
@@ -2080,12 +2205,31 @@ html[data-motion="reduced"] {
  * Bar: a sticky strip that parks directly under the header, so it has to track
  * the header's shrink the same way the progress bar does.
  */
+/*
+ * The bar's fill is a literal per theme, not a hardcoded white.
+ *
+ * It was `rgb(255 255 255 / 0.92)` while `.section-nav__link` takes its colour
+ * from `--color-ink-muted` / `--color-ink` — tokens that invert. In the dark
+ * theme that put a near-white active link on a white bar at **1.12:1**, which
+ * is the sub-navigation on every service page reduced to blank space.
+ *
+ * Written as two literals rather than `color-mix(… var(--color-paper) 92% …)`
+ * because Lightning CSS folds a `var()` inside `color-mix` to whichever theme
+ * it can see at build time — which would have baked the white straight back in.
+ */
 .section-nav--bar {
+  --section-nav-bg: rgb(255 255 255 / 0.92);
+
   top: var(--header-h);
   border-bottom: 1px solid var(--color-rule);
-  background: rgb(255 255 255 / 0.92);
+  background: var(--section-nav-bg);
   backdrop-filter: blur(12px);
   transition: top 0.32s var(--ease-out-quint);
+}
+
+/* `--color-paper` in the dark theme, at the same 92%. */
+:root[data-theme="dark"] .section-nav--bar {
+  --section-nav-bg: rgb(16 21 27 / 0.92);
 }
 
 body:has(.site-header[data-shrunk]) .section-nav--bar {
@@ -2643,15 +2787,22 @@ html[data-motion="reduced"] {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 2px;
+  /* Matches the nav links and the CTA — see `--header-control-h`. */
+  height: var(--header-control-h);
+  padding: 2px 3px;
   border: 1px solid var(--color-rule);
   background: var(--color-paper-warm);
 }
 
 /* Same footprint before mount, so the header does not shift. */
+/*
+ * The reserved footprint before the toggles mount. It has to match what
+ * replaces it on both axes or the row jumps at hydration: three 1.875rem
+ * options, two 2px gaps, 3px of padding each side and the border.
+ */
 .theme-toggle--idle {
-  width: 6.5rem;
-  height: 1.875rem;
+  width: 6.25rem;
+  height: var(--header-control-h);
   border: 1px solid transparent;
   background: none;
 }
@@ -3660,7 +3811,10 @@ html[data-motion="reduced"] {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.85rem 0.85rem 0.85rem 1rem;
+  position: relative;
+  isolation: isolate;
+  align-items: flex-start;
+  padding: 0.95rem 1rem;
   background: var(--color-ink);
   /* Same inversion pair as `.chat-fab` — with `#fff` here the whole header
      read as one flat block of colour in the dark theme. */
@@ -3682,17 +3836,22 @@ html[data-motion="reduced"] {
 }
 
 .chat-panel__avatar {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.15rem;
+  height: 2.15rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
   background: var(--color-brand);
   color: #fff;
 }
 
 .chat-panel__id {
+  position: relative;
   display: flex;
   flex-direction: column;
+  gap: 0.12rem;
   margin-right: auto;
   font-size: 0.95rem;
   line-height: 1.25;
@@ -3700,7 +3859,10 @@ html[data-motion="reduced"] {
 
 .chat-panel__id strong {
   font-family: var(--font-display);
+  font-size: 1.0625rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 /*
@@ -3724,20 +3886,51 @@ html[data-motion="reduced"] {
   color: var(--chat-head-muted);
 }
 
-.chat-panel__close {
-  display: grid;
-  place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  color: var(--chat-head-soft);
-  transition:
-    color 0.2s linear,
-    background-color 0.2s linear;
+/*
+ * The header carries no close button. The launcher below the panel is the
+ * close control — it turns into an ✕ while the panel is open — and Escape
+ * closes and hands focus back to it, so a second ✕ in the corner was a third
+ * way to do the same thing, sitting in the one place a masthead should be
+ * saying who you are talking to.
+ */
+.chat-panel__head-grid {
+  position: absolute;
+  inset: 0;
+  color: var(--chat-head-wash);
+  pointer-events: none;
 }
 
-.chat-panel__close:hover {
-  background: var(--chat-head-wash);
-  color: var(--color-paper);
+/* The keyboard route, in place of the button. See the note in chat-widget.tsx
+   for why it is pointer-only. */
+.chat-panel__esc {
+  display: none;
+  align-self: flex-start;
+  margin-top: 0.1rem;
+  padding: 0.16rem 0.42rem;
+  border: 1px solid var(--chat-head-wash);
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chat-head-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chat-panel__esc {
+    display: block;
+  }
+}
+
+/* Small uppercase marker over the name, the same device every section on the
+   site opens with — minus the orange rule, which the panel already spends on
+   its top edge. */
+.chat-panel__eyebrow {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--chat-head-muted);
 }
 
 .chat-log {
@@ -4030,18 +4223,46 @@ html[data-motion="reduced"] {
 /* --- Chat panel: frame, depth and the arrival ------------------------------ */
 
 /*
- * The panel arrives in two rates, the same figure the services flyout uses and
- * for the same reason (see `.svc-menu`): the frame lands first, and the rows
- * inside it are still catching up when it has stopped. A panel and its contents
- * moving as one block is a box appearing; moving at different speeds reads as
- * depth. That is the whole effect, and it is why the contents are not simply
- * faded in with the frame.
+ * The panel moves in two rates, the same figure the services flyout uses and
+ * for the same reason (see `.svc-menu`): the frame leads, and the rows inside
+ * it are still catching up when it has stopped. A panel and its contents moving
+ * as one block is a box appearing; moving at different speeds reads as depth.
  *
- * The frame keeps its `transition` — it has to animate *out* as well, which a
- * keyframe animation cannot do from a class being removed. The contents use
- * animations, which only run while `[data-open]` matches, so nothing plays on
- * page load while the panel sits hidden.
+ * **Transitions, not keyframes — because the figure has to run backwards too.**
+ * An animation gated on `[data-open]` stops dead the instant the attribute is
+ * removed, so the opening had depth and the closing was a single flat block
+ * dropping away. Declaring both states and letting the transition carry between
+ * them gives the same parallax on the way out, and lets the two directions be
+ * timed differently, which they should be:
+ *
+ *   opening — the frame lands first, then the layers arrive **top down**, each
+ *             60ms behind the one above it, over 520ms. Unhurried; you are
+ *             being shown the panel.
+ *   closing — the layers leave **bottom up**, footer first, in 200ms with a
+ *             22ms step, and the frame follows them out. Quicker, because a
+ *             dismissal that takes as long as an arrival feels stuck, and
+ *             reversed because the thing you just clicked should be the last
+ *             thing to go.
+ *
+ * The exit is timed to finish inside the frame's own 300ms: the last layer is
+ * clear at 288ms, just before `visibility` flips and would have cut it.
  */
+.chat-panel__head,
+.chat-log,
+.chat-chips,
+.chat-form,
+.chat-foot {
+  opacity: 0;
+  /* Further than the frame travels (12px), and diagonally, so the layers read
+     as sitting behind it rather than printed on it. */
+  transform: translate3d(10px, 18px, 0);
+  transition:
+    opacity 200ms var(--ease-out-quint),
+    transform 200ms var(--ease-out-quint);
+  /* Reversed: 4 - i, so the footer is first out and the header last. */
+  transition-delay: calc((4 - var(--i, 0)) * 22ms);
+}
+
 .chat[data-open] :is(
     .chat-panel__head,
     .chat-log,
@@ -4049,34 +4270,34 @@ html[data-motion="reduced"] {
     .chat-form,
     .chat-foot
   ) {
-  animation: chat-layer-in 520ms var(--ease-out-quint) backwards;
+  opacity: 1;
+  transform: none;
+  transition-duration: 520ms;
   /* Starts once the frame is most of the way open, then steps down the panel. */
-  animation-delay: calc(90ms + var(--i, 0) * 60ms);
+  transition-delay: calc(90ms + var(--i, 0) * 60ms);
 }
 
-.chat[data-open] .chat-panel__head {
+/*
+ * Unscoped, unlike before. These used to be set under `.chat[data-open]`, which
+ * was fine while only the entrance read them — but the exit reads them too, and
+ * by then the attribute is already gone. Scoped that way every layer would have
+ * fallen back to `--i: 0` and left at once, which is the flat block this change
+ * exists to remove.
+ */
+.chat-panel__head {
   --i: 0;
 }
-.chat[data-open] .chat-log {
+.chat-log {
   --i: 1;
 }
-.chat[data-open] .chat-chips {
+.chat-chips {
   --i: 2;
 }
-.chat[data-open] .chat-form {
+.chat-form {
   --i: 3;
 }
-.chat[data-open] .chat-foot {
+.chat-foot {
   --i: 4;
-}
-
-@keyframes chat-layer-in {
-  from {
-    opacity: 0;
-    /* Further than the frame travelled (12px), and diagonally, so the layers
-       read as sitting behind it rather than printed on it. */
-    transform: translate3d(10px, 18px, 0);
-  }
 }
 
 /*
@@ -4212,14 +4433,14 @@ html[data-motion="reduced"] {
 
 html[data-motion="reduced"] {
   /* The arrival is the decoration; the panel still opens, it just is open. */
-  .chat[data-open] :is(
-      .chat-panel__head,
-      .chat-log,
-      .chat-chips,
-      .chat-form,
-      .chat-foot
-    ) {
-    animation: none;
+  .chat-panel__head,
+  .chat-log,
+  .chat-chips,
+  .chat-form,
+  .chat-foot {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 
   .chat-turn {
@@ -4229,4 +4450,269 @@ html[data-motion="reduced"] {
   .chat-panel__live {
     animation: none;
   }
+}
+
+/* --- Partner band: aurora ---------------------------------------------------- */
+
+/*
+ * Aceternity's **Aurora Background** (21st.dev/community/components/aceternity/
+ * aurora-background), rebuilt in CSS.
+ *
+ * Their version stacks blurred gradient layers and animates them. This one
+ * keeps the look and drops the cost, because the home page is the one that has
+ * to paint fast on a slow machine:
+ *
+ *   - **No `filter: blur()`.** A 60px blur across a full-width band is a
+ *     large-surface filter recomputed every frame. Radial gradients are already
+ *     soft; blurring soft edges buys almost nothing and costs a great deal.
+ *   - **The animation is a transform, not `background-position`.** Moving the
+ *     background repaints the whole band each frame; moving an oversized layer
+ *     by transform is compositor work. Same drift, a fraction of the budget.
+ *   - **No WebGL.** The grain-gradient shader already in the project would have
+ *     done this, but it is a 59 KB route chunk and it is currently confined to
+ *     /contact. The home page does not need to start paying for it.
+ *
+ * Oversized by 30% on every side so the drift never pulls an edge into view.
+ */
+.partner-aurora {
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      38rem 24rem at 14% 30%,
+      rgb(242 111 33 / 0.34),
+      transparent 62%
+    ),
+    radial-gradient(
+      34rem 22rem at 78% 66%,
+      rgb(212 85 12 / 0.3),
+      transparent 62%
+    ),
+    radial-gradient(
+      28rem 18rem at 52% 6%,
+      rgb(255 176 102 / 0.18),
+      transparent 62%
+    );
+  background-repeat: no-repeat;
+  animation: partner-aurora 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes partner-aurora {
+  from {
+    transform: translate3d(-2.5%, -1.5%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(2.5%, 1.5%, 0) scale(1.12);
+  }
+}
+
+html[data-motion="reduced"] .partner-aurora {
+  animation: none;
+  /* Parked mid-drift: the field is the point, the travel is not. */
+  transform: scale(1.08);
+}
+
+/*
+ * The band's own parallax drift. `--band-y` is written by the shared scroll
+ * loop from `sections/partners.tsx`; unset — no script, reduced motion — it
+ * resolves to 0 and the band simply sits where it is.
+ */
+.partner-band {
+  transform: translate3d(0, var(--band-y, 0px), 0);
+  will-change: transform;
+}
+
+html[data-motion="reduced"] .partner-band {
+  transform: none;
+}
+
+/* --- Partner nodes on the path --------------------------------------------- */
+
+/*
+ * One principal on the ribbon. Square and hairline, matching the card strip
+ * this replaces — the bubble on the business-partner page is the deliberate
+ * exception on this site, not the rule.
+ *
+ * Centred on its own point: `offset-path` positions an element by its top-left
+ * corner, so without the pull-back the tile hangs below and right of the curve
+ * it is meant to be sitting on.
+ */
+.partner-node {
+  display: grid;
+  place-items: center;
+  /*
+   * Every card is the same box — one width, one height, for all seventeen
+   * principals, including the two carrying a wordmark instead of a mark. The
+   * logos inside differ in aspect, so they are fitted against a shared ceiling
+   * with `object-contain` rather than being allowed to size the card. A strip
+   * whose cards vary reads as a mistake rather than as variety.
+   */
+  /*
+   * 4rem. The pitch between cards on this path is 98 units, so 64px leaves 34
+   * between neighbours — looser than the reference's rhythm, and the trade is
+   * deliberate: the curve tops out at y=1.4 of a 330-unit viewBox, meaning a
+   * card centred there hangs half its own height above the band and into the
+   * copy above it. Every millimetre of card height is a millimetre of that
+   * overhang, so the card size and the clearance below the heading are one
+   * decision, not two.
+   */
+  width: 4rem;
+  height: 4rem;
+  /* `offset-path` positions an element by its top-left corner, so each card is
+     pulled back by half its own size to sit centred on the curve. */
+  margin-left: -2rem;
+  margin-top: -2rem;
+  /* 0.4rem, so the 46px logo frame clears the border with room either side:
+     64 - 2x6.4 padding - 2x1 border leaves 49.2px of content. */
+  padding: 0.4rem;
+  /*
+   * Permanently white, and permanently a light hairline — not `--color-paper`
+   * and `--color-rule`, which invert. Every partner mark on this site is drawn
+   * for a light background, so the card has to stay light in both themes or
+   * the dark theme turns each one into a black square with a black logo on it.
+   * This is the `--color-ink-fixed` idea in reverse: a chip that does not
+   * follow the theme, because what sits on it cannot.
+   */
+  background: #ffffff;
+  border: 1px solid rgb(20 24 29 / 0.1);
+  /* Magnify on hover. At 64px in a 98px slot there is 34px of room, so 1.35
+     grows the card by 22px total and still clears both neighbours. */
+  transform: scale(1);
+  transition:
+    transform 0.3s ease-in-out,
+    border-color 0.3s var(--ease-out-quint),
+    box-shadow 0.3s var(--ease-out-quint);
+}
+
+.partner-node:hover {
+  transform: scale(1.35);
+  border-color: var(--color-brand);
+  box-shadow: 0 16px 38px -16px rgb(0 0 0 / 0.55);
+}
+
+/* Dragging the ribbon should not look like selecting a logo. */
+.partner-node img,
+.partner-node__word {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+html[data-motion="reduced"] .partner-node {
+  transition: border-color 0.3s linear;
+}
+
+html[data-motion="reduced"] .partner-node:hover {
+  transform: none;
+}
+
+/* The two principals with no sourceable mark read as a wordmark instead. */
+/*
+ * The two principals with no sourceable mark. Text only — an icon plus a name
+ * does not fit a 3.5rem card, and the name is the information.
+ */
+/*
+ * The fallback wordmark, sized so the longest of them fits on one line.
+ *
+ * "CYBEROAM" is eight characters where "AMP" is three. At 0.6rem it measured
+ * out to almost exactly the card's 49.2px of content width, so with real
+ * Archivo metrics it ran past the edge — and an oversized grid item centred by
+ * `place-items` overflows on both sides, which is why that one card looked
+ * shifted rather than merely tight. At 0.5rem it comes to about 41px and has
+ * room either side.
+ *
+ * `nowrap` is the guarantee: "CYBEROAM" is a single unbreakable word, so
+ * without it the only way the box could ever contain it would be to spill.
+ * Both wordmarks take the same size — they are the same kind of thing.
+ */
+.partner-node__word {
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  white-space: nowrap;
+  /* Fixed ink, to match the card it sits on. */
+  color: var(--color-ink-fixed);
+  text-align: center;
+}
+
+/*
+ * The marks are PNGs with their own colour. On the warm paper of this band a
+ * couple of the darker ones sit heavily, so they are held back a touch and come
+ * up to full on hover — the same restraint the card strip used.
+ */
+.partner-node img {
+  opacity: 0.85;
+  transition: opacity 0.3s var(--ease-out-quint);
+}
+
+.partner-node:hover img {
+  opacity: 1;
+}
+
+/* --- Footer links ----------------------------------------------------------- */
+
+/*
+ * The footer holds twenty-odd links, and a colour swap on hover is the weakest
+ * possible answer at that density: twenty items each doing the same small thing
+ * reads as a list that lights up, not as a set of targets.
+ *
+ * So it borrows the header's own figure at footer scale — a brand rule drawn in
+ * from the left beneath the label, the text lifting to full white as it
+ * arrives. One pseudo-element, and it is a mark already used twice on the site
+ * rather than a new idea invented for this band.
+ *
+ * `inline-block` with `fit-content` so the rule is the width of the text and
+ * not of the column it sits in.
+ */
+.footer-link {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgb(255 255 255 / 0.72);
+  transition: color 0.25s var(--ease-out-quint);
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.34s var(--ease-out-quint);
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: #ffffff;
+}
+
+.footer-link:hover::after,
+.footer-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+html[data-motion="reduced"] .footer-link::after {
+  transition: none;
+}
+
+/*
+ * The eyebrow's orange tick is 1.75rem wide, which is right beside a section
+ * heading and heavy beside a 0.6875rem column label. Shortened here, and the
+ * gap with it.
+ */
+.site-footer-heading.eyebrow::before {
+  width: 1.1rem;
 }

@@ -29,8 +29,12 @@ import { ScrollStage } from "@/components/scroll-stage";
  *                     stage at all: perspective and clip-path both make the
  *                     wrapper a containing block, and the column would then
  *                     stick inside a moving frame.
- *   5 CasePreview     ZOOM - settles forward, recedes back. No rotation, so it
- *                     reads differently from the fold two sections above.
+ *   5 CasePreview     PAN - crosses sideways: in from the right, out to the
+ *                     left. The only figure on the horizontal axis, and the
+ *                     only section that can take it — it has no fill and no
+ *                     border, so nothing but its contents travels. It replaced
+ *                     ZOOM, which settled forward and back and was too close a
+ *                     relative of the fold two sections above.
  *   6 Coverage        aperture parallax - the skyline holds still and the band
  *                     travels over it.
  *   7 Partners        CURTAIN - clips open downward and shut from the top. The
@@ -53,7 +57,7 @@ export default function HomePage() {
 
       <Positioning />
 
-      <ScrollStage variant="zoom">
+      <ScrollStage variant="pan">
         <CasePreview />
       </ScrollStage>
 

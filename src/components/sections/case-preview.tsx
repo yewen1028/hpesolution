@@ -1,4 +1,5 @@
 import { Media } from "@/components/media";
+import { CaseParallax } from "@/components/case-parallax";
 import { Reveal } from "@/components/reveal";
 import { CounterText } from "@/components/counter";
 import { Tilt } from "@/components/tilt";
@@ -33,6 +34,13 @@ export function CasePreview() {
               delay={i * 100}
               className="bg-paper"
             >
+              {/*
+                The row separates into planes as it passes: outer columns
+                travel, the middle one holds. `CaseParallax` sits inside the
+                cell so the hairline grid the cells draw stays put — only the
+                card inside each cell moves.
+              */}
+              <CaseParallax index={i} count={featured.length} className="h-full">
               <Tilt className="flex h-full flex-col bg-paper">
                 <div className="hover-reveal relative aspect-[16/10]">
                   <Media
@@ -80,6 +88,7 @@ export function CasePreview() {
                   </dl>
                 </div>
               </Tilt>
+              </CaseParallax>
             </Reveal>
           ))}
         </ul>

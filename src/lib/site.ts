@@ -691,14 +691,48 @@ export const caseStudies: CaseStudy[] = [
     image: "/media/case-audit.jpg",
     imageAlt: "Laptops stacked on their shipping cartons",
   },
+  /*
+   * Three separate oil & gas engagements, not one.
+   *
+   * These were previously carried as a single merged entry summarising all
+   * three, which is how the page came to hold 28 of the source's 30. hpe.com.my
+   * lists them as distinct projects under Project Management & Deployment —
+   * different scopes, different estates, different years — and collapsing them
+   * both undercounts the record and loses the detail that the encryption
+   * rollout was awarded to a single vendor.
+   */
   {
     sector: "Oil & Gas",
     discipline: "Project Management & Deployment",
-    title: "Active Directory migration and estate-wide encryption",
-    body: "Microsoft Active Directory migration and Windows operating system upgrades across two projects of 10,000 and 2,000 end users, plus BitLocker encryption and installation reaching 30,000 end users, all completed inside a six-month window.",
+    title: "Active Directory migration for 10,000 end users",
+    body: "Project management and deployment of a Microsoft Active Directory migration with Windows operating system migration and upgrade, covering 10,000 end-user desktops and laptops countrywide.",
+    metrics: [
+      { value: "10,000", label: "End users migrated" },
+      { value: "Nationwide", label: "Coverage" },
+    ],
+    image: "/media/case-oil-gas.jpg",
+    imageAlt: "Aerial view of an oil refinery with storage spheres and flare stacks",
+  },
+  {
+    sector: "Oil & Gas",
+    discipline: "Project Management & Deployment",
+    title: "Estate-wide encryption rollout as sole vendor",
+    body: "Selected as the single vendor to handle BitLocker encryption together with DCS and Webs Skydive installation across 30,000 end users countrywide, delivered inside the six-month window the project was awarded against.",
     metrics: [
       { value: "30,000", label: "Users reached" },
       { value: "6 months", label: "Delivery window" },
+    ],
+    image: "/media/case-oil-gas.jpg",
+    imageAlt: "Aerial view of an oil refinery with storage spheres and flare stacks",
+  },
+  {
+    sector: "Oil & Gas",
+    discipline: "Project Management & Deployment",
+    title: "Directory migration and OS upgrade for 2,000 end users",
+    body: "Microsoft Active Directory migration and Microsoft Windows operating system upgrade across 2,000 end-user desktops and laptops for a second oil and gas customer.",
+    metrics: [
+      { value: "2,000", label: "End users migrated" },
+      { value: "AD + OS", label: "Scope" },
     ],
     image: "/media/case-oil-gas.jpg",
     imageAlt: "Aerial view of an oil refinery with storage spheres and flare stacks",
