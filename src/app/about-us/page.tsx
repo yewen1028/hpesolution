@@ -3,6 +3,7 @@ import { Media } from "@/components/media";
 import { Compass, Target, Handshake } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Parallax } from "@/components/parallax";
+import { ScrollShutter } from "@/components/scroll-shutter";
 import { Reveal } from "@/components/reveal";
 import { Counter } from "@/components/counter";
 import { Container, SectionHeading } from "@/components/ui";
@@ -98,7 +99,15 @@ export default function AboutPage() {
             </div>
 
             <Reveal delay={120}>
-              <div className="relative h-[24rem] overflow-hidden lg:h-[32rem]">
+              {/*
+                Two rates, not one. The photograph already drifted inside a
+                static frame — the same figure every masthead on the site uses.
+                Here the frame itself is a shutter: pinched top and bottom while
+                the section is approaching or leaving, fully open as it passes.
+                An aperture changing shape against a picture that is itself
+                moving is where the depth comes from; either alone is flat.
+              */}
+              <ScrollShutter className="relative h-[24rem] overflow-hidden lg:h-[32rem]">
                 <Parallax speed={70} className="absolute inset-x-0">
                   <Media
                     src="/media/svc-managed-services.jpg"
@@ -108,7 +117,7 @@ export default function AboutPage() {
                     className="object-cover"
                   />
                 </Parallax>
-              </div>
+              </ScrollShutter>
             </Reveal>
           </div>
         </Container>

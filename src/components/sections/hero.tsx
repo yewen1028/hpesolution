@@ -6,6 +6,7 @@ import { Magnetic } from "@/components/magnetic";
 import { ButtonLink, Container } from "@/components/ui";
 import { stats } from "@/lib/site";
 import { Counter } from "@/components/counter";
+import { StatParallax } from "@/components/stat-parallax";
 
 export function Hero() {
   return (
@@ -115,19 +116,28 @@ export function Hero() {
               >
                 <dt className="sr-only">{stat.label}</dt>
                 <dd>
-                  <span className="display-2 block font-display font-semibold text-white">
-                    <Counter
-                      value={stat.value}
-                      prefix={stat.prefix}
-                      suffix={stat.suffix}
-                    />
-                  </span>
-                  <span className="mt-2.5 block text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-brand">
-                    {stat.label}
-                  </span>
-                  <span className="mt-2 block max-w-[26ch] text-[0.85rem] leading-relaxed text-white/55">
-                    {stat.note}
-                  </span>
+                  {/*
+                    The drift sits inside the cell, not on it: `Reveal` owns the
+                    cell's own transform for the arrival, and two transforms on
+                    one element means whichever runs second wins. The cell also
+                    draws the hairlines between the four figures, and those have
+                    to stay where they are while the contents move.
+                  */}
+                  <StatParallax index={i}>
+                    <span className="display-2 block font-display font-semibold text-white">
+                      <Counter
+                        value={stat.value}
+                        prefix={stat.prefix}
+                        suffix={stat.suffix}
+                      />
+                    </span>
+                    <span className="mt-2.5 block text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-brand">
+                      {stat.label}
+                    </span>
+                    <span className="mt-2 block max-w-[26ch] text-[0.85rem] leading-relaxed text-white/55">
+                      {stat.note}
+                    </span>
+                  </StatParallax>
                 </dd>
               </Reveal>
             ))}

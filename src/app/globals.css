@@ -4569,6 +4569,16 @@ html[data-motion="reduced"] .partner-band {
      64 - 2x6.4 padding - 2x1 border leaves 49.2px of content. */
   padding: 0.4rem;
   /*
+   * **A deliberate exception to the square-corner rule**, alongside the circle
+   * on the business-partner page's bubble strip — and for a related reason.
+   * These cards are the only elements on the site that travel along a curve;
+   * a hard 90-degree corner reads as a chip that has been rotated off-axis
+   * when it sits on a bend, where a 10px radius keeps reading as the same
+   * object all the way round. Everywhere else on this site the corners are
+   * square, and this is not a licence to soften them.
+   */
+  border-radius: 0.625rem;
+  /*
    * Permanently white, and permanently a light hairline — not `--color-paper`
    * and `--color-rule`, which invert. Every partner mark on this site is drawn
    * for a light background, so the card has to stay light in both themes or
@@ -4715,4 +4725,79 @@ html[data-motion="reduced"] .footer-link::after {
  */
 .site-footer-heading.eyebrow::before {
   width: 1.1rem;
+}
+
+/* --- Case study rows -------------------------------------------------------- */
+
+/*
+ * Counter-drift inside a row. `--case-shift` is written by the shared scroll
+ * loop from `components/case-row.tsx`; unset — no script, reduced motion — both
+ * rules resolve to 0 and the row is an ordinary card.
+ *
+ * Two layers, opposite directions, neither of them the card itself:
+ *
+ *   the photograph  travels the full shift inside a frame that is
+ *                   `overflow-hidden`, so it can move without ever exposing an
+ *                   edge — which is why it is also scaled slightly, to give it
+ *                   the margin it needs to travel into;
+ *   the metrics     travel a third of that, the other way, inside the padding
+ *                   they already sit in.
+ *
+ * Moving the two halves of the row apart would have been the obvious reading of
+ * "parallax" here and it is the wrong one: the picture is flush against the
+ * type, so any differential between them opens a seam down the middle of the
+ * card.
+ */
+.case-row__image {
+  transform: translate3d(0, var(--case-shift, 0px), 0) scale(1.06);
+  will-change: transform;
+}
+
+.case-row__metrics {
+  transform: translate3d(0, calc(var(--case-shift, 0px) * -0.34), 0);
+}
+
+html[data-motion="reduced"] .case-row__image {
+  transform: none;
+}
+
+html[data-motion="reduced"] .case-row__metrics {
+  transform: none;
+}
+
+/* --- Hero figure strip ------------------------------------------------------ */
+
+/*
+ * `--stat-y` is written per cell by the shared scroll loop from
+ * `components/stat-parallax.tsx`. Unset — no script, reduced motion — it
+ * resolves to 0 and the four figures sit in a straight line, which is the
+ * state the strip was designed in.
+ */
+.stat-parallax {
+  transform: translate3d(0, var(--stat-y, 0px), 0);
+  will-change: transform;
+}
+
+html[data-motion="reduced"] .stat-parallax {
+  transform: none;
+}
+
+/* --- Scroll shutter --------------------------------------------------------- */
+
+/*
+ * `--shutter` is written by the shared scroll loop from
+ * `components/scroll-shutter.tsx` as a percentage of the frame's own height.
+ * Unset — no script, reduced motion — it resolves to 0% and the frame is an
+ * ordinary rectangle, which is the state the layout was built in.
+ *
+ * `inset()` rather than a mask: it clips the frame's border box, so the
+ * absolutely-positioned drift layer inside is clipped with it and no second
+ * rule is needed to keep the photograph inside its window.
+ */
+.scroll-shutter {
+  clip-path: inset(var(--shutter, 0%) 0%);
+}
+
+html[data-motion="reduced"] .scroll-shutter {
+  clip-path: none;
 }
