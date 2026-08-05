@@ -1832,6 +1832,29 @@ html[data-motion="reduced"] {
   border-color: var(--color-brand);
 }
 
+/*
+ * The service <select>'s dropdown.
+ *
+ * The list is drawn by the OS, and it inherits the control's own colours: this
+ * form's `--color-ink` is white and `--color-paper` is white at 7% — both
+ * correct against the dark panel, and both wrong once the browser paints them
+ * into a popup over its own white base. The result was white text on white.
+ *
+ * `color-scheme: dark` on the surface does not fix it, because it does not
+ * override an author-specified background — so the options carry an opaque
+ * colour of their own. Opaque is the point: any alpha here composites against
+ * whatever the OS puts behind the list, which is exactly what went wrong.
+ *
+ * Only the options are given it. Setting it on the <select> too would make the
+ * closed control read as a solid block next to the four translucent wells
+ * above it, and the closed control was never the broken part.
+ */
+.enquiry-surface select.field__input option,
+.enquiry-surface select.field__input optgroup {
+  background-color: #12171d;
+  color: #ffffff;
+}
+
 /* --- Mask reveal ---------------------------------------------------------- */
 
 /*
