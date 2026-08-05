@@ -149,6 +149,13 @@ export function SiteHeader() {
                       href={item.href}
                       aria-current={isActive(item.href) ? "page" : undefined}
                       data-active={isActive(item.href) ? "" : undefined}
+                      /*
+                        Same press feedback the Services trigger has. Safe on
+                        `.nav-link` because its underline is drawn *inside* the
+                        padding box, so the `overflow: hidden` that
+                        `[data-ripple]` brings with it has nothing to clip.
+                      */
+                      data-ripple=""
                       className={`nav-link rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                         isActive(item.href)
                           ? "text-ink"
@@ -205,6 +212,7 @@ export function SiteHeader() {
                       <Link
                         href="/services"
                         style={{ "--i": 0 } as CSSProperties}
+                        data-ripple=""
                         className="svc-menu__item group flex items-center justify-between gap-3 px-4 py-3 text-[0.9rem] font-semibold text-ink transition-colors hover:bg-paper-warm"
                       >
                         All services
@@ -223,6 +231,7 @@ export function SiteHeader() {
                           key={service.slug}
                           href={`/services/${service.slug}`}
                           style={{ "--i": i + 1 } as CSSProperties}
+                          data-ripple=""
                           className="svc-menu__item group flex items-start gap-3.5 px-4 py-2.5 transition-colors hover:bg-paper-warm"
                         >
                           {/*
@@ -295,6 +304,7 @@ export function SiteHeader() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    data-ripple=""
                     className="flex items-center justify-between py-4 text-lg font-medium text-ink"
                   >
                     {item.label}
@@ -305,6 +315,7 @@ export function SiteHeader() {
                         <li key={service.slug}>
                           <Link
                             href={`/services/${service.slug}`}
+                            data-ripple=""
                             className="block py-1.5 text-[0.95rem] text-ink-soft"
                           >
                             {service.title}

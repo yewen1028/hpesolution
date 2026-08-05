@@ -271,6 +271,13 @@ To put a real model behind it, keep `Reply` as the response shape and replace
   and has something to animate out of. `inert` is what takes it out of the tab
   order and the accessibility tree; `visibility: hidden` alone leaves a closed
   panel readable to a screen reader mid-transition.
+- **The panel has a settled `height`, not a `max-height`**, clamped to what is
+  free above the launcher once `--header-h` is subtracted, in `dvh` so mobile
+  browser chrome is accounted for. With a maximum alone the frame grew by a
+  bubble per turn and the input crept away under the cursor. This only works
+  because `.chat-log` carries `min-height: 0` — a flex item defaults to
+  `min-height: auto` and will not shrink below its content, which pushed the
+  input and footer out through the bottom of the panel instead of scrolling.
 - Stacking: splash 200 > header 100 > scroll progress 99 > **chat 95** >
   back-to-top 90. `.back-to-top` is offset upward by `--chat-size`, so the two
   fixed corner controls share the corner instead of covering each other.

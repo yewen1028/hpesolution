@@ -3299,8 +3299,31 @@ html[data-motion="reduced"] {
   bottom: calc(var(--chat-size) + 0.85rem);
   display: flex;
   flex-direction: column;
-  width: min(23rem, calc(100vw - 2 * var(--chat-edge)));
-  max-height: min(33rem, calc(100vh - 9rem));
+  width: min(26rem, calc(100vw - 2 * var(--chat-edge)));
+
+  /*
+   * A settled height, not `max-height`.
+   *
+   * With only a maximum, the frame grew by one bubble on every turn: the
+   * chips and the input crept down the screen between the moment you read
+   * them and the moment you clicked, and the whole panel re-laid-out behind
+   * the answer you were trying to read. A conversation should scroll inside a
+   * frame that stays put — which is also why `.chat-log` below needs
+   * `min-height: 0`.
+   *
+   * The preferred value is what is actually free above the launcher: the
+   * viewport, less the site header it must not slide under, less the launcher
+   * and its gap, less a little breathing room. `dvh` rather than `vh` because
+   * mobile `vh` is measured against the *retracted* browser chrome, which put
+   * the top of the panel behind the URL bar.
+   */
+  height: clamp(
+    20rem,
+    calc(
+      100dvh - var(--header-h) - var(--chat-edge) - var(--chat-size) - 2.5rem
+    ),
+    36rem
+  );
   background: var(--color-paper);
   border: 1px solid var(--color-rule);
   box-shadow: 0 30px 70px -28px rgb(20 24 29 / 0.6);
@@ -3409,6 +3432,13 @@ html[data-motion="reduced"] {
 
 .chat-log {
   flex: 1;
+  /*
+   * Required, not defensive. A flex item defaults to `min-height: auto`, which
+   * refuses to shrink below its content — so a long conversation pushed the
+   * chips, the input and the footer out through the bottom of the panel
+   * instead of scrolling. This is what makes the log the one scrolling region.
+   */
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -3419,9 +3449,11 @@ html[data-motion="reduced"] {
 
 .chat-msg {
   max-width: 88%;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  padding: 0.65rem 0.8rem;
+  /* 14px. The bot answers in bulleted lists of up to seven services, and at
+     13px in a 368px frame those wrapped onto two lines each. */
+  font-size: 0.875rem;
+  line-height: 1.55;
   animation: chat-msg-in 0.34s var(--ease-out-quint) backwards;
 }
 
@@ -3553,10 +3585,21 @@ html[data-motion="reduced"] {
 .chat-form__input {
   flex: 1;
   min-width: 0;
-  padding: 0.8rem 0.9rem;
+  padding: 0.85rem 0.9rem;
   background: transparent;
-  font-size: 0.82rem;
+  /*
+   * 16px on touch. Anything smaller and iOS Safari zooms the page on focus,
+   * which on a fixed-position panel leaves it half off-screen with no obvious
+   * way back. Pointer devices keep the smaller size the panel is drawn for.
+   */
+  font-size: 1rem;
   color: var(--color-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chat-form__input {
+    font-size: 0.875rem;
+  }
 }
 
 .chat-form__input::placeholder {
@@ -3611,7 +3654,17 @@ html[data-motion="reduced"] {
     left: 0.75rem;
     bottom: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
     width: auto;
-    max-height: calc(100vh - var(--chat-size) - 6rem);
+    /*
+     * `dvh`, and a taller share of it than the desktop rule takes: on a phone
+     * this panel is the screen, and the header it has to clear is the only
+     * thing above it. The floor is lower than the desktop 20rem because a
+     * landscape phone has barely more than that to give.
+     */
+    height: clamp(
+      15rem,
+      calc(100dvh - var(--chat-edge) - var(--chat-size) - 5.5rem),
+      34rem
+    );
   }
 }
 
