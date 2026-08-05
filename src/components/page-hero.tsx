@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Media } from "@/components/media";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -16,6 +17,7 @@ export function PageHero({
   image,
   imageAlt,
   crumbs = [],
+  backdrop,
 }: {
   eyebrow: string;
   title: string;
@@ -23,22 +25,36 @@ export function PageHero({
   image: string;
   imageAlt: string;
   crumbs?: Crumb[];
+  /**
+   * Replaces the drifting photograph with something else behind the tint.
+   *
+   * `image` and `imageAlt` stay required either way: a backdrop is decoration
+   * and carries no alt text, so the page still has to name a photograph for
+   * the metadata and for the no-script case. One page uses this — see
+   * `app/case-study/page.tsx` — and it should stay that way. A masthead that
+   * differs per page stops being a masthead.
+   */
+  backdrop?: ReactNode;
 }) {
   return (
     <section
       data-site-hero
       className="relative isolate overflow-hidden bg-paper-deep"
     >
-      <Parallax speed={100} className="absolute inset-x-0 -z-10">
-        <Media
-          src={image}
-          alt={imageAlt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-      </Parallax>
+      {backdrop ? (
+        <div className="absolute inset-0 -z-10">{backdrop}</div>
+      ) : (
+        <Parallax speed={100} className="absolute inset-x-0 -z-10">
+          <Media
+            src={image}
+            alt={imageAlt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        </Parallax>
+      )}
       {/* Shared with the home hero; see `.masthead-tint` in globals.css. */}
       <div className="masthead-tint absolute inset-0 -z-10" aria-hidden="true" />
 

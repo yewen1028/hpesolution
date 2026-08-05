@@ -27,11 +27,15 @@ export function BackToTop() {
     const el = ref.current;
     if (!el) return;
 
+    // Guarded: this runs on every scroll frame, and writing an attribute even
+    // to the value it already holds invalidates style for the element.
+    let shown: boolean | null = null;
+
     const update = () => {
-      el.toggleAttribute(
-        "data-shown",
-        window.scrollY > window.innerHeight * SHOW_AFTER,
-      );
+      const next = window.scrollY > window.innerHeight * SHOW_AFTER;
+      if (next === shown) return;
+      shown = next;
+      el.toggleAttribute("data-shown", next);
     };
 
     update();

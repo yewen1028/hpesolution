@@ -43,6 +43,14 @@ export function ScrollTheme({
       return;
     }
 
+    /*
+     * Guarded, because the clamp means this spends most of the page pinned at
+     * 0 or 1 — and re-writing the same value still invalidates style for this
+     * band and everything inside it, on every scroll frame, forever. The band
+     * directly above the coverage section is exactly where that was being paid.
+     */
+    let last = "";
+
     const update = () => {
       const rect = el.getBoundingClientRect();
       const viewportH = window.innerHeight;
@@ -54,7 +62,10 @@ export function ScrollTheme({
       const travelled = viewportH - rect.top;
       const progress = Math.min(1, Math.max(0, travelled / distance));
 
-      el.style.setProperty("--theme-progress", progress.toFixed(4));
+      const next = progress.toFixed(4);
+      if (next === last) return;
+      last = next;
+      el.style.setProperty("--theme-progress", next);
     };
 
     update();

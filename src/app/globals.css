@@ -4801,3 +4801,92 @@ html[data-motion="reduced"] .stat-parallax {
 html[data-motion="reduced"] .scroll-shutter {
   clip-path: none;
 }
+
+/* --- Diagonal marquee field ------------------------------------------------- */
+
+/*
+ * The backdrop behind the case-study masthead. Keyframes live here rather than
+ * in a `<style>` tag injected per mount, which is how the component ships.
+ *
+ * The field is oversized and tilted, so it must be clipped by whatever it sits
+ * in — `PageHero` is already `overflow-hidden`, which is the only reason a
+ * 200vw rotated block is safe here.
+ */
+.marquee-field {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.marquee-field__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 200vw;
+  /*
+   * Two transforms on one element: the tilt is constant, the drift comes from
+   * the scroll loop. Order matters — translate first, then rotate, or the
+   * drift would travel along the tilted axis and slide the field sideways.
+   */
+  transform: translate3d(0, var(--marquee-y, 0px), 0)
+    rotate(var(--marquee-angle, -14deg));
+  will-change: transform;
+}
+
+.marquee-row {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-row__track {
+  display: flex;
+  flex-shrink: 0;
+  animation: marquee-field-left var(--speed, 150s) linear infinite;
+}
+
+.marquee-row__track--reverse {
+  animation-name: marquee-field-right;
+}
+
+@keyframes marquee-field-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-field-right {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/*
+ * Square corners and a hairline, not the component's `rounded-xl shadow-2xl`.
+ * The rule is white at 10% because this field only ever sits under the
+ * masthead tint, which is near-black.
+ */
+.marquee-card {
+  flex-shrink: 0;
+  width: 15rem;
+  height: 10rem;
+  margin-right: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+html[data-motion="reduced"] .marquee-row__track {
+  animation: none;
+}
+
+html[data-motion="reduced"] .marquee-field__rows {
+  transform: rotate(var(--marquee-angle, -14deg));
+}

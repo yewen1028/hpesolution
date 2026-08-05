@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Media } from "@/components/media";
 import { CaseRow } from "@/components/case-row";
+import DiagonalMarquee from "@/components/ui/diagonal-marquee";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { FolderOpen } from "lucide-react";
@@ -21,6 +22,28 @@ const disciplines = [
   "Project Management & Deployment",
 ] as const;
 
+/*
+ * The masthead backdrop. Nine stills, every one of them already in
+ * `public/media` and already checked by eye against the section it serves —
+ * these are the pairings recorded in `services` and used on the service pages,
+ * reused here rather than a fresh set sourced blind.
+ *
+ * The `title` is for the component's own API; the field is `aria-hidden`, so
+ * none of it is announced. The photographs that carry alt text on this page are
+ * the ones in the case rows below.
+ */
+const MARQUEE_CARDS = [
+  { id: 1, url: "/media/svc-managed-services.jpg", title: "Managed services" },
+  { id: 2, url: "/media/svc-project-deployment.jpg", title: "Deployment" },
+  { id: 3, url: "/media/svc-helpdesk.jpg", title: "Helpdesk" },
+  { id: 4, url: "/media/svc-staffing.jpg", title: "Staffing" },
+  { id: 5, url: "/media/svc-warranty.jpg", title: "Warranty" },
+  { id: 6, url: "/media/svc-sourcing.jpg", title: "Sourcing" },
+  { id: 7, url: "/media/svc-value-added.jpg", title: "Value added" },
+  { id: 8, url: "/media/band-network-rack.jpg", title: "Network" },
+  { id: 9, url: "/media/contact-support.jpg", title: "Datacentre" },
+];
+
 export default function CaseStudyPage() {
   return (
     <>
@@ -31,6 +54,17 @@ export default function CaseStudyPage() {
         image="/media/case-telco.jpg"
         imageAlt="Engineers working on rooftop cellular antenna equipment"
         crumbs={[{ label: "Case Study" }]}
+        /*
+          A contact sheet of the work, drifting behind the masthead.
+
+          Deliberately **not** the eight case photographs: every one of those
+          appears in a row further down this page, and a hero that previews the
+          page it sits on is a page that says everything twice. These are the
+          service stills instead — engineers at racks, a helpdesk desk, a memory
+          module going into a chassis — which are the same work seen from the
+          other side, and none of them appears anywhere else on this page.
+        */
+        backdrop={<DiagonalMarquee cards={MARQUEE_CARDS} />}
       />
 
       {disciplines.map((discipline, di) => {

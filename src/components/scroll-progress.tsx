@@ -22,19 +22,49 @@ export function ScrollProgress() {
     const el = ref.current;
     if (!el) return;
 
-    const update = () => {
-      const doc = document.documentElement;
-      // Total distance the page can actually travel.
-      const span = doc.scrollHeight - window.innerHeight;
-      const progress = span <= 0 ? 0 : Math.min(1, Math.max(0, window.scrollY / span));
+    /*
+     * `scrollHeight` is measured on resize, never on scroll.
+     *
+     * Reading it forces a layout of the whole document, and this ran on every
+     * scroll frame — on a loop that is *not* the one the parallax layers use.
+     * So each frame went: parallax loop writes its transforms, this reads
+     * `scrollHeight`, and the browser has to re-lay-out the entire page to
+     * answer. The more scroll-linked layers on screen the more that costs,
+     * which is why it showed up as a stutter in the heaviest bands rather than
+     * evenly. The page's height does not change while you scroll; a
+     * `ResizeObserver` catches the times it does.
+     */
+    let span = 0;
 
-      el.style.setProperty("--scroll-progress", progress.toFixed(4));
-      // Hidden until the page is long enough to be worth tracking.
+    const measure = () => {
+      span = document.documentElement.scrollHeight - window.innerHeight;
       el.toggleAttribute("data-idle", span < 400);
     };
 
+    measure();
+    const sized = new ResizeObserver(measure);
+    sized.observe(document.body);
+
+    // Only the value actually changes per frame, and only when it differs:
+    // writing an identical custom property still invalidates style.
+    let last = "";
+
+    const update = () => {
+      const progress =
+        span <= 0 ? 0 : Math.min(1, Math.max(0, window.scrollY / span));
+      const next = progress.toFixed(4);
+      if (next === last) return;
+      last = next;
+      el.style.setProperty("--scroll-progress", next);
+    };
+
     update();
-    return onScrollFrame(update);
+    const offScroll = onScrollFrame(update);
+
+    return () => {
+      offScroll();
+      sized.disconnect();
+    };
   }, []);
 
   return (
