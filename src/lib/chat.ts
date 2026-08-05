@@ -174,7 +174,7 @@ const INTENTS: Intent[] = [
           .map((r) => `${r.centres.length} in ${r.name}`)
           .join("; ")}.`,
         `Head office is at ${contact.addressLines.join(", ")}.`,
-        `${engineerStat?.value ?? 70} full-time engineers are deployed from those centres, so an onsite dispatch is not a subcontractor.`,
+        `${engineerStat?.value ?? 70} full-time engineers are deployed from those centres, so an onsite dispatch is not a subcontractor. The phone helpdesk and nationwide service and support both run 24 × 7.`,
       ],
       links: [
         { label: "Coverage map", href: "/service-centre/map" },
@@ -354,10 +354,16 @@ const INTENTS: Intent[] = [
     ],
     reply: () => ({
       body: [
-        "The office runs standard business hours, and contracted support follows your tier rather than the office — Elite is 24 × 7.",
-        `Anything urgent outside hours goes to ${supportEmail} or ${contact.phoneDisplay}.`,
+        // hpe.com.my advertises a 24 × 7 phone helpdesk and 24 × 7 nationwide
+        // service and support on its service-centre page. Saying "standard
+        // business hours" here contradicted the company's own headline claim.
+        "The phone helpdesk runs 24 × 7, and service and support is 24 × 7 nationwide.",
+        `What that means contractually depends on your tier — Elite is 24 × 7, the others are 8 × 5. ${contact.phoneDisplay} reaches the helpdesk, ${supportEmail} the support mailbox.`,
       ],
-      links: [{ label: "Contact", href: "/contact" }],
+      links: [
+        { label: "Contact", href: "/contact" },
+        { label: "Coverage map", href: "/service-centre/map" },
+      ],
       suggestions: [{ label: "Response times", intent: "sla" }],
     }),
   },

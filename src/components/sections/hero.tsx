@@ -1,7 +1,7 @@
 import { Media } from "@/components/media";
 import { Parallax } from "@/components/parallax";
 import { Reveal } from "@/components/reveal";
-import { AnimatedText } from "@/components/animated-text";
+import { GradientShimmer } from "@/components/ui/gradient-shimmer";
 import { Magnetic } from "@/components/magnetic";
 import { ButtonLink, Container } from "@/components/ui";
 import { stats } from "@/lib/site";
@@ -36,17 +36,45 @@ export function Hero() {
           </Reveal>
 
           {/*
-            Not wrapped in <Reveal>: AnimatedText carries its own observer, and
-            fading the block in while the words also stagger reads as two
-            competing animations on the first thing the visitor sees.
+            The h1 carries the gradient shimmer instead of AnimatedText's
+            per-word stagger — the two cannot share this element. AnimatedText
+            renders a span per word and the shimmer clips one gradient to the
+            whole heading, so running both would mean a background sweeping
+            across glyphs that are themselves still moving.
+
+            Which to keep follows the reasoning the old comment already set out:
+            one effect on the first thing the visitor sees. The stagger played
+            once on arrival and was then over; the shimmer keeps the brand mark
+            moving across the headline for as long as the hero is in view, which
+            is the more useful of the two on a masthead.
+
+            `Reveal` supplies the arrival the stagger used to. It is safe to
+            wrap now for the same reason it was not before: the shimmer has no
+            entrance animation of its own to compete with.
+
+            Restoring the old behaviour is a straight swap back to
+            <AnimatedText> with the same text — nothing else here depends on it.
           */}
-          <AnimatedText
-            as="h1"
-            text={"Malaysia's established\nIT support service provider."}
-            className="display-1 mt-7 text-white"
-            delay={80}
-            stagger={48}
-          />
+          <Reveal>
+            <GradientShimmer
+              as="h1"
+              gradient="hpe"
+              /*
+                Slower and rarer than the component's defaults. At the
+                component's 1.45s/1s a display-size heading glitters
+                continuously, which reads as a cheap effect on a B2B masthead;
+                a near-4s rest between passes makes it an occasional highlight
+                crossing the line instead.
+              */
+              duration={1.9}
+              pauseBetween={3800}
+              /* `whitespace-pre-line` keeps the authored line break — the
+                 shimmer takes a plain string, where AnimatedText split it. */
+              className="display-1 mt-7 whitespace-pre-line text-white"
+            >
+              {"Malaysia's established\nIT support service provider."}
+            </GradientShimmer>
+          </Reveal>
 
           <Reveal delay={160}>
             <p className="lede mt-8 max-w-2xl text-white/72">

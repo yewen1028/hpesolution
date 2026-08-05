@@ -31,6 +31,7 @@ export function FlickeringGrid({
   flickerChance = 0.3,
   color = "#f26f21",
   maxOpacity = 0.3,
+  reveal = false,
   className = "",
 }: {
   /** Cell edge in CSS pixels. */
@@ -43,6 +44,21 @@ export function FlickeringGrid({
   color?: string;
   /** Ceiling for a cell's opacity. */
   maxOpacity?: number;
+  /**
+   * Switch the field on outward from the centre the first time it scrolls into
+   * view, instead of arriving already lit.
+   *
+   * This is the one idea worth keeping from the WebGL dot-matrix background it
+   * was added for: that shader's whole signature is `dist_from_center * 0.01 +
+   * random * 0.15`, cells lighting in a ragged ring travelling outward, each
+   * overshooting slightly as it lands. Reproduced here in the 2D loop that was
+   * already running — see the note in `sections/contact-cta.tsx` for why the
+   * shader itself did not come with it.
+   *
+   * Off under reduced motion, like every other arrival on this site: the field
+   * is simply already there.
+   */
+  reveal?: boolean;
   className?: string;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -96,6 +112,25 @@ export function FlickeringGrid({
     let squares = new Float32Array(0);
     let dpr = 1;
 
+    /*
+     * Per-cell switch-on time in seconds, and how far `progress` has to travel
+     * before the last of them is lit. `progress` only advances inside `tick`,
+     * which only runs while the band is on screen — so the arrival plays when
+     * the visitor reaches the section, not while it is still below the fold.
+     *
+     * `Infinity` means "already arrived": no reveal requested, or reduced
+     * motion, where the settled state is the whole state.
+     */
+    let revealAt = new Float32Array(0);
+    let revealEnd = 0;
+    let progress = reveal && !still ? 0 : Number.POSITIVE_INFINITY;
+    /** Seconds of travel per cell of distance from the centre. */
+    const REVEAL_SPREAD = 0.016;
+    /** Random spray, so the front edge is ragged rather than a clean ring. */
+    const REVEAL_JITTER = 0.32;
+    /** How long a cell burns brighter than its resting value after landing. */
+    const REVEAL_FLARE_S = 0.14;
+
     function resize() {
       const { width, height } = parent!.getBoundingClientRect();
       if (width === 0 || height === 0) return;
@@ -117,6 +152,23 @@ export function FlickeringGrid({
         // texture.
         squares[i] = still ? maxOpacity * 0.55 : Math.random() * maxOpacity;
       }
+
+      revealAt = new Float32Array(cols * rows);
+      revealEnd = 0;
+      if (reveal) {
+        const cx = cols / 2;
+        const cy = rows / 2;
+        for (let x = 0; x < cols; x++) {
+          for (let y = 0; y < rows; y++) {
+            const at =
+              Math.hypot(x - cx, y - cy) * REVEAL_SPREAD +
+              Math.random() * REVEAL_JITTER;
+            revealAt[x * rows + y] = at;
+            if (at > revealEnd) revealEnd = at;
+          }
+        }
+      }
+
       draw();
     }
 
@@ -127,7 +179,19 @@ export function FlickeringGrid({
 
       for (let x = 0; x < cols; x++) {
         for (let y = 0; y < rows; y++) {
-          const opacity = squares[x * rows + y];
+          const i = x * rows + y;
+          let opacity = squares[i];
+
+          if (progress !== Number.POSITIVE_INFINITY) {
+            const at = revealAt[i];
+            // Not lit yet.
+            if (progress < at) continue;
+            // Just landed: burn a little brighter, then settle. This is the
+            // shader's 1.25x clamp, which is what stops the arrival reading as
+            // cells merely fading up.
+            if (progress < at + REVEAL_FLARE_S) opacity = Math.min(1, opacity * 1.3);
+          }
+
           if (opacity <= 0.01) continue;
           context!.fillStyle = `rgba(${rgb},${opacity})`;
           context!.fillRect(x * step, y * step, size, size);
@@ -161,6 +225,18 @@ export function FlickeringGrid({
           changed = true;
         }
       }
+
+      // While the field is still arriving every frame changes something, even
+      // when no cell happened to reroll. Past the last switch-on the gate is
+      // retired outright, so the steady state costs exactly what it did before.
+      if (progress !== Number.POSITIVE_INFINITY) {
+        progress += delta;
+        changed = true;
+        if (progress > revealEnd + REVEAL_FLARE_S) {
+          progress = Number.POSITIVE_INFINITY;
+        }
+      }
+
       if (changed) draw();
     }
 
@@ -189,7 +265,7 @@ export function FlickeringGrid({
       sized.disconnect();
       seen.disconnect();
     };
-  }, [squareSize, gridGap, flickerChance, color, maxOpacity]);
+  }, [squareSize, gridGap, flickerChance, color, maxOpacity, reveal]);
 
   return (
     <canvas

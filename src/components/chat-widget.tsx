@@ -268,6 +268,7 @@ export function ChatWidget() {
           <span className="chat-panel__id">
             <strong>{company.name}</strong>
             <span className="chat-panel__status">
+              <span className="chat-panel__live" aria-hidden="true" />
               Assistant · replies instantly
             </span>
           </span>
@@ -297,58 +298,82 @@ export function ChatWidget() {
                 {message.text}
               </p>
             ) : (
-              <div key={message.id} className="chat-msg chat-msg--bot">
-                {message.reply.body.map((paragraph, i) => (
-                  <p key={i} className="chat-msg__p">
-                    {paragraph}
-                  </p>
-                ))}
-                {message.reply.links && (
-                  <div className="chat-msg__links">
-                    {message.reply.links.map((link) =>
-                      link.href.startsWith("/") ? (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          className="chat-link"
-                          onClick={() => setOpen(false)}
-                        >
-                          {link.label}
-                          <ArrowRight
-                            size={13}
-                            strokeWidth={2.25}
-                            aria-hidden="true"
-                          />
-                        </Link>
-                      ) : (
-                        <a key={link.href} href={link.href} className="chat-link">
-                          {link.label}
-                          <ArrowRight
-                            size={13}
-                            strokeWidth={2.25}
-                            aria-hidden="true"
-                          />
-                        </a>
-                      ),
-                    )}
-                  </div>
-                )}
+              /*
+                Avatar outside the bubble, in the gutter — the one idea worth
+                taking from 21st.dev's chat components. It gives the assistant
+                a fixed left edge to speak from, so a run of bot turns reads as
+                one voice rather than as a stack of unattributed boxes. Drawn
+                as the site's bordered glyph, not their rounded avatar.
+              */
+              <div key={message.id} className="chat-turn">
+                <span className="chat-turn__avatar" aria-hidden="true">
+                  <Headset size={14} strokeWidth={1.75} />
+                </span>
+                <div className="chat-msg chat-msg--bot">
+                  {message.reply.body.map((paragraph, i) => (
+                    <p key={i} className="chat-msg__p">
+                      {paragraph}
+                    </p>
+                  ))}
+                  {message.reply.links && (
+                    <div className="chat-msg__links">
+                      {message.reply.links.map((link) =>
+                        link.href.startsWith("/") ? (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            className="chat-link"
+                            onClick={() => setOpen(false)}
+                          >
+                            {link.label}
+                            <ArrowRight
+                              size={13}
+                              strokeWidth={2.25}
+                              aria-hidden="true"
+                            />
+                          </Link>
+                        ) : (
+                          <a
+                            key={link.href}
+                            href={link.href}
+                            className="chat-link"
+                          >
+                            {link.label}
+                            <ArrowRight
+                              size={13}
+                              strokeWidth={2.25}
+                              aria-hidden="true"
+                            />
+                          </a>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             ),
           )}
 
           {typing && (
-            <p className="chat-msg chat-msg--bot chat-typing">
-              <span className="sr-only">Typing</span>
-              <span className="chat-typing__dot" aria-hidden="true" />
-              <span className="chat-typing__dot" aria-hidden="true" />
-              <span className="chat-typing__dot" aria-hidden="true" />
-            </p>
+            <div className="chat-turn">
+              <span className="chat-turn__avatar" aria-hidden="true">
+                <Headset size={14} strokeWidth={1.75} />
+              </span>
+              <p className="chat-msg chat-msg--bot chat-typing">
+                <span className="sr-only">Typing</span>
+                <span className="chat-typing__dot" aria-hidden="true" />
+                <span className="chat-typing__dot" aria-hidden="true" />
+                <span className="chat-typing__dot" aria-hidden="true" />
+              </p>
+            </div>
           )}
         </div>
 
         {lastBot?.from === "bot" && lastBot.reply.suggestions && (
           <div className="chat-chips">
+            {/* Names the row rather than leaving four loose buttons under the
+                conversation. Same uppercase micro-label the pages use. */}
+            <span className="chat-chips__label">Suggested</span>
             {lastBot.reply.suggestions.map((s) => (
               <button
                 key={s.intent}

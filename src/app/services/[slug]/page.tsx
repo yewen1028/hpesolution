@@ -5,6 +5,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { ContactCta } from "@/components/sections/contact-cta";
+import { ServiceBand } from "@/components/sections/service-band";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
 import { SectionNav } from "@/components/section-nav";
 import { ScrollTimeline } from "@/components/scroll-timeline";
@@ -205,6 +206,13 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
           </Container>
         </section>
       )}
+
+      {/*
+        The page's one parallax figure below the hero. Which figure and which
+        photograph is per service, in `site.ts`; the slot is the same on every
+        page so the seven differ in what they show, not in how they are built.
+      */}
+      {service.band && <ServiceBand band={service.band} />}
 
       {/* Benefits */}
       <section id="benefits" className="scroll-mt-28 border-t border-rule bg-paper-warm py-24 sm:py-32">

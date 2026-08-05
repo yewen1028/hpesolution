@@ -1,4 +1,5 @@
 import { Mail, MapPin, Phone } from "lucide-react";
+import { FlickeringGrid } from "@/components/flickering-grid";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink, Container } from "@/components/ui";
 import { Typewriter } from "@/components/typewriter";
@@ -26,7 +27,39 @@ const sectorPhrases = Array.from(
  */
 export function ContactCta() {
   return (
-    <section className="border-t border-rule py-28 sm:py-40">
+    <section className="relative isolate overflow-hidden border-t border-rule py-28 sm:py-40">
+      {/*
+        The dot field from the WebGL background this was asked for, run on the
+        canvas grid the site already had rather than the shader.
+        `sections/services-grid.tsx` has the other instance; this one differs in
+        three ways, each of them the design system talking:
+
+        - **Ink, not brand orange.** That comment two sections up is explicit —
+          a moving orange field belongs on a near-black panel, where it reads as
+          the accent the system allows. This band is warm white, and orange at
+          any usable opacity here would be a wash, which is the one thing the
+          brand colour may never be. `--color-ink` also inverts with the theme,
+          so the field is dark-on-light and light-on-dark for free.
+        - **A tenth of the opacity.** It is texture under a call to action, not
+          a feature of it. Nothing here may compete with the two buttons.
+        - **`reveal`** — it switches on outward from the centre as the band
+          arrives, which is the shader's actual signature and the only part of
+          it worth carrying over.
+
+        Masked to fade out downward, so the field is strongest against the
+        hairline it hangs from and gone by the time it reaches the contact
+        details.
+      */}
+      <FlickeringGrid
+        className="-z-10 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
+        squareSize={2}
+        gridGap={9}
+        flickerChance={0.16}
+        color="var(--color-ink)"
+        maxOpacity={0.07}
+        reveal
+      />
+
       <Container>
         <div className="grid gap-14 lg:grid-cols-[1.15fr_1fr] lg:gap-24">
           <Reveal>

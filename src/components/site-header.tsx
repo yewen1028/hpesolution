@@ -4,7 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowRight, ChevronDown, Menu, Phone, X } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  Menu,
+  Phone,
+  X,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MotionToggle } from "@/components/motion-toggle";
 import { ServiceIcon } from "@/components/service-icon";
@@ -110,6 +117,23 @@ export function SiteHeader() {
           : "border-transparent bg-paper"
       }`}
     >
+      {/*
+        Steps the page back while the flyout is open, so the panel reads as the
+        layer in focus rather than a box floating on a fully lit page.
+
+        **Outside the <li> that `servicesRef` points at, deliberately.** The
+        dismiss handler closes the menu when a pointerdown lands outside that
+        ref; with the scrim inside it, every click on the dimmed page would have
+        counted as a click inside the menu and the thing would not shut. Out
+        here it is ordinary outside-click territory and needs no handler of its
+        own.
+
+        Still inside <header>, so it inherits the header's stacking context and
+        can never cover the bar — and it starts at `--header-h` for the same
+        reason.
+      */}
+      {servicesOpen && <div className="svc-scrim" aria-hidden="true" />}
+
       <div className="mx-auto flex h-full max-w-[88rem] items-center gap-6 px-5 sm:px-8">
         {/*
           `flex items-center` rather than the default inline box: an <img> in
@@ -140,7 +164,17 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Main" className="ml-auto hidden lg:block">
-          <ul className="flex items-center gap-1">
+          {/*
+            `relative` here rather than on the Services <li>, so the flyout
+            hangs off the **nav's** right edge instead of the trigger's. The
+            trigger sits fourth from the left of six, so a panel this wide
+            anchored to it would hang off the left of the viewport at the
+            narrow end of `lg`. The panel stays inside the <li> in the DOM —
+            `position` resolves against the nearest positioned ancestor, while
+            the outside-click check walks the DOM tree — so `servicesRef`
+            still contains it and dismissal is unaffected.
+          */}
+          <ul className="relative flex items-center gap-1">
             {navigation.map((item) => {
               if (item.href !== "/services") {
                 return (
@@ -169,7 +203,7 @@ export function SiteHeader() {
               }
 
               return (
-                <li key={item.href} ref={servicesRef} className="relative">
+                <li key={item.href} ref={servicesRef}>
                   <button
                     type="button"
                     onClick={() => setServicesOpen((v) => !v)}
@@ -177,6 +211,7 @@ export function SiteHeader() {
                     aria-controls="services-menu"
                     data-ripple=""
                     data-active={isActive(item.href) ? "" : undefined}
+                    data-open={servicesOpen ? "" : undefined}
                     className={`nav-link flex items-center gap-1.5 rounded px-3.5 py-2 text-[0.9rem] font-medium transition-colors ${
                       isActive(item.href)
                         ? "text-ink"
@@ -207,51 +242,120 @@ export function SiteHeader() {
                   {servicesOpen && (
                     <div
                       id="services-menu"
-                      className="svc-menu absolute right-0 top-[calc(100%+0.75rem)] w-[27rem] border border-rule bg-paper p-2 shadow-[0_24px_60px_-24px_rgb(20_24_29/0.28)]"
+                      /* Steps up only once there is room for it to. */
+                      className="svc-menu absolute right-0 top-[calc(100%+0.75rem)] z-10 w-[34rem] max-w-[calc(100vw-2.5rem)] border border-rule bg-paper shadow-[0_28px_70px_-28px_rgb(20_24_29/0.34)] xl:w-[40rem]"
                     >
-                      <Link
-                        href="/services"
+                      {/*
+                        A titled strip rather than a bare list edge: the panel
+                        is wide enough now to read as a section of the site, so
+                        it gets the same eyebrow marker a section would.
+                      */}
+                      <div
                         style={{ "--i": 0 } as CSSProperties}
-                        data-ripple=""
-                        className="svc-menu__item group flex items-center justify-between gap-3 px-4 py-3 text-[0.9rem] font-semibold text-ink transition-colors hover:bg-paper-warm"
+                        className="svc-menu__item flex items-center justify-between border-b border-rule px-5 py-3"
                       >
-                        All services
-                        <ArrowRight
-                          size={14}
-                          strokeWidth={2.25}
-                          aria-hidden="true"
-                          className="text-brand transition-transform duration-300 group-hover:translate-x-1"
-                        />
-                      </Link>
+                        <span className="eyebrow">Services</span>
+                        <span className="text-[0.75rem] text-ink-muted">
+                          {services.length} service lines
+                        </span>
+                      </div>
 
-                      <div className="my-1 h-px bg-rule" />
+                      {/*
+                        Hairlines by `gap-px` over a ruled background, not the
+                        container-supplies-top-left rule the page grids use:
+                        inside a panel that already has its own border, that
+                        pattern doubles the frame down the right edge and along
+                        the bottom. This draws the internal lines only.
 
-                      {services.map((service, i) => (
-                        <Link
-                          key={service.slug}
-                          href={`/services/${service.slug}`}
-                          style={{ "--i": i + 1 } as CSSProperties}
-                          data-ripple=""
-                          className="svc-menu__item group flex items-start gap-3.5 px-4 py-2.5 transition-colors hover:bg-paper-warm"
-                        >
-                          {/*
-                            The same bordered glyph the services grid uses, at
-                            two thirds the size. The menu and the grid are two
-                            views of one list and should look like it.
-                          */}
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
-                            <ServiceIcon name={service.icon} size={15} />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[0.9rem] font-medium text-ink">
-                              {service.title}
+                        Seven services plus the closing panel fill four rows of
+                        two exactly — the same "fill a ragged row" move as
+                        `sections/services-grid.tsx`.
+                      */}
+                      <ul className="grid grid-cols-2 gap-px bg-rule">
+                        {services.map((service, i) => {
+                          const href = `/services/${service.slug}`;
+                          const current = pathname === href;
+
+                          return (
+                            <li key={service.slug} className="bg-paper">
+                              <Link
+                                href={href}
+                                aria-current={current ? "page" : undefined}
+                                data-current={current ? "" : undefined}
+                                style={{ "--i": i + 1 } as CSSProperties}
+                                data-ripple=""
+                                /*
+                                  The same cursor wash the services grid cards
+                                  use — one delegated pointermove listener in
+                                  `spotlight.tsx` writes --spot-x/--spot-y, and
+                                  `[data-spotlight]::before` draws from them.
+                                  Scoped down to a 9rem circle for a cell this
+                                  size in globals.css; the current-page rule
+                                  moved to `::after` so the two can coexist.
+                                */
+                                data-spotlight=""
+                                className="svc-menu__item svc-menu__cell group flex h-full items-start gap-3 p-4 transition-colors duration-300 hover:bg-paper-warm"
+                              >
+                                {/*
+                                  The same bordered glyph the services grid
+                                  uses, at two thirds the size. The menu and the
+                                  grid are two views of one list and should look
+                                  like it.
+                                */}
+                                <span className="svc-menu__glyph mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+                                  <ServiceIcon name={service.icon} size={15} />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-[0.875rem] font-medium leading-snug text-ink">
+                                    {service.title}
+                                  </span>
+                                  <span className="mt-1 block text-[0.775rem] leading-snug text-ink-muted">
+                                    {service.short}
+                                  </span>
+                                </span>
+                                {/*
+                                  Arrives on hover rather than sitting there:
+                                  seven permanent arrows would be seven marks
+                                  competing with the one that says where you
+                                  are.
+                                */}
+                                <ArrowUpRight
+                                  size={14}
+                                  strokeWidth={2.25}
+                                  aria-hidden="true"
+                                  className="mt-0.5 shrink-0 -translate-x-1 text-brand opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                                />
+                              </Link>
+                            </li>
+                          );
+                        })}
+
+                        <li className="bg-paper">
+                          <Link
+                            href="/services"
+                            style={
+                              {
+                                "--i": services.length + 1,
+                              } as CSSProperties
+                            }
+                            data-ripple=""
+                            className="svc-menu__item group flex h-full flex-col justify-between gap-4 bg-paper-warm p-4 transition-colors duration-300 hover:bg-brand-tint"
+                          >
+                            <span className="text-[0.875rem] font-semibold text-ink">
+                              All services
                             </span>
-                            <span className="mt-0.5 block text-[0.8rem] leading-snug text-ink-muted">
-                              {service.short}
+                            <span className="flex items-center gap-2 text-[0.775rem] text-ink-muted">
+                              The full list, with what each one covers
+                              <ArrowRight
+                                size={14}
+                                strokeWidth={2.25}
+                                aria-hidden="true"
+                                className="shrink-0 text-brand transition-transform duration-300 group-hover:translate-x-1"
+                              />
                             </span>
-                          </span>
-                        </Link>
-                      ))}
+                          </Link>
+                        </li>
+                      </ul>
                     </div>
                   )}
                 </li>
@@ -310,18 +414,35 @@ export function SiteHeader() {
                     {item.label}
                   </Link>
                   {item.href === "/services" && (
-                    <ul className="-mt-1 mb-4 space-y-1 border-l-2 border-brand pl-4">
-                      {services.map((service) => (
-                        <li key={service.slug}>
-                          <Link
-                            href={`/services/${service.slug}`}
-                            data-ripple=""
-                            className="block py-1.5 text-[0.95rem] text-ink-soft"
-                          >
-                            {service.title}
-                          </Link>
-                        </li>
-                      ))}
+                    /*
+                      The same list as the desktop flyout, so it carries the
+                      same two marks: the service's glyph, and the current page
+                      called out rather than left for the visitor to work out.
+                      Laid out as rows instead of a grid — at this width a
+                      second column would be two cramped columns.
+                    */
+                    <ul className="-mt-1 mb-4 border-l border-rule">
+                      {services.map((service) => {
+                        const href = `/services/${service.slug}`;
+                        const current = pathname === href;
+
+                        return (
+                          <li key={service.slug}>
+                            <Link
+                              href={href}
+                              aria-current={current ? "page" : undefined}
+                              data-current={current ? "" : undefined}
+                              data-ripple=""
+                              className="svc-menu__cell flex items-center gap-3 py-2.5 pl-4 text-[0.95rem] text-ink-soft"
+                            >
+                              <span className="svc-menu__glyph flex h-7 w-7 shrink-0 items-center justify-center border border-rule text-brand">
+                                <ServiceIcon name={service.icon} size={13} />
+                              </span>
+                              {service.title}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </li>

@@ -1372,9 +1372,10 @@ html[data-motion="reduced"] {
 
 .svc-menu__item {
   /*
-   * Stagger by cascade, off the `--i` each row carries. Eight rows, 42ms
-   * apart, starting once the panel is most of the way open. No timers, and the
-   * sequence cannot drift out of step with the panel that frames it.
+   * Stagger by cascade, off the `--i` each cell carries — the title strip, the
+   * seven services and the closing panel, 42ms apart, starting once the panel
+   * is most of the way open. No timers, and the sequence cannot drift out of
+   * step with the panel that frames it.
    */
   animation: svc-menu-item-in 420ms var(--ease-out-quint) backwards;
   animation-delay: calc(90ms + var(--i, 0) * 42ms);
@@ -1396,6 +1397,137 @@ html[data-motion="reduced"] {
 html[data-motion="reduced"] {
   .svc-menu,
   .svc-menu__item {
+    animation: none;
+  }
+}
+
+/* --- Services flyout: frame and cell states -------------------------------- */
+
+/*
+ * The one orange mark on the frame — a rule across the top edge, the same
+ * device the eyebrow uses at the scale of a panel. It sits on the border box,
+ * so it reads as part of the frame rather than as a first row inside it.
+ */
+.svc-menu::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+
+/*
+ * Current page. The flyout is the only navigation that lists the seven
+ * services, so it is the one place that can say which of them you are already
+ * on — a nav that cannot answer that makes you read the seven titles to find
+ * out. The mark is a brand rule down the leading edge, the same figure
+ * `.nav-link[data-active]` uses along the bottom.
+ */
+.svc-menu__cell {
+  position: relative;
+}
+
+/*
+ * `::after`, not `::before` — `::before` belongs to the cursor wash that
+ * `[data-spotlight]` draws, and a cell cannot have two. Putting the rule here
+ * lets one cell carry both: the wash follows the pointer, the rule states which
+ * page you are on.
+ */
+.svc-menu__cell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out-quint);
+}
+
+/* Hover draws the same rule the current page holds open, so pointing at a
+   service rehearses the mark it will keep once you are on it. */
+.svc-menu__cell:hover::after,
+.svc-menu__cell:focus-visible::after,
+.svc-menu__cell[data-current]::after {
+  transform: scaleX(1);
+}
+
+/*
+ * The wash is scoped down here. `[data-spotlight]` draws a 16rem circle, which
+ * is sized for the 20rem-wide cards in the services grid; in a menu cell a
+ * third that height it covers the whole cell at once and stops reading as a
+ * pointer at all. At 9rem it tracks.
+ */
+.svc-menu__cell::before {
+  background: radial-gradient(
+    9rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--color-brand) 14%, transparent),
+    transparent 70%
+  );
+}
+
+.svc-menu__cell[data-current] {
+  background: var(--color-paper-warm);
+}
+
+/* On the current cell the glyph is already filled, so hover has nothing to
+   announce and should not un-fill it. */
+.svc-menu__cell[data-current] .svc-menu__glyph {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #fff;
+}
+
+/* --- Services flyout: page scrim ------------------------------------------- */
+
+/*
+ * The panel used to open over a fully lit page, which is why it read as a box
+ * sitting on top of the site rather than a layer of it. The scrim is what
+ * settles it: everything below the header steps back a stop, so the panel is
+ * simply the thing in focus.
+ *
+ * Anchored to `--header-h` rather than the viewport top, so the bar itself
+ * stays lit and the panel keeps reading as having come out of it.
+ *
+ * The blur is deliberately 2px. A full-viewport `backdrop-filter` is the most
+ * expensive thing on this page, and the machines this site is most often read
+ * on are the low-powered laptops the motion preference exists for; 2px is
+ * enough to push the page out of focus and cheap enough not to drop frames
+ * doing it.
+ */
+.svc-scrim {
+  position: fixed;
+  inset: var(--header-h) 0 0 0;
+  z-index: 0;
+  background: rgb(20 24 29 / 0.22);
+  backdrop-filter: blur(2px);
+  animation: svc-scrim-in 260ms var(--ease-out-quint) backwards;
+}
+
+@keyframes svc-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The trigger holds the brand rule open for as long as the panel is, so the
+   two read as one control rather than a button and a floating sheet. */
+.nav-link[data-open]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+html[data-motion="reduced"] {
+  .svc-menu__cell::after {
+    transition: none;
+  }
+
+  .svc-scrim {
     animation: none;
   }
 }
@@ -3001,13 +3133,20 @@ html[data-motion="reduced"] {
 }
 
 /*
- * The launcher owns the corner, so the back-to-top control stacks above it
- * rather than under it. Both are fixed to the same corner and neither may
- * cover the other.
+ * Back-to-top sits **beside** the launcher, not above it.
+ *
+ * Above was wrong: the space directly over the launcher is where the chat's
+ * floating label lives, so the label covered the arrow — the label is the
+ * wider element and it won, leaving a control the visitor could see but not
+ * click. Moving the arrow to the left of the launcher puts both on the same
+ * baseline and leaves the column above the launcher to the label alone.
+ *
+ * The vertical nudge centres the 2.875rem arrow against the taller launcher,
+ * and is written off `--chat-size` so it survives a change to that token.
  */
 .back-to-top {
-  bottom: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
-  right: var(--chat-edge);
+  right: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
+  bottom: calc(var(--chat-edge) + (var(--chat-size) - 2.875rem) / 2);
 }
 
 /* --- Launcher -------------------------------------------------------------- */
@@ -3714,5 +3853,209 @@ html[data-motion="reduced"] {
 
   .chat-link:hover svg {
     transform: none;
+  }
+}
+
+/* --- Chat panel: frame, depth and the arrival ------------------------------ */
+
+/*
+ * The panel arrives in two rates, the same figure the services flyout uses and
+ * for the same reason (see `.svc-menu`): the frame lands first, and the rows
+ * inside it are still catching up when it has stopped. A panel and its contents
+ * moving as one block is a box appearing; moving at different speeds reads as
+ * depth. That is the whole effect, and it is why the contents are not simply
+ * faded in with the frame.
+ *
+ * The frame keeps its `transition` — it has to animate *out* as well, which a
+ * keyframe animation cannot do from a class being removed. The contents use
+ * animations, which only run while `[data-open]` matches, so nothing plays on
+ * page load while the panel sits hidden.
+ */
+.chat[data-open] :is(
+    .chat-panel__head,
+    .chat-log,
+    .chat-chips,
+    .chat-form,
+    .chat-foot
+  ) {
+  animation: chat-layer-in 520ms var(--ease-out-quint) backwards;
+  /* Starts once the frame is most of the way open, then steps down the panel. */
+  animation-delay: calc(90ms + var(--i, 0) * 60ms);
+}
+
+.chat[data-open] .chat-panel__head {
+  --i: 0;
+}
+.chat[data-open] .chat-log {
+  --i: 1;
+}
+.chat[data-open] .chat-chips {
+  --i: 2;
+}
+.chat[data-open] .chat-form {
+  --i: 3;
+}
+.chat[data-open] .chat-foot {
+  --i: 4;
+}
+
+@keyframes chat-layer-in {
+  from {
+    opacity: 0;
+    /* Further than the frame travelled (12px), and diagonally, so the layers
+       read as sitting behind it rather than printed on it. */
+    transform: translate3d(10px, 18px, 0);
+  }
+}
+
+/*
+ * The offset rule behind the panel. A printed-edge device rather than a second
+ * shadow: the site draws with hairlines, so depth here is a displaced line, not
+ * a blur.
+ *
+ * Drawn with box-shadow rather than an offset pseudo-element at `z-index: -1`.
+ * A negative z-index only paints behind the parent's background while the
+ * parent is *not* a stacking context — and this panel becomes one every time
+ * it opens or closes, because its transform is non-`none` for the length of
+ * the transition. The rule would have flipped from behind the panel to across
+ * its face for 300ms on each open. Two shadows have no such dependency: the
+ * paper fill paints over the rule, leaving exactly the 1px that escapes.
+ */
+.chat-panel {
+  box-shadow:
+    7px 7px 0 0 var(--color-paper),
+    7px 7px 0 1px var(--color-rule),
+    0 30px 70px -28px rgb(20 24 29 / 0.6);
+}
+
+/* The one orange mark on the frame: a rule across the head of the panel. */
+.chat-panel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+
+/* --- Header ---------------------------------------------------------------- */
+
+/* Live dot. Brand orange reads as "attended" without borrowing the green that
+   every other widget uses. */
+.chat-panel__live {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--color-brand);
+  flex-shrink: 0;
+  animation: chat-live 2.6s ease-in-out infinite;
+}
+
+.chat-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@keyframes chat-live {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --- Turns ----------------------------------------------------------------- */
+
+/*
+ * A bot turn is the avatar plus the bubble. The avatar sits in the gutter so
+ * every assistant bubble shares one left edge and a run of them reads as one
+ * voice — the idea taken from 21st.dev's chat components, drawn as this site's
+ * bordered glyph rather than their rounded avatar.
+ */
+.chat-turn {
+  display: flex;
+  align-self: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 94%;
+  animation: chat-msg-in 0.34s var(--ease-out-quint) backwards;
+}
+
+.chat-turn__avatar {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  color: var(--color-brand);
+}
+
+/* Inside a turn the bubble is already width-constrained by the turn itself. */
+.chat-turn .chat-msg--bot {
+  max-width: none;
+  /* The turn carries the entrance; running it on both double-animates. */
+  animation: none;
+}
+
+/* --- Suggested chips ------------------------------------------------------- */
+
+.chat-chips__label {
+  width: 100%;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+/* --- Log scrollbar --------------------------------------------------------- */
+
+/*
+ * A default scrollbar is 15px of system chrome inside a 416px panel and it
+ * lands right next to a hairline border. Thin and inherited from the tokens.
+ */
+.chat-log {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-strong) transparent;
+}
+
+.chat-log::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-log::-webkit-scrollbar-thumb {
+  background: var(--color-rule-strong);
+}
+
+html[data-motion="reduced"] {
+  /* The arrival is the decoration; the panel still opens, it just is open. */
+  .chat[data-open] :is(
+      .chat-panel__head,
+      .chat-log,
+      .chat-chips,
+      .chat-form,
+      .chat-foot
+    ) {
+    animation: none;
+  }
+
+  .chat-turn {
+    animation: none;
+  }
+
+  .chat-panel__live {
+    animation: none;
   }
 }
