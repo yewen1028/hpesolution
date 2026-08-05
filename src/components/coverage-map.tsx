@@ -12,6 +12,7 @@ import type {
 import { MapPin, Network, Globe2 } from "lucide-react";
 import { regions, type Centre } from "@/lib/site";
 import "leaflet/dist/leaflet.css";
+import { prefersReducedMotion } from "@/lib/motion";
 
 type View = "network" | "geo";
 
@@ -134,7 +135,7 @@ export function CoverageMap({ networkMap }: { networkMap: React.ReactNode }) {
   const flyTo = useCallback((centre: Centre) => {
     const map = mapRef.current;
     if (!map) return;
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = prefersReducedMotion();
     // Zoom in only as far as the country view — enough to place the town
     // without throwing away the surrounding coastline.
     map.setView([centre.lat, centre.lng], Math.max(map.getZoom(), 7), {
@@ -151,7 +152,7 @@ export function CoverageMap({ networkMap }: { networkMap: React.ReactNode }) {
       if (cancelled || !holder.current || mapRef.current) return;
       leaflet.current = L;
 
-      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const still = prefersReducedMotion();
 
       // Malaysia is ~19° of longitude, which is only ~430px at zoom 5 — lost
       // inside a container two or three times that wide. Zoom 6 doubles it and

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
 
 /**
  * Press feedback for every `[data-press]` element on the page.
@@ -70,8 +71,19 @@ function spawnRipple(host: HTMLElement, e: PointerEvent) {
 }
 
 export function PressProvider() {
+  /*
+   * This provider sits outside MotionScope in the layout, so it does not get
+   * the remount that page content does. It subscribes instead: the resolved
+   * state is an effect dependency, and a switch re-runs the listener setup.
+   */
+  const reduced = useSyncExternalStore(
+    subscribeMotion,
+    prefersReducedMotion,
+    () => false,
+  );
+
   useEffect(() => {
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = reduced;
     let pressed: HTMLElement | null = null;
 
     const release = () => {
@@ -123,7 +135,7 @@ export function PressProvider() {
       window.removeEventListener("blur", release);
       release();
     };
-  }, []);
+  }, [reduced]);
 
   return null;
 }

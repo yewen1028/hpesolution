@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * Layout effects run after commit but before paint, which is what keeps a
@@ -32,9 +33,7 @@ export const MAP_INTRO_ROUTE = "/service-centre/map";
  */
 function claimIntro() {
   try {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return false;
-    }
+    if (prefersReducedMotion()) return false;
     if (sessionStorage.getItem(MAP_INTRO_FLAG)) return false;
     sessionStorage.setItem(MAP_INTRO_FLAG, "1");
     return true;
@@ -60,7 +59,7 @@ try {
   if (
     location.pathname.replace(/\\/+$/, '') === ${JSON.stringify(MAP_INTRO_ROUTE)} &&
     !sessionStorage.getItem(${JSON.stringify(MAP_INTRO_FLAG)}) &&
-    !matchMedia('(prefers-reduced-motion: reduce)').matches
+    document.documentElement.dataset.motion !== 'reduced'
   ) {
     document.documentElement.classList.add('map-intro-pending');
     sessionStorage.setItem(${JSON.stringify(MAP_INTRO_FLAG)}, '1');

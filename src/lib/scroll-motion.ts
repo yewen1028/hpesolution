@@ -20,12 +20,12 @@ export const easeOutExpo = (t: number) =>
 /** Matches `--ease-out-quint` in globals.css. Type and transforms. */
 export const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5);
 
-export function prefersReducedMotion() {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
+/*
+ * Re-exported, not defined here: the preference is resolved in `lib/motion.ts`,
+ * which layers a visitor override over the OS media query. Importing it from
+ * this module keeps every call site that already reads it unchanged.
+ */
+export { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * A real pointer that can hover — the check every hover effect needs.

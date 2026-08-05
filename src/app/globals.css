@@ -323,8 +323,8 @@
   );
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
+html[data-motion="reduced"] {
+  & {
     scroll-behavior: auto;
   }
 
@@ -517,7 +517,7 @@
  * (it exists to expand and fade), so it has to be pinned back to its start.
  * Arcs already rest fully drawn, so stopping the animation is enough.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .netmap-arc,
   .netmap-ring {
     animation: none;
@@ -651,7 +651,7 @@
 }
 
 /* Nothing here carries meaning that the movement supplies. */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .sc-pin,
   .sc-pin__pulse {
     animation: none;
@@ -810,7 +810,7 @@
  * strip is still moving, so it must stay a clipped single-line track rather
  * than becoming a scrollable row.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .marquee {
     overflow-x: auto;
   }
@@ -1037,7 +1037,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* The finished state is the rendered state; only the arrival is dropped. */
   .split-part {
     opacity: 1;
@@ -1205,7 +1205,7 @@
  * The global reduced-motion block already collapses animation durations, but
  * an explicit rule keeps the intent readable next to the effect it disables.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   [data-page-enter] {
     animation: none;
   }
@@ -1393,7 +1393,7 @@
  * The flyout is navigation, so it may not depend on motion to be usable: with
  * reduced motion it simply is where it is, fully opaque, the moment it opens.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .svc-menu,
   .svc-menu__item {
     animation: none;
@@ -1599,7 +1599,7 @@ textarea.field__input {
   background: var(--color-brand-strong);
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* Each end state is still reachable — only the travel is dropped. */
   .btn-fill::before,
   .nav-link::after,
@@ -1652,7 +1652,7 @@ textarea.field__input {
   transform: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* Fully open, no travel — the resting state is already the complete one. */
   .mask-reveal,
   .mask-reveal:not([data-shown])[data-from="up"],
@@ -1748,7 +1748,7 @@ body:has(.site-header[data-shrunk]) .scroll-progress {
   transition: transform 0.12s linear;
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* Track the scrollbar exactly rather than gliding after it. */
   .scroll-progress__fill {
     transition: none;
@@ -1879,7 +1879,9 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   width: 2.875rem;
   height: 2.875rem;
   background: var(--color-ink);
-  color: #fff;
+  /* Was `#fff`, which made this a white arrow on the off-white the themed
+     `--color-ink` becomes in the dark theme. Same pair as `.chat-fab`. */
+  color: var(--color-paper);
   box-shadow: 0 18px 40px -18px rgb(20 24 29 / 0.55);
 
   /* Exit state. `visibility` is what takes it out of the tab order — the
@@ -1904,6 +1906,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
 
 .back-to-top:hover {
   background: var(--color-brand);
+  color: #fff;
 }
 
 @media (min-width: 1024px) {
@@ -1913,7 +1916,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .back-to-top {
     transition:
       opacity 0.01ms linear,
@@ -1985,7 +1988,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   opacity: calc(0.55 + 0.45 * var(--theme-progress, 1));
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .scroll-theme__tint {
     opacity: 1;
   }
@@ -2121,7 +2124,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * Standard bail-out, unlike `.marquee`. A stopped line of text still reads as a
  * list, so it becomes a scrollable row rather than a clipped one.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .text-marquee {
     overflow-x: auto;
   }
@@ -2166,7 +2169,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   --wght: 780;
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .wght-hover {
     transition: none;
   }
@@ -2227,7 +2230,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * Reduced motion: the shape still has to communicate "content is coming", so
  * the block stays and only the sweep is dropped.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .skeleton {
     animation: none;
     background-image: none;
@@ -2322,7 +2325,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   transition-delay: 0ms !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .theme-transition,
   .theme-transition *,
   .theme-transition *::before,
@@ -2453,7 +2456,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * to be confirmable, so the colour and shadow changes remain and only the
  * transform goes.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   [data-press],
   [data-press][data-pressed],
   [data-press]:active {
@@ -2539,7 +2542,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   background: linear-gradient(270deg, var(--color-paper-warm), transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .partner-card {
     transition: none;
   }
@@ -2596,7 +2599,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * server-rendered phrase stays. The caret would be the only thing moving, so it
  * goes too.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .typewriter::after {
     display: none;
   }
@@ -2649,7 +2652,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * the stroke, slow to land it, which is how a drawn line actually behaves.
  */
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* Belt and braces: DrawIcon returns before arming, but a preference changed
      mid-session must not strand a rewound icon. */
   .draw-icon[data-draw] svg :is(path, line, polyline, polygon, circle, ellipse, rect) {
@@ -2721,7 +2724,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   text-align: center;
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* The number is still correct — only the roll between values is dropped. */
   .odometer__strip {
     transition: none;
@@ -2816,7 +2819,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
  * Reduced motion: every state is still distinguishable — the tick, the green,
  * the spinner's presence — but nothing draws, pops or spins.
  */
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .success-check__ring,
   .success-check__tick {
     stroke-dasharray: none;
@@ -2937,7 +2940,7 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
   color: var(--color-ink-muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   /* Belt and braces: the component returns before arming, but a preference
      changed mid-session must not strand a dimmed, half-drawn timeline. */
   .timeline[data-armed] .timeline__rail-fill {
@@ -2953,5 +2956,710 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
 
   .timeline[data-armed] .timeline__node {
     background: var(--color-brand);
+  }
+}
+
+/* --- Chat assistant ------------------------------------------------------- */
+
+/*
+ * Launcher, floating label and panel. Square-cornered and token-driven like
+ * everything else here — the one rounded thing is the unread dot, which is a
+ * dot.
+ *
+ * The two interaction states are opposite movements on purpose, so neither can
+ * be mistaken for the other:
+ *
+ *   hover  — outward: lifts 3px, grows to 1.06, ink turns brand, and a ring
+ *            expands off the edge on a loop.
+ *   press  — inward: compresses to 0.92 with no lift, and the shared
+ *            `[data-ripple]` wash runs from the point of contact.
+ *
+ * `[data-pressed]` is what makes the press state work on touch, where `:active`
+ * is unreliable; `press.tsx` sets it from Pointer Events.
+ */
+
+:root {
+  --chat-size: 3.25rem;
+  --chat-edge: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --chat-edge: 2rem;
+  }
+}
+
+.chat {
+  position: fixed;
+  right: var(--chat-edge);
+  bottom: var(--chat-edge);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+/*
+ * The launcher owns the corner, so the back-to-top control stacks above it
+ * rather than under it. Both are fixed to the same corner and neither may
+ * cover the other.
+ */
+.back-to-top {
+  bottom: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
+  right: var(--chat-edge);
+}
+
+/* --- Launcher -------------------------------------------------------------- */
+
+.chat-fab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--chat-size);
+  height: var(--chat-size);
+  background: var(--color-ink);
+  /*
+   * `--color-paper`, not `#fff`. Both tokens invert together under
+   * `[data-theme="dark"]`, so the glyph stays opposite its own background:
+   * white on near-black in the light theme, near-black on off-white in the
+   * dark one. Pairing the themed `--color-ink` background with a hardcoded
+   * white glyph is the exact trap `--color-ink-fixed` is documented against —
+   * in the dark theme it painted a white headset on an off-white button.
+   */
+  color: var(--color-paper);
+  box-shadow: 0 18px 40px -18px rgb(20 24 29 / 0.55);
+  transition:
+    transform 0.28s var(--ease-out-quint),
+    background-color 0.25s linear,
+    box-shadow 0.28s var(--ease-out-quint);
+}
+
+/* Outward. */
+.chat-fab:hover {
+  background: var(--color-brand);
+  /* The fill is orange in both themes, so the glyph stops inverting with them
+     and matches the site's white-on-brand CTAs. */
+  color: #fff;
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 24px 50px -18px rgb(242 111 33 / 0.55);
+}
+
+/* Inward — and it must beat the hover rule, which is still matching. */
+.chat-fab[data-pressed],
+.chat-fab:active {
+  transform: scale(0.92);
+  box-shadow: 0 10px 24px -14px rgb(20 24 29 / 0.6);
+  transition-duration: 0.12s;
+}
+
+.chat[data-open] .chat-fab {
+  background: var(--color-brand);
+}
+
+/*
+ * Both glyphs share one grid cell and cross-fade with a quarter turn, so the
+ * headset becomes the close mark rather than being replaced by it.
+ */
+.chat-fab__icon {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 0.24s var(--ease-out-quint),
+    transform 0.32s var(--ease-out-quint);
+}
+
+.chat-fab__icon[data-glyph="open"] {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.7);
+}
+
+.chat[data-open] .chat-fab__icon[data-glyph="rest"] {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.7);
+}
+
+.chat[data-open] .chat-fab__icon[data-glyph="open"] {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+ * The hover ring. Outside the button's own box, so it reads as the button
+ * pushing the space around it rather than as a border appearing.
+ */
+.chat-fab__ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid currentColor;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chat-fab:hover .chat-fab__ring {
+  animation: chat-ring 1.5s var(--ease-out-quint) infinite;
+}
+
+@keyframes chat-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+.chat-fab__dot {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--color-brand);
+  animation: chat-dot 2.4s ease-in-out infinite;
+}
+
+/* On the brand-orange hover state an orange dot would vanish. */
+.chat-fab:hover .chat-fab__dot {
+  background: #fff;
+}
+
+@keyframes chat-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.7);
+  }
+}
+
+
+/*
+ * The standing label above the launcher. Deliberately quiet — it names the
+ * button, it does not sell. The caret ties it to the control below it, the
+ * same as the larger nudge.
+ */
+.chat-tag {
+  position: relative;
+  padding: 0.34rem 0.6rem;
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  box-shadow: 0 10px 26px -18px rgb(20 24 29 / 0.55);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+  transition:
+    color 0.2s linear,
+    border-color 0.2s linear,
+    transform 0.28s var(--ease-out-quint);
+}
+
+.chat-tag::after {
+  content: ;
+  position: absolute;
+  right: 0.85rem;
+  bottom: -0.3rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  background: var(--color-paper);
+  border-right: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  transform: rotate(45deg);
+}
+
+/* Hovering either part lights both: they are one control in two boxes. */
+.chat-tag:hover,
+.chat:has(.chat-fab:hover) .chat-tag {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  transform: translateY(-2px);
+}
+
+.chat-tag:hover::after,
+.chat:has(.chat-fab:hover) .chat-tag::after {
+  border-color: var(--color-brand);
+}
+
+html[data-motion="reduced"] {
+  .chat-tag,
+  .chat-tag:hover,
+  .chat:has(.chat-fab:hover) .chat-tag {
+    transform: none;
+  }
+}
+
+
+/*
+ * Dark theme: a fixed dark glyph on the brand fills.
+ *
+ * `--color-brand` lightens to #ff8236 in the dark theme — deliberately, so it
+ * clears AA as *text on the page*. The side effect is that a white glyph on
+ * top of that fill drops to 2.5:1, under the 3:1 WCAG asks of a graphical
+ * object. `--color-ink-fixed` is the token that exists for this: it does not
+ * invert, so it stays a near-black mark on orange and reads at about 7.6:1.
+ *
+ * Scoped to the floating controls and the chat panel. The site-wide
+ * white-on-brand CTAs are a separate design decision and are left alone.
+ */
+:root[data-theme="dark"] :is(
+  .chat-fab:hover,
+  .back-to-top:hover,
+  .chat-panel__avatar,
+  .chat-form__send
+) {
+  color: var(--color-ink-fixed);
+}
+
+/* --- Floating label -------------------------------------------------------- */
+
+.chat-nudge {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  max-width: min(17rem, calc(100vw - 3rem));
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  box-shadow: 0 18px 44px -22px rgb(20 24 29 / 0.5);
+  animation: chat-nudge-in 0.44s var(--ease-out-quint) backwards;
+}
+
+/* The caret. Sits on the label's bottom edge, pointing at the launcher. */
+.chat-nudge::after {
+  content: "";
+  position: absolute;
+  right: 1.05rem;
+  bottom: -0.4rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--color-paper);
+  border-right: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  transform: rotate(45deg);
+}
+
+@keyframes chat-nudge-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.chat-nudge__body {
+  display: block;
+  padding: 0.7rem 0.4rem 0.75rem 0.9rem;
+  text-align: left;
+}
+
+.chat-nudge__title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  transition: color 0.2s linear;
+}
+
+.chat-nudge__text {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--color-ink-muted);
+}
+
+.chat-nudge__body:hover .chat-nudge__title {
+  color: var(--color-brand);
+}
+
+.chat-nudge__close {
+  flex-shrink: 0;
+  padding: 0.55rem 0.55rem 0 0;
+  color: var(--color-ink-muted);
+  transition: color 0.2s linear;
+}
+
+.chat-nudge__close:hover {
+  color: var(--color-ink);
+}
+
+/* --- Panel ----------------------------------------------------------------- */
+
+.chat-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--chat-size) + 0.85rem);
+  display: flex;
+  flex-direction: column;
+  width: min(23rem, calc(100vw - 2 * var(--chat-edge)));
+  max-height: min(33rem, calc(100vh - 9rem));
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  box-shadow: 0 30px 70px -28px rgb(20 24 29 / 0.6);
+
+  /* Closed. `visibility` is what takes the whole panel out of the tab order. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.985);
+  transform-origin: bottom right;
+  transition:
+    opacity 0.3s var(--ease-out-quint),
+    transform 0.3s var(--ease-out-quint),
+    visibility 0s linear 0.3s;
+}
+
+.chat[data-open] .chat-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s, 0s, 0s;
+}
+
+.chat-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 0.85rem 0.85rem 1rem;
+  background: var(--color-ink);
+  /* Same inversion pair as `.chat-fab` — with `#fff` here the whole header
+     read as one flat block of colour in the dark theme. */
+  color: var(--color-paper);
+
+  /* The three muted tones used inside the header. See the note further down
+     for why these are literals per theme rather than a mix. */
+  --chat-head-muted: rgb(255 255 255 / 0.62);
+  --chat-head-soft: rgb(255 255 255 / 0.72);
+  --chat-head-wash: rgb(255 255 255 / 0.12);
+}
+
+/* The header's background follows `--color-ink`, which inverts, so the tones
+   that sit on it have to invert with it. */
+:root[data-theme="dark"] .chat-panel__head {
+  --chat-head-muted: rgb(16 21 27 / 0.62);
+  --chat-head-soft: rgb(16 21 27 / 0.72);
+  --chat-head-wash: rgb(16 21 27 / 0.12);
+}
+
+.chat-panel__avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.chat-panel__id {
+  display: flex;
+  flex-direction: column;
+  margin-right: auto;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.chat-panel__id strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/*
+ * The header's muted tones are literal per-theme values behind three local
+ * custom properties, declared just above on `.chat-panel__head`.
+ *
+ * Not `rgb(255 255 255 / …)`: fixed white is invisible against the off-white
+ * the header becomes in the dark theme, which is the bug being fixed here.
+ *
+ * And **not `color-mix`** either, though that is the obvious way to write it.
+ * Lightning CSS folds these at build time and gets both spellings wrong:
+ * `color-mix(… var(--color-paper) 62%, transparent)` compiles to a literal
+ * `#ffffff9e` — the light theme's white, baked in, defeating the fix — while
+ * `color-mix(… currentColor 62%, transparent)` compiles to a bare
+ * `currentColor`, dropping the alpha, which turned the close button's hover
+ * wash into a solid block. Plain `var()` references are passed through
+ * untouched, so the values are resolved by the cascade instead.
+ */
+.chat-panel__status {
+  font-size: 0.72rem;
+  color: var(--chat-head-muted);
+}
+
+.chat-panel__close {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  color: var(--chat-head-soft);
+  transition:
+    color 0.2s linear,
+    background-color 0.2s linear;
+}
+
+.chat-panel__close:hover {
+  background: var(--chat-head-wash);
+  color: var(--color-paper);
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: var(--color-paper-warm);
+}
+
+.chat-msg {
+  max-width: 88%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  animation: chat-msg-in 0.34s var(--ease-out-quint) backwards;
+}
+
+@keyframes chat-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.chat-msg--bot {
+  align-self: flex-start;
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  /* The one orange mark in the panel: it identifies the speaker. */
+  border-left: 2px solid var(--color-brand);
+  color: var(--color-ink-soft);
+}
+
+.chat-msg--user {
+  align-self: flex-end;
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* The list answers in `chat.ts` arrive with newlines in them. */
+.chat-msg__p {
+  white-space: pre-line;
+}
+
+.chat-msg__p + .chat-msg__p {
+  margin-top: 0.5rem;
+}
+
+.chat-msg__links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--color-rule);
+}
+
+.chat-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-brand);
+}
+
+.chat-link svg {
+  transition: transform 0.24s var(--ease-out-quint);
+}
+
+.chat-link:hover svg {
+  transform: translateX(3px);
+}
+
+.chat-typing {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.chat-typing__dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--color-ink-muted);
+  animation: chat-typing 1.1s ease-in-out infinite;
+}
+
+.chat-typing__dot:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.chat-typing__dot:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--color-rule);
+}
+
+.chat-chip {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--color-rule-strong);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-ink-soft);
+  transition:
+    border-color 0.2s linear,
+    color 0.2s linear,
+    background-color 0.2s linear;
+}
+
+.chat-chip:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand-tint);
+  color: var(--color-brand-strong);
+}
+
+.chat-form {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--color-rule);
+}
+
+.chat-form__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  background: transparent;
+  font-size: 0.82rem;
+  color: var(--color-ink);
+}
+
+.chat-form__input::placeholder {
+  color: var(--color-ink-muted);
+}
+
+.chat-form__input:focus {
+  outline: none;
+}
+
+/* The input has no focus ring of its own, so the whole row carries it. */
+.chat-form:focus-within {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+}
+
+.chat-form__send {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  align-self: stretch;
+  background: var(--color-brand);
+  color: #fff;
+  transition: background-color 0.2s linear;
+}
+
+.chat-form__send:hover {
+  background: var(--color-brand-strong);
+}
+
+.chat-foot {
+  padding: 0.55rem 1rem 0.7rem;
+  border-top: 1px solid var(--color-rule);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--color-ink-muted);
+}
+
+.chat-foot a {
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}
+
+/*
+ * On a phone the panel is the screen. Anchored to the viewport rather than to
+ * the launcher, which would otherwise push it off the top on a short screen.
+ */
+@media (max-width: 480px) {
+  .chat-panel {
+    position: fixed;
+    right: 0.75rem;
+    left: 0.75rem;
+    bottom: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
+    width: auto;
+    max-height: calc(100vh - var(--chat-size) - 6rem);
+  }
+}
+
+/*
+ * Reduced motion. The launcher keeps its colour changes — those are state, not
+ * movement — and loses every transform, ring and pulse. The panel simply is
+ * open or closed.
+ */
+html[data-motion="reduced"] {
+  .chat-fab,
+  .chat-fab__icon,
+  .chat-fab:hover,
+  .chat-fab[data-pressed],
+  .chat-fab:active {
+    transform: none;
+    transition: background-color 0.2s linear;
+  }
+
+  .chat-fab__icon[data-glyph="open"],
+  .chat[data-open] .chat-fab__icon[data-glyph="rest"] {
+    /* The swap still has to happen — it is the button's state, not decoration. */
+    opacity: 0;
+  }
+
+  .chat-fab__ring,
+  .chat-fab__dot,
+  .chat-nudge,
+  .chat-msg {
+    animation: none;
+  }
+
+  .chat-typing__dot {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .chat-panel {
+    transform: none;
+    transition:
+      opacity 0.01ms linear,
+      visibility 0s linear 0.01ms;
+  }
+
+  .chat[data-open] .chat-panel {
+    transform: none;
+  }
+
+  .chat-link:hover svg {
+    transform: none;
   }
 }

@@ -6,7 +6,10 @@ import { SplashScreen, splashBootScript } from "@/components/splash-screen";
 import { mapIntroBootScript } from "@/components/map-intro";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { BackToTop } from "@/components/back-to-top";
+import { ChatWidget } from "@/components/chat-widget";
 import { themeBootScript } from "@/components/theme-toggle";
+import { MotionScope } from "@/components/motion-toggle";
+import { motionBootScript } from "@/lib/motion";
 import { PressProvider } from "@/components/press";
 import { SpotlightProvider } from "@/components/spotlight";
 import { company, contact } from "@/lib/site";
@@ -74,6 +77,12 @@ export default function RootLayout({
           reads it.
         */}
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        {/*
+          Resolves `data-motion` before paint. Must precede the splash and map
+          scripts below — both of them ask whether motion is allowed, and the
+          answer is now this attribute rather than the media query.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: motionBootScript }} />
         <script dangerouslySetInnerHTML={{ __html: splashBootScript }} />
         {/*
           Route-scoped, but it has to live here: a <script> rendered inside a
@@ -85,7 +94,14 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col bg-paper">
         <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}.split-part{opacity:1!important;transform:none!important}.split-rule{transform:scaleX(1)!important}.mask-reveal{clip-path:none!important}.mask-reveal__inner{transform:none!important}.splash{display:none!important}`}</style>
+          {/*
+            Second rule: with scripting off, `data-motion` is never written, so
+            the attribute-scoped bail-outs in globals.css cannot match. The
+            media query is the honest fallback for that case — every remaining
+            effect here is CSS-only decoration, so switching all of it off is
+            the whole of what those blocks would have done.
+          */}
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important}.split-part{opacity:1!important;transform:none!important}.split-rule{transform:scaleX(1)!important}.mask-reveal{clip-path:none!important}.mask-reveal__inner{transform:none!important}.splash{display:none!important}@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}`}</style>
         </noscript>
 
         <SplashScreen />
@@ -113,10 +129,12 @@ export default function RootLayout({
           className="flex-1 outline-none"
           style={{ paddingTop: "var(--header-h)" }}
         >
-          {children}
+          <MotionScope>{children}</MotionScope>
         </main>
 
         <BackToTop />
+        {/* Sits in the same corner as BackToTop, which stacks above it. */}
+        <ChatWidget />
 
         <SiteFooter />
 

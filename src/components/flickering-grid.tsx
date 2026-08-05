@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /* ---------------------------------------------------------------------------
    Flickering grid — the Magic UI background component published on 21st.dev
@@ -56,7 +57,7 @@ export function FlickeringGrid({
     const parent = canvas.parentElement;
     if (!parent) return;
 
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = prefersReducedMotion();
 
     /*
      * Resolve the colour once, up front.

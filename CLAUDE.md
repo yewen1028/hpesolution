@@ -58,15 +58,40 @@ hardcode hex values.
   safety-net timer**. Content starts hidden in CSS, so anything animated needs
   that net or it can stay invisible. Keep the `<noscript>` override in
   `layout.tsx` in sync.
-- Everything bails out under `prefers-reduced-motion: reduce` — with one
-  deliberate exception, `components/partner-carousel.tsx`. Windows reports
-  reduced motion whenever `SPI_GETCLIENTAREAANIMATION` is 0, which is routinely
-  the case on low-powered laptops, and a carousel that has stopped reads as a
-  broken section rather than a considerate one. It therefore drives its own
-  transform from `requestAnimationFrame` when CSS animation is disabled. The
-  draft in `HPE - refined/hpe-enhanced-editing.html` does the same thing for the
-  same reason. Do not copy this pattern elsewhere without the same
-  justification.
+- Everything bails out when motion is off — with one deliberate exception,
+  `components/partner-carousel.tsx`, which drives its own transform from
+  `requestAnimationFrame` instead, because a carousel that has stopped reads as
+  a broken section rather than a considerate one. The draft in
+  `HPE - refined/hpe-enhanced-editing.html` does the same thing for the same
+  reason. Do not copy this pattern elsewhere without the same justification.
+
+### The motion preference
+
+**Never ask `prefers-reduced-motion` directly — in CSS or in script.** The
+resolved answer lives on `<html data-motion="full|reduced">`, written before
+first paint by `motionBootScript` (`src/lib/motion.ts`).
+
+Windows reports reduced motion whenever `SPI_GETCLIENTAREAANIMATION` is 0, and
+that flag is cleared by **Accessibility → Visual effects → Animation effects**,
+by the "Adjust for best performance" preset, and by some OEM battery-saver
+profiles. On low-end laptops it is routinely off without the owner ever having
+expressed a preference about motion, and the whole site then renders dead
+still. So the media query is the *default*, not the verdict, and `MotionToggle`
+in the header lets a visitor override it either way (persisted under
+`hpe:motion`). Someone who set the OS preference deliberately still gets the
+still site on arrival.
+
+- CSS: `html[data-motion="reduced"] { … }`, never `@media
+  (prefers-reduced-motion: reduce)`. The one remaining media query is the
+  `<noscript>` fallback in `layout.tsx`, for when no script runs to set the
+  attribute.
+- Script: `prefersReducedMotion()` from `@/lib/motion` — re-exported by
+  `lib/scroll-motion.ts` and aliased as `reducedMotion()` in `parallax.tsx`, so
+  existing call sites are unchanged. `subscribeMotion()` for anything that must
+  react to a switch.
+- Most components decide once in a mount effect, so `MotionScope` (wrapping
+  `{children}` in `layout.tsx`) remounts the page on a switch. Providers that
+  sit outside it — `press.tsx`, `spotlight.tsx` — subscribe instead.
 
 ## Splash screen
 
@@ -204,3 +229,48 @@ route still prerenders; the action is a separate POST endpoint.
   same structured body. Keep that fallback and keep the `aria-live` status.
 - The form works with scripting off: `action` takes the server action directly,
   so a submit without JavaScript is an ordinary POST that still sends.
+
+## Chat assistant
+
+`components/chat-widget.tsx` (launcher, floating label, panel) over
+`lib/chat.ts` (the answers). Mounted once in `layout.tsx`, so it is on every
+route.
+
+**It is scripted, not a language model.** Every answer is composed from
+`site.ts` — service titles and summaries, `supportTiers`, `regions`, `stats`,
+`contact` — so an answer cannot drift from the page it links to, and adding a
+service to `site.ts` teaches the bot about it with no edit in `chat.ts`. Two
+rules hold it up, and they matter more than the matcher does:
+
+- **It never invents.** Figures are read, never typed out a second time.
+- **It never dead-ends.** The fallback hands over — phone, the right mailbox,
+  the enquiry form — in the same turn. "I don't understand" and a full stop is
+  worse for a visitor than no chat widget at all.
+
+To put a real model behind it, keep `Reply` as the response shape and replace
+`answer()` with a call to your endpoint. The widget knows nothing else.
+
+- The matcher scores whole-word phrase hits, longest phrase wins, and tests the
+  plural of each keyword. **Not `String.includes`** — substring matching had
+  "who are your partners" matching the *about* intent's "who are you" and
+  answering with the company history.
+- **The icon is a headset, not a speech bubble.** A bubble says there is a chat
+  window here, which is the least interesting thing about it; on a site selling
+  a helpdesk and 4-hour onsite response, a headset says *who* is on the other
+  end. One import to change if that judgement is ever reversed.
+- **Hover and press are opposite movements, deliberately**, so the two states
+  can never be confused. Hover goes outward — lift, scale to 1.06, ink to
+  brand, an expanding ring on a loop. Press goes inward — compress to 0.92,
+  plus the shared `[data-ripple]` wash. `[data-pressed]` from `press.tsx` is
+  what makes press work on touch, where `:active` is unreliable.
+- Two labels float above the launcher, never both at once: `.chat-nudge` (the
+  prompt, after 2.6s, dismissed for the session through `sessionStorage`) and
+  `.chat-tag` (the standing "Chat with us", so the control is never a bare icon
+  a visitor has to guess at).
+- The panel is hidden, not unmounted — it keeps the conversation across opens
+  and has something to animate out of. `inert` is what takes it out of the tab
+  order and the accessibility tree; `visibility: hidden` alone leaves a closed
+  panel readable to a screen reader mid-transition.
+- Stacking: splash 200 > header 100 > scroll progress 99 > **chat 95** >
+  back-to-top 90. `.back-to-top` is offset upward by `--chat-size`, so the two
+  fixed corner controls share the corner instead of covering each other.

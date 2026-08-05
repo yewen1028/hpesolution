@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /* ---------------------------------------------------------------------------
    One rAF loop drives every scroll-linked layer on the page — parallax drift
@@ -27,12 +28,8 @@ const pending: ScrollLayer[] = [];
 let frame = 0;
 let running = false;
 
-export function reducedMotion() {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
+/** Alias kept for this module's callers; the preference lives in `lib/motion`. */
+export const reducedMotion = prefersReducedMotion;
 
 function tick() {
   frame = 0;

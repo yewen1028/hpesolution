@@ -78,7 +78,7 @@ html.splash-pending body {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+html[data-motion="reduced"] {
   .splash__logo,
   .splash__bar::after {
     animation: none;

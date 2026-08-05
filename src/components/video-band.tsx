@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * Background video that only downloads once it is close to the viewport, and
@@ -22,7 +23,7 @@ export function BackgroundVideo({
     const video = ref.current;
     if (!video) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
 
     const observer = new IntersectionObserver(
       (entries) => {

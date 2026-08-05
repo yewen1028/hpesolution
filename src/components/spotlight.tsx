@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
 
 /**
  * Cursor spotlight for every `[data-spotlight]` element on the page.
@@ -25,8 +26,19 @@ import { useEffect } from "react";
  * rather than merely slowed.
  */
 export function SpotlightProvider() {
+  /*
+   * This provider sits outside MotionScope in the layout, so it does not get
+   * the remount that page content does. It subscribes instead: the resolved
+   * state is an effect dependency, and a switch re-runs the listener setup.
+   */
+  const reduced = useSyncExternalStore(
+    subscribeMotion,
+    prefersReducedMotion,
+    () => false,
+  );
+
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduced) return;
 
     let active: HTMLElement | null = null;
     let frame = 0;
@@ -75,7 +87,7 @@ export function SpotlightProvider() {
       active?.style.removeProperty("--spot-x");
       active?.style.removeProperty("--spot-y");
     };
-  }, []);
+  }, [reduced]);
 
   return null;
 }

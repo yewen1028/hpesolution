@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowRight, ChevronDown, Menu, Phone, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { MotionToggle } from "@/components/motion-toggle";
 import { ServiceIcon } from "@/components/service-icon";
 import { contact, navigation, services } from "@/lib/site";
 
@@ -250,7 +251,8 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <ThemeToggle className="ml-auto hidden lg:ml-4 lg:inline-flex" />
+        <MotionToggle className="ml-auto hidden lg:ml-4 lg:inline-flex" />
+        <ThemeToggle className="hidden lg:ml-2 lg:inline-flex" />
 
         <a
           href={`tel:${contact.phoneDial}`}
@@ -320,6 +322,13 @@ export function SiteHeader() {
                 Theme
               </span>
               <ThemeToggle />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                Animation
+              </span>
+              <MotionToggle />
             </div>
 
             <a

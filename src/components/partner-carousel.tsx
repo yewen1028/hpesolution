@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ServiceIcon } from "@/components/ui";
 import { partnerFallbackIcons, partnerLogos, partners } from "@/lib/site";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
 
 /**
  * The moving strip. Bubble shape follows the `HPE - refined` draft: a white
@@ -51,7 +52,6 @@ export function PartnerCarousel({
     if (!frame || !track) return;
 
     const duration = DURATION_S[variant];
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     let raf = 0;
     let prev = 0;
     let x = 0;
@@ -95,12 +95,15 @@ export function PartnerCarousel({
       if (el) el.style.transform = "";
     }
 
-    const sync = () => (query.matches ? start() : stop());
+    // CSS drives the strip when motion is on; rAF takes over when it is off,
+    // which is the exception documented above. `subscribeMotion` covers both
+    // the OS query and a switch made with the header toggle.
+    const sync = () => (prefersReducedMotion() ? start() : stop());
     sync();
-    query.addEventListener("change", sync);
+    const unsubscribe = subscribeMotion(sync);
 
     return () => {
-      query.removeEventListener("change", sync);
+      unsubscribe();
       stop();
     };
     // `variant` is fixed per mount in practice; listed so the loop picks up the
