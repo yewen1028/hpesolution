@@ -433,9 +433,60 @@ html[data-motion="reduced"] {
   /* 1000 comfortably exceeds the longest arc across an 800-wide viewBox, so one
      constant covers every path without measuring each at runtime. */
   stroke-dasharray: 1000;
+  /*
+   * Rest fully drawn. The arrival is armed by `.netmap-stage[data-armed]`
+   * below, not run from here — a CSS animation starts when its element
+   * renders, and this map sits well below the fold, so the whole seventeen-arc
+   * sequence used to finish before the visitor had scrolled to it. They
+   * arrived at a finished map every time.
+   */
   stroke-dashoffset: 0;
+}
+
+.netmap-stage[data-armed] .netmap-arc {
   animation: netmap-draw 1.5s cubic-bezier(0.5, 0, 0.2, 1) backwards;
   animation-delay: var(--delay, 0s);
+}
+
+/*
+ * Traffic on the route: one short dash running Puchong → centre, on a second
+ * path laid over the arc.
+ *
+ * A dash pattern rather than a dot on an `offset-path`, because the arc is
+ * already a stroke and this costs one more path and no new geometry — the
+ * packet is simply the only visible piece of a 16-unit dash in a 1200-unit
+ * gap, walked forward by `stroke-dashoffset`.
+ *
+ * Parked at `16` it covers [-16, 0], which is off the start of the path, so
+ * the resting state shows nothing at all. That matters: this is decoration on
+ * a map whose static state is already complete, and a packet frozen halfway
+ * along a route would read as a fault rather than a still.
+ */
+.netmap-flow {
+  fill: none;
+  stroke: #ffd2a6;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 16 1200;
+  stroke-dashoffset: 16;
+}
+
+.netmap-stage[data-armed] .netmap-flow {
+  animation: netmap-flow 2.9s linear infinite;
+  /* Starts as its own arc finishes drawing, so nothing travels a route that
+     is not there yet. 1.5s is the draw duration above. */
+  animation-delay: calc(var(--delay, 0s) + 1.5s);
+}
+
+@keyframes netmap-flow {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    /* Same 1000 the draw uses: comfortably past the longest arc, so every
+       packet leaves at the far node rather than stopping short on it. */
+    stroke-dashoffset: -1000;
+  }
 }
 
 @keyframes netmap-draw {
@@ -462,6 +513,11 @@ html[data-motion="reduced"] {
   opacity: 0.5;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+/* Armed with the arcs, so the nodes do not sit pulsing at an empty map while
+   the visitor is still three sections above it. */
+.netmap-stage[data-armed] .netmap-ring {
   animation: netmap-pulse 2.4s ease-out infinite;
   animation-delay: var(--delay, 0s);
 }
@@ -519,7 +575,8 @@ html[data-motion="reduced"] {
  */
 html[data-motion="reduced"] {
   .netmap-arc,
-  .netmap-ring {
+  .netmap-ring,
+  .netmap-flow {
     animation: none;
   }
 

@@ -51,14 +51,33 @@ export function NetworkMap() {
         <path className="netmap-dots" d={NETMAP_DOTS} />
 
         <g className="netmap-arcs">
-          {spokes.map((centre, i) => (
-            <path
-              key={centre.name}
-              className="netmap-arc"
-              d={arcPath(hq.nx, hq.ny, centre.nx, centre.ny)}
-              style={{ "--delay": `${(i * STAGGER).toFixed(2)}s` } as React.CSSProperties}
-            />
-          ))}
+          {spokes.map((centre, i) => {
+            /*
+              Two paths on the same geometry. The first is the route itself,
+              drawn once on arrival. The second carries a short bright dash
+              along that route, out from Puchong to the centre and away at the
+              far end — the map's subject is dispatch from head office, and
+              until now the arcs stated the routes without ever showing
+              anything moving on them.
+
+              `--delay` sits on the group so both children read it: the route
+              draws at its stagger, and the traffic on it starts once that
+              route exists.
+            */
+            const d = arcPath(hq.nx, hq.ny, centre.nx, centre.ny);
+
+            return (
+              <g
+                key={centre.name}
+                style={
+                  { "--delay": `${(i * STAGGER).toFixed(2)}s` } as React.CSSProperties
+                }
+              >
+                <path className="netmap-arc" d={d} />
+                <path className="netmap-flow" d={d} />
+              </g>
+            );
+          })}
         </g>
 
         <g className="netmap-points">
