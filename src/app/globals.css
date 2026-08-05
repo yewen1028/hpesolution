@@ -4053,32 +4053,6 @@ html[data-motion="reduced"] {
   }
 }
 
-.chat-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  padding: 0.75rem 1.15rem;
-  border-top: 1px solid var(--color-rule);
-}
-
-.chat-chip {
-  padding: 0.45rem 0.75rem;
-  border: 1px solid var(--color-rule-strong);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-ink-soft);
-  transition:
-    border-color 0.2s linear,
-    color 0.2s linear,
-    background-color 0.2s linear;
-}
-
-.chat-chip:hover {
-  border-color: var(--color-brand);
-  background: var(--color-brand-tint);
-  color: var(--color-brand-strong);
-}
-
 .chat-form {
   display: flex;
   align-items: center;
@@ -4249,7 +4223,6 @@ html[data-motion="reduced"] {
  */
 .chat-panel__head,
 .chat-log,
-.chat-chips,
 .chat-form,
 .chat-foot {
   opacity: 0;
@@ -4259,14 +4232,15 @@ html[data-motion="reduced"] {
   transition:
     opacity 200ms var(--ease-out-quint),
     transform 200ms var(--ease-out-quint);
-  /* Reversed: 4 - i, so the footer is first out and the header last. */
-  transition-delay: calc((4 - var(--i, 0)) * 22ms);
+  /* Reversed: last index minus i, so the footer is first out and the header
+     last. Three now the suggestion row is gone, not four — leaving it at four
+     would have put a silent 22ms hole at the front of every close. */
+  transition-delay: calc((3 - var(--i, 0)) * 22ms);
 }
 
 .chat[data-open] :is(
     .chat-panel__head,
     .chat-log,
-    .chat-chips,
     .chat-form,
     .chat-foot
   ) {
@@ -4290,14 +4264,11 @@ html[data-motion="reduced"] {
 .chat-log {
   --i: 1;
 }
-.chat-chips {
+.chat-form {
   --i: 2;
 }
-.chat-form {
-  --i: 3;
-}
 .chat-foot {
-  --i: 4;
+  --i: 3;
 }
 
 /*
@@ -4399,15 +4370,6 @@ html[data-motion="reduced"] {
 
 /* --- Suggested chips ------------------------------------------------------- */
 
-.chat-chips__label {
-  width: 100%;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-ink-muted);
-}
-
 /* --- Log scrollbar --------------------------------------------------------- */
 
 /*
@@ -4435,7 +4397,6 @@ html[data-motion="reduced"] {
   /* The arrival is the decoration; the panel still opens, it just is open. */
   .chat-panel__head,
   .chat-log,
-  .chat-chips,
   .chat-form,
   .chat-foot {
     opacity: 1;
@@ -4889,4 +4850,87 @@ html[data-motion="reduced"] .marquee-row__track {
 
 html[data-motion="reduced"] .marquee-field__rows {
   transform: rotate(var(--marquee-angle, -14deg));
+}
+
+/* --- Chat field: inline completion ------------------------------------------ */
+
+/*
+ * The suggestion is drawn behind the input rather than inside it. Two rules
+ * make that work and both are load-bearing:
+ *
+ *   - the ghost layer and the input must share *every* metric that affects
+ *     where a glyph lands — font, size, weight, letter-spacing and the exact
+ *     padding — or the completion drifts away from the caret as you type;
+ *   - the input's own background must be transparent, or it would paint over
+ *     the layer underneath it.
+ *
+ * The typed half of the ghost is rendered but invisible. It is what pushes the
+ * completion to start at the caret; measuring the text instead would mean a
+ * canvas or a mirror element on every keystroke.
+ */
+.chat-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-ghost {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 0.9rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chat-ghost {
+    font-size: 0.875rem;
+  }
+}
+
+/* Occupies the width of what has been typed without showing it twice. */
+.chat-ghost__typed {
+  visibility: hidden;
+}
+
+.chat-ghost__rest {
+  color: var(--color-ink-muted);
+}
+
+/* Transparent, so the ghost beneath is visible through the field. */
+.chat-field .chat-form__input {
+  position: relative;
+  background: transparent;
+}
+
+/*
+ * The Tab affordance. A pointer user has no Tab key within reach of the field,
+ * so the same accept is offered as a target — `tabIndex={-1}` and
+ * `aria-hidden`, because for a keyboard user it is the key itself, and a stop
+ * on the way to Send would be one tab too many.
+ */
+.chat-field__accept {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 0.35rem;
+  padding: 0.16rem 0.4rem;
+  border: 1px solid var(--color-rule-strong);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  transition:
+    border-color 0.2s linear,
+    color 0.2s linear;
+}
+
+.chat-field__accept:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
 }

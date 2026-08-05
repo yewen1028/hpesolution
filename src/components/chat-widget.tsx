@@ -59,6 +59,11 @@ export function ChatWidget() {
     { id: nextId++, from: "bot", reply: GREETING },
   ]);
 
+  /** Controlled now, because the ghost layer has to mirror it exactly. */
+  const [value, setValue] = useState("");
+  /** Set when a completion is taken, cleared the moment the text is edited. */
+  const acceptedIntent = useRef<string | null>(null);
+
   const panelId = useId();
   const fabRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -148,29 +153,98 @@ export function ChatWidget() {
     [respond],
   );
 
-  const runSuggestion = useCallback(
-    (label: string, intent: string) => {
-      setMessages((m) => [...m, { id: nextId++, from: "user", text: label }]);
-      respond(answerIntent(intent));
-    },
-    [respond],
-  );
-
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const input = inputRef.current;
-    if (!input) return;
-    send(input.value);
-    input.value = "";
-  };
-
   const toggle = () => {
     dismissNudge();
     setOpen((v) => !v);
   };
 
-  /** Only the newest bot turn offers chips — older ones would stack up. */
+  /** Only the newest bot turn offers suggestions — older ones would stack up. */
   const lastBot = [...messages].reverse().find((m) => m.from === "bot");
+  const suggestions =
+    lastBot?.from === "bot" ? (lastBot.reply.suggestions ?? []) : [];
+
+  /*
+   * The offer being completed, and the tail of it that is drawn behind the
+   * caret.
+   *
+   * Empty field → the first offer, so there is always something on the table.
+   * Once typing starts it becomes a prefix match, which is what makes this
+   * worth having over the chip row: three characters of "ser" reaches "Service
+   * centres" without a click. A match that is already complete offers nothing,
+   * so the ghost disappears rather than sitting there as a duplicate.
+   */
+  const match = value.trim()
+    ? suggestions.find(
+        (s) =>
+          s.label.toLowerCase().startsWith(value.toLowerCase()) &&
+          s.label.length > value.length,
+      )
+    : suggestions[0];
+
+  const ghost = match ? match.label.slice(value.length) : "";
+
+  const acceptGhost = useCallback(() => {
+    if (!match) return;
+    setValue(match.label);
+    // Remembered so the submit runs the intent itself rather than putting the
+    // label back through the matcher. The chips carried their intent for the
+    // same reason: an intent cannot misfire, a string can.
+    acceptedIntent.current = match.intent;
+    inputRef.current?.focus();
+  }, [match]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!ghost) return;
+
+    /*
+     * Tab is the accept key, and it is only intercepted while a completion is
+     * actually showing — otherwise it does what Tab is supposed to do and moves
+     * to the send button. Right arrow at the end of the line accepts too, which
+     * is the shell convention, and Escape dismisses without leaving the field.
+     */
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      acceptGhost();
+      return;
+    }
+
+    if (
+      e.key === "ArrowRight" &&
+      e.currentTarget.selectionStart === value.length
+    ) {
+      e.preventDefault();
+      acceptGhost();
+      return;
+    }
+
+    if (e.key === "Escape") {
+      // Swallowed so the panel stays open: dismissing the suggestion and
+      // closing the whole assistant should not be the same keystroke.
+      e.stopPropagation();
+      setValue((v) => (v === "" ? " " : v).trimEnd());
+      acceptedIntent.current = null;
+    }
+  };
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const intent = acceptedIntent.current;
+    if (intent && trimmed === value.trim()) {
+      setMessages((m) => [
+        ...m,
+        { id: nextId++, from: "user", text: trimmed },
+      ]);
+      respond(answerIntent(intent));
+    } else {
+      send(trimmed);
+    }
+
+    setValue("");
+    acceptedIntent.current = null;
+  };
 
   return (
     <div className="chat" data-open={open ? "" : undefined}>
@@ -384,40 +458,93 @@ export function ChatWidget() {
           )}
         </div>
 
-        {lastBot?.from === "bot" && lastBot.reply.suggestions && (
-          <div className="chat-chips">
-            {/* Names the row rather than leaving four loose buttons under the
-                conversation. Same uppercase micro-label the pages use. */}
-            <span className="chat-chips__label">Suggested</span>
-            {lastBot.reply.suggestions.map((s) => (
-              <button
-                key={s.intent}
-                type="button"
-                onClick={() => runSuggestion(s.label, s.intent)}
-                className="chat-chip"
-                data-press="toggle"
-                data-ripple=""
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        )}
-
+        {/*
+          The suggestions used to be a row of chips above this form. They are
+          now completed inside the field itself: the rest of the offer is drawn
+          in grey behind the caret and Tab takes it. That returns the chip row's
+          height to the conversation, which is the part of the panel worth
+          having.
+        */}
         <form className="chat-form" onSubmit={onSubmit}>
           <label htmlFor={`${panelId}-input`} className="sr-only">
             Your message
           </label>
-          <input
-            ref={inputRef}
-            id={`${panelId}-input`}
-            name="message"
-            type="text"
-            autoComplete="off"
-            maxLength={400}
-            placeholder="Ask about services, coverage, SLA…"
-            className="chat-form__input"
-          />
+
+          <div className="chat-field">
+            {/*
+              The ghost is a separate layer under the input, not the input's
+              own value — the field has to keep exactly what was typed, or
+              submitting would send a half-accepted suggestion. It mirrors the
+              typed text in an invisible span so the completion starts at the
+              caret whatever has been entered, rather than at a guessed offset.
+            */}
+            {ghost && (
+              <div className="chat-ghost" aria-hidden="true">
+                <span className="chat-ghost__typed">{value}</span>
+                <span className="chat-ghost__rest">{ghost}</span>
+              </div>
+            )}
+
+            <input
+              ref={inputRef}
+              id={`${panelId}-input`}
+              name="message"
+              type="text"
+              autoComplete="off"
+              maxLength={400}
+              value={value}
+              onChange={(e) => {
+                setValue(e.target.value);
+                acceptedIntent.current = null;
+              }}
+              onKeyDown={onKeyDown}
+              /*
+                No placeholder while a completion is showing.
+
+                An empty field paints both: the browser draws the placeholder
+                and the ghost layer draws the suggestion, in the same box, on
+                top of each other. Only one of them can be taken with Tab, so
+                the suggestion is the one that stays. The placeholder returns
+                whenever there is no completion to offer — after an answer that
+                carries no suggestions, which is when a prompt is actually
+                useful again.
+              */
+              placeholder={
+                ghost ? undefined : "Ask about services, coverage, SLA…"
+              }
+              className="chat-form__input"
+              /*
+                `inline` is the honest value: the completion appears in the
+                field rather than in a popup listbox, so there is no list to
+                own with `aria-activedescendant`.
+              */
+              aria-autocomplete="inline"
+              aria-describedby={ghost ? `${panelId}-ghost` : undefined}
+            />
+
+            {/*
+              What the ghost says, for anyone who cannot see it. Polite, so it
+              waits for a pause in typing instead of interrupting every
+              keystroke.
+            */}
+            <span id={`${panelId}-ghost`} className="sr-only" aria-live="polite">
+              {ghost ? `Suggestion: ${value}${ghost}. Press Tab to accept.` : ""}
+            </span>
+          </div>
+
+          {/* Pointer users get no Tab key, so they get the affordance instead. */}
+          {ghost && (
+            <button
+              type="button"
+              className="chat-field__accept"
+              onClick={acceptGhost}
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              Tab
+            </button>
+          )}
+
           <button type="submit" className="chat-form__send" aria-label="Send">
             <Send size={16} strokeWidth={2} aria-hidden="true" />
           </button>
