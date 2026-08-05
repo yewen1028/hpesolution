@@ -50,13 +50,21 @@ export function ContactCta() {
         hairline it hangs from and gone by the time it reaches the contact
         details.
       */}
+      {/*
+        On the opacity: ink at 0.07 came out as rgb(239,239,239) against this
+        band's white — a six-percent difference from the background, which is
+        no field at all. These values put the brightest cells near rgb(173) and
+        the average around rgb(214): plainly a dot field, still quiet enough to
+        sit under a heading. The mask is what protects the copy, not timidity
+        about the opacity.
+      */}
       <FlickeringGrid
-        className="-z-10 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
-        squareSize={2}
-        gridGap={9}
-        flickerChance={0.16}
+        className="-z-10 [mask-image:linear-gradient(to_bottom,black_5%,transparent_65%)]"
+        squareSize={3}
+        gridGap={6}
+        flickerChance={0.34}
         color="var(--color-ink)"
-        maxOpacity={0.07}
+        maxOpacity={0.35}
         reveal
       />
 

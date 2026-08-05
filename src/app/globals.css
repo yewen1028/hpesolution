@@ -1741,6 +1741,97 @@ html[data-motion="reduced"] {
   }
 }
 
+/* --- Enquiry form on a dark surface --------------------------------------- */
+
+/*
+ * The form that sits on the shader panel on /contact.
+ *
+ * **Not one line of `enquiry-form.tsx` changes for this.** Every rule in
+ * `.field` above reads its colours from tokens, and Tailwind v4 compiles
+ * `text-ink` / `bg-paper-warm` / `border-rule-strong` to `var()` of those same
+ * tokens — so redefining them on an ancestor re-colours the whole form,
+ * floating labels, validation states, status panel and all, through the
+ * cascade. That is the entire mechanism here.
+ *
+ * The brand tokens are deliberately left alone. Orange on near-black is the
+ * combination the design system is built around, so the focus rule, the
+ * required marker and the submit button all land correctly with no help.
+ * `--color-brand-strong` is the exception: #d4550c is the *darker* orange, and
+ * error text in it disappears against this surface, so it takes the value the
+ * dark theme already uses.
+ */
+.enquiry-surface {
+  --color-paper: rgb(255 255 255 / 0.07);
+  --color-paper-warm: rgb(255 255 255 / 0.06);
+  --color-ink: #ffffff;
+  --color-ink-soft: rgb(255 255 255 / 0.78);
+  --color-ink-muted: rgb(255 255 255 / 0.58);
+  --color-rule: rgb(255 255 255 / 0.18);
+  --color-rule-strong: rgb(255 255 255 / 0.4);
+  --color-brand-strong: #ffa06b;
+
+  /*
+   * The one thing tokens cannot reach. The service <select> opens a native
+   * popup drawn by the OS, and without this it renders black-on-white while
+   * the control that opened it is white-on-dark. Also fixes the caret and the
+   * textarea's resize grip.
+   */
+  color-scheme: dark;
+
+  position: relative;
+  /*
+   * Translucent rather than frosted. `backdrop-filter` over the shader would
+   * re-blur a canvas that is repainting every frame, which is the most
+   * expensive thing this page could ask for and exactly the sort of cost the
+   * low-powered machines this site is read on cannot absorb. A dark fill at
+   * 72% lets the gradient tint the panel — which is the part that actually
+   * reads as belonging to the background — and costs nothing.
+   */
+  background: rgb(9 12 16 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.14);
+}
+
+/* The house frame mark, same as the chat panel and the services flyout. */
+.enquiry-surface::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+
+/*
+ * The inputs are wells cut into the panel, so they lose the box border and
+ * keep only a base rule — a full outline per field over a moving background is
+ * four competing rectangles, and the floating label already says where each
+ * field starts.
+ */
+.enquiry-surface .field__input {
+  border-color: transparent;
+  border-bottom-color: var(--color-rule);
+  transition:
+    border-color 0.25s var(--ease-out-quint),
+    background-color 0.25s var(--ease-out-quint);
+}
+
+.enquiry-surface .field__input:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.enquiry-surface .field__input:focus {
+  background: rgb(255 255 255 / 0.11);
+  border-bottom-color: var(--color-rule-strong);
+}
+
+/* Invalid keeps its full border: it is the one state that has to be found by
+   scanning rather than read. */
+.enquiry-surface .field[data-invalid] .field__input {
+  border-color: var(--color-brand);
+}
+
 /* --- Mask reveal ---------------------------------------------------------- */
 
 /*

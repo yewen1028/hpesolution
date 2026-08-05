@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { EnquiryForm } from "@/components/enquiry-form";
+import { GrainGradientBackdrop } from "@/components/ui/grain-gradient-backdrop";
 import { Container, SectionHeading } from "@/components/ui";
 import { contact, regions } from "@/lib/site";
 
@@ -106,19 +107,57 @@ export default function ContactPage() {
               </Reveal>
             </div>
 
-            {/* Enquiry form */}
-            <div>
-              <Reveal>
-                <SectionHeading
-                  title="Send us your enquiry"
+            {/*
+              Enquiry form.
+
+              The shader field goes here and only here. It is the one part of
+              this page with a job that benefits from weight — the page's whole
+              purpose is that someone fills this in — and confining it to the
+              panel means the contact details opposite stay on plain paper,
+              legible and unbothered. A field like this run across the whole
+              section would have had to be turned down so far to keep two
+              columns of text readable that it would not have been worth having.
+
+              The form sits in a solid box on top rather than directly on the
+              field. Labels, hairlines and validation messages all depend on a
+              steady background; a moving one underneath them is the exact
+              condition the site's floating-label fields were not designed for.
+              So the panel carries the effect, and the box carries the work.
+            */}
+            <Reveal>
+              <div className="relative isolate overflow-hidden bg-paper-deep p-6 sm:p-9 lg:p-10">
+                <GrainGradientBackdrop className="-z-20" />
+                {/*
+                  The shader blooms to white in places, and white type over a
+                  white bloom is unreadable. This holds the panel down enough
+                  for the heading to sit on it, and is why the field's own
+                  intensity did not have to be dialled back instead.
+                */}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 -z-10 bg-gradient-to-b from-paper-deep/70 via-paper-deep/40 to-paper-deep/75"
                 />
-              </Reveal>
-              <Reveal delay={100}>
-                <div className="mt-10">
+
+                <div className="max-w-md">
+                  <h2 className="display-3 text-white">Send us your enquiry</h2>
+                  <p className="mt-3.5 text-[0.95rem] leading-relaxed text-white/65">
+                    Sites, node count and the hours that matter. The more of the
+                    estate you describe, the closer the first reply lands.
+                  </p>
+                </div>
+
+                {/*
+                  `.enquiry-surface` re-points the colour tokens inside this
+                  box, which re-colours the whole form through the cascade —
+                  see the block in globals.css. The form component itself is
+                  untouched and still renders identically everywhere else it is
+                  used.
+                */}
+                <div className="enquiry-surface mt-9 p-6 sm:p-8">
                   <EnquiryForm />
                 </div>
-              </Reveal>
-            </div>
+              </div>
+            </Reveal>
           </div>
         </Container>
       </section>
