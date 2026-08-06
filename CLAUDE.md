@@ -133,10 +133,18 @@ component needs changing. The authoritative source is the logo pack each
 principal issues to authorised partners; prefer it over Commons, and check each
 principal's brand guidelines for usage terms.
 
-The home page renders this list on a curved path
-(`components/ui/marquee-along-svg-path.tsx`); `/business-partner` keeps the
-straight bubble strip in `components/partner-carousel.tsx`. A page picks one,
-never both.
+Both pages render this list through `components/partner-carousel.tsx`, in its
+two variants: the home page takes `card` on the near-black band (`tone="dark"`,
+which recolours the edge fades and pins the card text, since the card itself
+stays white in both themes), `/business-partner` takes the `bubble` strip. A
+page picks one variant, never both. `components/ui/marquee-along-svg-path.tsx`
+drew the home page's earlier curved ribbon and is currently unused.
+
+The home page also passes `parallax`, which displaces the strip as the section
+passes: `--band-y` on the clipping frame, `--band-x` on an inner wrapper, both
+written by `registerScrollLayer`. The axes cannot be swapped — Y inside the clip
+shaves the cards, and X on the track fights the marquee's own transform. Unlike
+the marquee itself, the parallax takes the standard reduced-motion bail-out.
 
 ### Replacing an image at an existing path
 

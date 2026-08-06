@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { registerScrollLayer } from "@/components/parallax";
 import { ServiceIcon } from "@/components/ui";
 import { partnerFallbackIcons, partnerLogos, partners } from "@/lib/site";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
@@ -38,12 +39,44 @@ const DURATION_S = { bubble: 42, card: 78 } as const;
 
 export type PartnerVariant = keyof typeof DURATION_S;
 
+/**
+ * `tone` is which background the strip is sitting on, and it exists for the
+ * edge fades: they are painted gradients, so they have to be the band's own
+ * colour or they read as a grey smear rather than as the strip running out.
+ * `dark` also pins the card text to the fixed ink, because the card underneath
+ * it is permanently white in both themes.
+ */
+export type PartnerTone = "light" | "dark";
+
+/**
+ * Scroll parallax, in px, when `parallax` is on. The strip is displaced by these
+ * amounts at each end of its pass through the viewport: the band drifts
+ * vertically against the page, and the cards slide horizontally *against their
+ * own travel*, so approaching the section and leaving it are different views of
+ * the same strip rather than the same loop seen twice.
+ *
+ * Both ceilings are measured rather than picked. `Y` has the section's own
+ * padding to play with — 80px at the smallest step, and the strip is the last
+ * thing in the section — so 20px never puts a card into the description above.
+ * `X` is bounded by nothing visual (the duplicated track runs thousands of
+ * pixels past both edges, so no shift can expose an end) and instead by the
+ * loop: at 70px it stays well under one card's width, so the horizontal
+ * displacement reads as depth rather than as the marquee stuttering.
+ */
+const PARALLAX_Y = 20;
+const PARALLAX_X = 70;
+
 export function PartnerCarousel({
   variant = "bubble",
+  tone = "light",
+  parallax = false,
 }: {
   variant?: PartnerVariant;
+  tone?: PartnerTone;
+  parallax?: boolean;
 } = {}) {
   const frameRef = useRef<HTMLDivElement>(null);
+  const driftRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -110,13 +143,82 @@ export function PartnerCarousel({
     // right speed rather than silently keeping the first one.
   }, [variant]);
 
+  /*
+   * Scroll parallax, on the site's single rAF loop — `registerScrollLayer` is
+   * the same one the photo layers use, so this costs no extra scroll listener
+   * and no extra layout pass. Reads are batched before writes across the page.
+   *
+   * The two axes are written to two different elements, and that split is
+   * load-bearing rather than tidiness:
+   *
+   *   - **Y goes on the frame**, which is the clipping box. Drifting the box
+   *     itself moves the whole strip against the page. Putting Y on something
+   *     *inside* `overflow: hidden` would slide the cards under their own clip
+   *     and shave the top or bottom off every one of them.
+   *   - **X goes on the inner wrapper**, never the track: the track's transform
+   *     is the marquee itself, driven by the CSS animation and, under reduced
+   *     motion, by the rAF loop above. A second writer on that property would
+   *     fight both. The wrapper is free, and the duplicated track runs
+   *     thousands of pixels past both edges of the frame, so a 70px shift can
+   *     never pull an end into view.
+   *
+   * Unlike the marquee, this is ordinary decoration and bails out entirely when
+   * motion is off — the strip still travels, it simply stops being displaced by
+   * the page. `MotionScope` remounts on a toggle, so deciding once is enough.
+   */
+  useEffect(() => {
+    const frame = frameRef.current;
+    const drift = driftRef.current;
+    if (!parallax || !frame || !drift || prefersReducedMotion()) return;
+
+    let y = 0;
+    let x = 0;
+
+    const unregister = registerScrollLayer({
+      el: frame,
+      read(rect, viewportH) {
+        // -0.5 when the strip sits a half-viewport low, +0.5 once it has risen
+        // the same distance past centre. Clamped, so a section still on screen
+        // after a long scroll cannot keep accumulating displacement.
+        const progress =
+          (viewportH / 2 - (rect.top + rect.height / 2)) / viewportH;
+        const t = Math.max(-1, Math.min(1, progress));
+        y = t * PARALLAX_Y;
+        // Negative: the cards lag as the section rises, so the displacement
+        // opposes the loop's own left-to-right travel instead of adding to it.
+        x = -t * PARALLAX_X;
+      },
+      write() {
+        frame.style.setProperty("--band-y", `${y.toFixed(2)}px`);
+        drift.style.setProperty("--band-x", `${x.toFixed(2)}px`);
+      },
+    });
+
+    return () => {
+      unregister();
+      frame.style.removeProperty("--band-y");
+      drift.style.removeProperty("--band-x");
+    };
+  }, [parallax]);
+
   return (
     <div
       ref={frameRef}
-      className={`marquee mt-10 ${variant === "card" ? "marquee--cards" : ""}`}
+      className={`marquee mt-10 ${variant === "card" ? "marquee--cards" : ""} ${
+        tone === "dark" ? "marquee--deep" : ""
+      } ${parallax ? "marquee--parallax" : ""}`}
     >
-      <ul ref={trackRef} className={`marquee__track ${variant === "card" ? "py-8" : "py-5"}`}>
-        {/*
+      {/*
+       * Carries the horizontal parallax only. Present in every configuration so
+       * the tree does not change shape with a prop; with `--band-x` unset it
+       * resolves to 0 and this is an inert wrapper.
+       */}
+      <div ref={driftRef} className="marquee__drift">
+        <ul
+          ref={trackRef}
+          className={`marquee__track ${variant === "card" ? "py-8" : "py-5"}`}
+        >
+          {/*
          * Two passes over the same list. The second is the visual tail that
          * makes the loop seamless, so it is hidden from assistive tech — a
          * screen reader reads the partner list once.
@@ -161,9 +263,10 @@ export function PartnerCarousel({
                   return (
                     <li key={partner} className="mx-3 shrink-0">
                       {/*
-                        Square corners and a hairline border, matching the
-                        grid this replaces. The bubble variant's circle is the
-                        deliberate exception on this site, not the rule.
+                        Softly rounded and lifted, following the auto-slider
+                        reference: see `.partner-card` in globals.css for why
+                        this variant is allowed a radius where the rest of the
+                        site is square.
                       */}
                       <article className="partner-card group">
                         <span className="partner-card__mark">{mark}</span>
@@ -194,7 +297,8 @@ export function PartnerCarousel({
             </ul>
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
     </div>
   );
 }

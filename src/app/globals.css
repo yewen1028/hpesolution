@@ -2942,19 +2942,42 @@ html[data-motion="reduced"] {
   width: 208px;
   height: 176px;
   padding: 1.5rem 1.25rem;
+  /*
+   * **A deliberate exception to the square-corner rule**, alongside the circle
+   * on the business-partner page's bubble strip, and asked for directly: these
+   * are the auto-slider's tiles, and the radius is half of what makes that
+   * strip read as a run of objects passing rather than as a divided row.
+   * Everywhere else on this site the corners are square, and this is not a
+   * licence to soften them.
+   */
+  border-radius: 0.75rem;
   border: 1px solid var(--color-rule);
   background: var(--color-paper);
+  /* The reference's `shadow-2xl`, pulled back to something a light card can
+     carry: a tile that travels needs to sit above the band, not on it. */
+  box-shadow: 0 18px 36px -24px rgb(20 24 29 / 0.55);
   cursor: default;
   transition:
-    transform 350ms var(--ease-out-quint),
-    border-color 350ms var(--ease-out-quint),
-    box-shadow 350ms var(--ease-out-quint);
+    transform 300ms ease,
+    filter 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
 }
 
+/*
+ * Scale and brighten, which is the reference's hover exactly — and it replaces
+ * the 6px lift rather than joining it. A card that both rose and grew read as
+ * two effects disagreeing about which direction "forward" is; on a strip that
+ * is already moving sideways, the scale alone is the clearer of the two.
+ *
+ * `brightness` is doing very little to a white card and a good deal to the mark
+ * on it, which is the point: the logo is what the visitor is looking at.
+ */
 .partner-card:hover {
-  transform: translateY(-6px);
+  transform: scale(1.05);
+  filter: brightness(1.1);
   border-color: var(--color-brand);
-  box-shadow: 0 18px 38px -20px rgb(242 111 33 / 0.45);
+  box-shadow: 0 26px 50px -22px rgb(242 111 33 / 0.5);
 }
 
 /* Reserves the logo's row so cards with a short mark and a tall one align. */
@@ -2994,6 +3017,78 @@ html[data-motion="reduced"] {
 
 .marquee--cards::after {
   background: linear-gradient(270deg, var(--color-paper-warm), transparent);
+}
+
+/*
+ * The home page runs this strip across the near-black partner band, so the
+ * fades have to be that band's colour — a painted gradient in the wrong colour
+ * is a grey smear over the cards rather than the strip running out of sight.
+ */
+.marquee--deep::before {
+  background: linear-gradient(90deg, var(--color-paper-deep), transparent);
+}
+
+.marquee--deep::after {
+  background: linear-gradient(270deg, var(--color-paper-deep), transparent);
+}
+
+/*
+ * Permanently white, and permanently a light hairline — not `--color-paper` and
+ * `--color-rule`, which invert. Every partner mark is drawn for a light
+ * background, so a card on the dark band has to stay light in both themes or
+ * the dark theme turns each one into a black square with a black logo on it.
+ * The text on it follows: `--color-ink-fixed` is the token for exactly this.
+ */
+.marquee--deep .partner-card {
+  background: #ffffff;
+  border-color: rgb(20 24 29 / 0.1);
+}
+
+.marquee--deep .partner-card__name {
+  color: var(--color-ink-fixed);
+}
+
+.marquee--deep .partner-card__role {
+  color: rgb(20 24 29 / 0.55);
+}
+
+.marquee--deep .partner-card:hover .partner-card__name {
+  color: var(--color-brand);
+}
+
+/* --- Partner strip parallax ----------------------------------------------- */
+
+/*
+ * Written by the shared scroll loop in `partner-carousel.tsx` when `parallax`
+ * is set. Unset — no script, reduced motion, or the prop off — both resolve to
+ * 0 and the strip simply sits where it is.
+ *
+ * `--band-y` moves the clipping frame, `--band-x` moves an inner wrapper. The
+ * component comments explain why those cannot be swapped.
+ */
+.marquee--parallax {
+  transform: translate3d(0, var(--band-y, 0px), 0);
+}
+
+.marquee__drift {
+  transform: translate3d(var(--band-x, 0px), 0, 0);
+}
+
+/*
+ * `will-change` only on the axis that is actually driven from script, and only
+ * on the two elements that carry it — the track underneath is animating its own
+ * transform for the life of the page and does not need a third promoted layer
+ * stacked on it.
+ */
+.marquee--parallax,
+.marquee--parallax .marquee__drift {
+  will-change: transform;
+}
+
+html[data-motion="reduced"] .marquee--parallax,
+html[data-motion="reduced"] .marquee--parallax .marquee__drift {
+  transform: none;
+  will-change: auto;
 }
 
 html[data-motion="reduced"] {
@@ -4474,156 +4569,6 @@ html[data-motion="reduced"] .partner-aurora {
   animation: none;
   /* Parked mid-drift: the field is the point, the travel is not. */
   transform: scale(1.08);
-}
-
-/*
- * The band's own parallax drift. `--band-y` is written by the shared scroll
- * loop from `sections/partners.tsx`; unset — no script, reduced motion — it
- * resolves to 0 and the band simply sits where it is.
- */
-.partner-band {
-  transform: translate3d(0, var(--band-y, 0px), 0);
-  will-change: transform;
-}
-
-html[data-motion="reduced"] .partner-band {
-  transform: none;
-}
-
-/* --- Partner nodes on the path --------------------------------------------- */
-
-/*
- * One principal on the ribbon. Square and hairline, matching the card strip
- * this replaces — the bubble on the business-partner page is the deliberate
- * exception on this site, not the rule.
- *
- * Centred on its own point: `offset-path` positions an element by its top-left
- * corner, so without the pull-back the tile hangs below and right of the curve
- * it is meant to be sitting on.
- */
-.partner-node {
-  display: grid;
-  place-items: center;
-  /*
-   * Every card is the same box — one width, one height, for all seventeen
-   * principals, including the two carrying a wordmark instead of a mark. The
-   * logos inside differ in aspect, so they are fitted against a shared ceiling
-   * with `object-contain` rather than being allowed to size the card. A strip
-   * whose cards vary reads as a mistake rather than as variety.
-   */
-  /*
-   * 4rem. The pitch between cards on this path is 98 units, so 64px leaves 34
-   * between neighbours — looser than the reference's rhythm, and the trade is
-   * deliberate: the curve tops out at y=1.4 of a 330-unit viewBox, meaning a
-   * card centred there hangs half its own height above the band and into the
-   * copy above it. Every millimetre of card height is a millimetre of that
-   * overhang, so the card size and the clearance below the heading are one
-   * decision, not two.
-   */
-  width: 4rem;
-  height: 4rem;
-  /* `offset-path` positions an element by its top-left corner, so each card is
-     pulled back by half its own size to sit centred on the curve. */
-  margin-left: -2rem;
-  margin-top: -2rem;
-  /* 0.4rem, so the 46px logo frame clears the border with room either side:
-     64 - 2x6.4 padding - 2x1 border leaves 49.2px of content. */
-  padding: 0.4rem;
-  /*
-   * **A deliberate exception to the square-corner rule**, alongside the circle
-   * on the business-partner page's bubble strip — and for a related reason.
-   * These cards are the only elements on the site that travel along a curve;
-   * a hard 90-degree corner reads as a chip that has been rotated off-axis
-   * when it sits on a bend, where a 10px radius keeps reading as the same
-   * object all the way round. Everywhere else on this site the corners are
-   * square, and this is not a licence to soften them.
-   */
-  border-radius: 0.625rem;
-  /*
-   * Permanently white, and permanently a light hairline — not `--color-paper`
-   * and `--color-rule`, which invert. Every partner mark on this site is drawn
-   * for a light background, so the card has to stay light in both themes or
-   * the dark theme turns each one into a black square with a black logo on it.
-   * This is the `--color-ink-fixed` idea in reverse: a chip that does not
-   * follow the theme, because what sits on it cannot.
-   */
-  background: #ffffff;
-  border: 1px solid rgb(20 24 29 / 0.1);
-  /* Magnify on hover. At 64px in a 98px slot there is 34px of room, so 1.35
-     grows the card by 22px total and still clears both neighbours. */
-  transform: scale(1);
-  transition:
-    transform 0.3s ease-in-out,
-    border-color 0.3s var(--ease-out-quint),
-    box-shadow 0.3s var(--ease-out-quint);
-}
-
-.partner-node:hover {
-  transform: scale(1.35);
-  border-color: var(--color-brand);
-  box-shadow: 0 16px 38px -16px rgb(0 0 0 / 0.55);
-}
-
-/* Dragging the ribbon should not look like selecting a logo. */
-.partner-node img,
-.partner-node__word {
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-html[data-motion="reduced"] .partner-node {
-  transition: border-color 0.3s linear;
-}
-
-html[data-motion="reduced"] .partner-node:hover {
-  transform: none;
-}
-
-/* The two principals with no sourceable mark read as a wordmark instead. */
-/*
- * The two principals with no sourceable mark. Text only — an icon plus a name
- * does not fit a 3.5rem card, and the name is the information.
- */
-/*
- * The fallback wordmark, sized so the longest of them fits on one line.
- *
- * "CYBEROAM" is eight characters where "AMP" is three. At 0.6rem it measured
- * out to almost exactly the card's 49.2px of content width, so with real
- * Archivo metrics it ran past the edge — and an oversized grid item centred by
- * `place-items` overflows on both sides, which is why that one card looked
- * shifted rather than merely tight. At 0.5rem it comes to about 41px and has
- * room either side.
- *
- * `nowrap` is the guarantee: "CYBEROAM" is a single unbreakable word, so
- * without it the only way the box could ever contain it would be to spill.
- * Both wordmarks take the same size — they are the same kind of thing.
- */
-.partner-node__word {
-  max-width: 100%;
-  font-family: var(--font-display);
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  line-height: 1.1;
-  white-space: nowrap;
-  /* Fixed ink, to match the card it sits on. */
-  color: var(--color-ink-fixed);
-  text-align: center;
-}
-
-/*
- * The marks are PNGs with their own colour. On the warm paper of this band a
- * couple of the darker ones sit heavily, so they are held back a touch and come
- * up to full on hover — the same restraint the card strip used.
- */
-.partner-node img {
-  opacity: 0.85;
-  transition: opacity 0.3s var(--ease-out-quint);
-}
-
-.partner-node:hover img {
-  opacity: 1;
 }
 
 /* --- Footer links ----------------------------------------------------------- */
