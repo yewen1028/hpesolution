@@ -203,6 +203,7 @@ export function ParallaxBand({
   alt,
   speed = 110,
   variant = "drift",
+  flattenOnCoarsePointer = false,
   className = "",
   overlay = "linear-gradient(180deg, rgb(16 21 27 / 0.86), rgb(16 21 27 / 0.74))",
   eager = false,
@@ -213,6 +214,8 @@ export function ParallaxBand({
   /** `drift` only. */
   speed?: number;
   variant?: "drift" | "aperture";
+  /** `drift` only. See `Parallax` — off by default, opt in per figure. */
+  flattenOnCoarsePointer?: boolean;
   className?: string;
   overlay?: string;
   /**
@@ -239,7 +242,11 @@ export function ParallaxBand({
           />
         </ParallaxWindow>
       ) : (
-        <Parallax speed={speed} className="absolute inset-x-0 -z-10">
+        <Parallax
+          speed={speed}
+          flattenOnCoarsePointer={flattenOnCoarsePointer}
+          className="absolute inset-x-0 -z-10"
+        >
           <Media
             src={image}
             alt={alt}

@@ -53,12 +53,60 @@ export type StageVariant =
    */
   | "pan";
 
+/*
+ * The figure plays on arrival and on departure, and **not in between**.
+ *
+ * Both scalars used to be measured from the section's top edge: entry from the
+ * fold, exit from the moment that edge crossed the top of the window. On a
+ * section taller than the viewport that is wrong, and badly. The services grid
+ * on the home page is 1509px in a 748px window, and its exit began the instant
+ * the heading scrolled off and completed while 558px of cards were still on
+ * screen — so the section tipped away and dimmed while it was being read, then
+ * sat at its spent end state for the whole lower half. It was neutral for 16%
+ * of its passage.
+ *
+ * Each phase is now keyed to the edge it belongs to: entry to the top edge
+ * arriving, exit to the **bottom** edge leaving. Everything between the two is
+ * the settled state — no transform, no fade — which is what a reader scrolling
+ * through the content should get.
+ */
+
 /** Viewport fraction the entry takes to resolve, measured from the fold. */
 const ENTER_SPAN = 0.3;
-/** Fraction of the section's own height the exit plays out over. */
+/** Viewport fraction of the tail the exit plays out over. */
 const EXIT_SPAN = 0.9;
 
 const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
+
+/**
+ * The intro / hold / conclude contract, as two 0–1 scalars.
+ *
+ * Exported because it is a contract rather than an implementation detail:
+ * `ScrollDrift` applies the same phasing to an element inside a stage, and the
+ * two must agree about when a thing is arriving, settled and leaving. One copy
+ * of these four lines, measured against whichever element is being described.
+ */
+export function stagePhases(rect: DOMRect, viewportH: number) {
+  /*
+   * Neither span may exceed half the element, which is what keeps the two
+   * phases from overlapping on something shorter than the window — there, the
+   * bottom edge starts leaving before the top has finished arriving. `|| 1`
+   * guards a zero height, which is what a `display: none` ancestor measures as.
+   */
+  const half = rect.height / 2;
+  const enterSpan = Math.min(viewportH * ENTER_SPAN, half) || 1;
+  const exitSpan = Math.min(viewportH * EXIT_SPAN, half) || 1;
+
+  return {
+    // 0 while the element is still below the fold, 1 once its top edge has
+    // travelled enterSpan past it.
+    enter: clamp01((viewportH - rect.top) / enterSpan),
+    // 0 until the element's **bottom** edge is within exitSpan of the top of
+    // the window, 1 as that edge reaches it. On something tall this is the
+    // last screenful and nothing before it.
+    exit: clamp01((exitSpan - rect.bottom) / exitSpan),
+  };
+}
 
 export function ScrollStage({
   variant,
@@ -83,16 +131,7 @@ export function ScrollStage({
     const unregister = registerScrollLayer({
       el,
       read(rect, viewportH) {
-        // 0 while the section is still below the fold, 1 once it has travelled
-        // ENTER_SPAN of a viewport past it.
-        enter = clamp01((viewportH - rect.top) / (viewportH * ENTER_SPAN));
-
-        // 0 until the section's top edge crosses the top of the window, 1 once
-        // it has gone far enough past that the section is spent. Capped at a
-        // viewport so a very tall section does not leave in slow motion.
-        exit = clamp01(
-          -rect.top / (Math.min(rect.height, viewportH) * EXIT_SPAN),
-        );
+        ({ enter, exit } = stagePhases(rect, viewportH));
       },
       write() {
         el.style.setProperty("--stage-enter", enter.toFixed(4));

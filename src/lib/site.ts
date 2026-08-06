@@ -93,28 +93,24 @@ export type Service = {
   features: { title: string; body: string }[];
   benefits: { title: string; body: string }[];
   /**
-   * The page's **one** parallax figure below the hero, and the only thing that
-   * differentiates these seven pages structurally — they otherwise share a
-   * template.
+   * The page's **one** parallax figure below the hero.
    *
    * One per page is the whole rule. The hero already drifts, so a second
    * photographic figure is the most a page can carry before the scroll stops
-   * reading as depth and starts reading as noise. The figure is chosen against
-   * the subject, not rotated for variety:
+   * reading as depth and starts reading as noise.
    *
-   *   `aperture` — the photo is pinned and the section travels over it, so the
-   *                picture reads as something standing still that the page
-   *                passes across. It wants a tall section and a subject that is
-   *                a *place*: the estate, the floor.
-   *   `drift`    — the photo lags inside its own frame. Gentler, and right
-   *                where the subject is an *object* or a moment rather than a
-   *                standing place, and on pages whose features already render
-   *                as a scroll-linked timeline.
+   * The *movement* is not configurable here and deliberately so. This field
+   * used to carry a `variant` of `"drift" | "aperture"`, chosen per service
+   * against its subject; in practice it meant the same slot on the same
+   * template moved in two different directions depending on which service you
+   * had opened, which reads as an inconsistency rather than as rhythm. The
+   * figure now lives in `components/sections/service-band.tsx` and is the same
+   * on all seven. What varies is the photograph and the sentence — which is
+   * what this data is for.
    */
   band?: {
     image: string;
     alt: string;
-    variant: "drift" | "aperture";
     eyebrow: string;
     line: string;
   };
@@ -147,15 +143,9 @@ export const services: Service[] = [
     icon: "ServerCog",
     image: "/media/svc-managed-services.jpg",
     imageAlt: "Engineer checking a tablet beside racked servers",
-    /*
-     * Aperture. The estate is the subject and it does not move — the contract
-     * runs across it. This is also the longest of the seven pages (timeline,
-     * scope, tiers, benefits), so it has the height the stronger figure wants.
-     */
     band: {
       image: "/media/band-network-rack.jpg",
       alt: "A lit aisle between two rows of closed server cabinets",
-      variant: "aperture",
       eyebrow: "Under contract",
       line: "Around 50,000 customer nodes sit under contract across 18 centres — servers, endpoints, network devices and peripherals, each on a defined escalation path.",
     },
@@ -241,16 +231,9 @@ export const services: Service[] = [
     icon: "Boxes",
     image: "/media/svc-project-deployment.jpg",
     imageAlt: "Technician working at a rack in a server room",
-    /*
-     * Drift, not aperture: this page's features already render as a
-     * scroll-linked timeline, and a pinned band underneath it would be two
-     * scroll figures competing over the same few hundred pixels. The subject is
-     * an object — kit staged and boxed — which is what drift suits.
-     */
     band: {
       image: "/media/case-audit.jpg",
       alt: "Laptops stacked on their shipping cartons",
-      variant: "drift",
       eyebrow: "Off-site first",
       line: "Commissioning, imaging and testing are finished before anything reaches your floor, so the site visit is an installation rather than a build.",
     },
@@ -310,11 +293,9 @@ export const services: Service[] = [
     icon: "Headset",
     image: "/media/svc-helpdesk.jpg",
     imageAlt: "Helpdesk agent wearing a headset at a call centre desk",
-    /* Drift. The subject is people at a moment of work, not a standing place. */
     band: {
       image: "/media/band-office.jpg",
       alt: "Two colleagues working at adjacent desks in an open office",
-      variant: "drift",
       eyebrow: "24 × 7",
       line: "The phone helpdesk runs around the clock, and performance is measured against the SLA rather than asserted.",
     },
@@ -365,15 +346,9 @@ export const services: Service[] = [
     icon: "Users",
     image: "/media/svc-staffing.jpg",
     imageAlt: "Two engineers working on cabling at a network rack",
-    /*
-     * Aperture. Staffing is about a floor that carries on working while people
-     * are placed into it — a standing place the page travels across, which is
-     * exactly the figure's subject.
-     */
     band: {
       image: "/media/band-workspace.jpg",
       alt: "An open-plan technical floor with several people at monitors",
-      variant: "aperture",
       eyebrow: "Placed, not posted",
       line: "Resource is matched to the skill set and the years the role actually needs, with backfill arranged before it is required rather than after.",
     },
@@ -424,11 +399,9 @@ export const services: Service[] = [
     icon: "ShieldCheck",
     image: "/media/svc-warranty.jpg",
     imageAlt: "A memory module being fitted into an opened laptop chassis",
-    /* Drift. A claim is a moment in a queue, not a place. */
     band: {
       image: "/media/contact-support.jpg",
       alt: "A row of server cabinets receding down a data centre aisle",
-      variant: "drift",
       eyebrow: "On the principal's behalf",
       line: "Parts are carried for the manufacturers we are appointed by, so a claim is fulfilled on site or at any of the 18 centres rather than posted away.",
     },
@@ -484,15 +457,13 @@ export const services: Service[] = [
     image: "/media/svc-sourcing.jpg",
     imageAlt: "Numbered ports and link LEDs across the face of a rack switch",
     /*
-     * Aperture, and the boxed-kit still again — shared with project deployment,
-     * where it carries the opposite figure and a different line. Sourcing is
+     * The boxed-kit still again, shared with project deployment. Sourcing is
      * where that photograph is most literally on topic: this is the page about
      * supplying the hardware in those cartons.
      */
     band: {
       image: "/media/case-audit.jpg",
       alt: "Laptops stacked on their shipping cartons",
-      variant: "aperture",
       eyebrow: "Supplied and integrated",
       line: "Desktops, laptops, servers and network equipment sourced direct or by tender, tested together before any of it ships.",
     },
@@ -543,11 +514,9 @@ export const services: Service[] = [
     icon: "Wrench",
     image: "/media/svc-value-added.jpg",
     imageAlt: "Technician tracing cabling at the back of a rack",
-    /* Drift. IMAC work is a series of small moments on someone else's floor. */
     band: {
       image: "/media/band-workspace.jpg",
       alt: "An open-plan technical floor with several people at monitors",
-      variant: "drift",
       eyebrow: "Alongside the contract",
       line: "Installs, moves, adds and changes, mini projects and office relocation — the work that arrives between the scheduled ones.",
     },

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { ScrollDrift } from "@/components/scroll-drift";
 import { DrawIcon } from "@/components/draw-icon";
 import { FlickeringGrid } from "@/components/flickering-grid";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
@@ -31,7 +32,23 @@ export function ServicesGrid({
           <SectionHeading eyebrow={eyebrow} title={title} lede={lede} />
         </Reveal>
 
-        <ul className="mt-16 grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
+        {/*
+          The grid lags the heading above it as it arrives, and again as it
+          leaves — and does nothing at all in between, which is the point.
+          `ScrollDrift` measures the list and publishes the phase; `.svc-list`
+          decides how far it travels.
+
+          The transform is on the list, not on the cells. Each cell draws its
+          own right and bottom hairline, so staggering them individually pulls
+          the grid's rules apart into a jagged step — the frame has to travel
+          as one piece.
+
+          The wrapper is the ruler and the `<ul>` is what moves. They cannot be
+          the same element: measuring the thing you are moving reads back your
+          own last frame. See `scroll-drift.tsx`.
+        */}
+        <ScrollDrift className="mt-16">
+          <ul className="svc-list grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service, i) => (
             <Reveal
               as="li"
@@ -133,7 +150,8 @@ export function ServicesGrid({
               </span>
             </Link>
           </Reveal>
-        </ul>
+          </ul>
+        </ScrollDrift>
       </Container>
     </section>
   );

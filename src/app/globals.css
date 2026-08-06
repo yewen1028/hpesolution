@@ -358,6 +358,44 @@
 }
 
 /*
+ * The services grid lags the heading it sits under, on the way in and on the
+ * way out — and holds perfectly still for the whole middle of its passage,
+ * where a reader is going down the cards and nothing should be moving under
+ * them.
+ *
+ * `--drift-p` comes from the `ScrollDrift` wrapper (+1 arriving, 0 settled, -1
+ * leaving), measured against the list rather than against the section: the
+ * section's own entry is spent before the grid has cleared the fold, so a
+ * drift keyed to it would do its travel out of sight.
+ *
+ * Sign follows from the property: at +1 the list sits below its resting place
+ * and rises into it, which is what reads as the grid being brought out; it
+ * carries on upward as the section leaves. One direction of travel throughout,
+ * which is what separates a parallax from a bounce.
+ *
+ * Unset — no script, reduced motion, before hydration — it resolves to 0 and
+ * the grid is simply a grid. The explicit bail-out below is belt and braces.
+ */
+.svc-list {
+  --svc-travel: 60px;
+  transform: translate3d(0, calc(var(--drift-p, 0) * var(--svc-travel)), 0);
+  will-change: transform;
+}
+
+/* Shorter travel where the viewport is short: 60px of lag against a heading
+   that is itself only a few lines tall reads as a jump rather than a drift. */
+@media (max-width: 640px) {
+  .svc-list {
+    --svc-travel: 34px;
+  }
+}
+
+html[data-motion="reduced"] .svc-list {
+  transform: none;
+  will-change: auto;
+}
+
+/*
  * Per-card drift inside the case-study row. `--case-y` is written by the shared
  * scroll loop from `components/case-parallax.tsx`; unset — no script, reduced
  * motion — it resolves to 0 and the row is simply a row.
@@ -2476,12 +2514,243 @@ html[data-motion="reduced"] {
   -webkit-text-stroke: 1px rgb(20 24 29 / 0.08);
 }
 
+/*
+ * `--light` and `--dark` name the ink, not the theme, and they were written for
+ * bands that are dark in both themes. The benefits ledger is the first caller
+ * that sits on a themed surface, where near-black ink on near-black paper is
+ * nothing at all — so the dark tone inverts with the page.
+ */
+:root[data-theme="dark"] .display-watermark--dark {
+  -webkit-text-stroke-color: rgb(244 242 239 / 0.07);
+}
+
 /* Below the fold of a phone it would crop to a single stroke. */
 @media (max-width: 640px) {
   .display-watermark {
     font-size: 46vw;
     right: -6%;
     opacity: 0.7;
+  }
+}
+
+/* --- Service benefits ----------------------------------------------------- */
+
+/*
+ * The ledger that closes every service page, and the one section on it that
+ * moves on both sides of itself.
+ *
+ * `components/benefits-stage.tsx` writes a single scalar, --ben-p, running -1
+ * → +1 as the section crosses the window. Everything below is derived from it,
+ * so the whole composition costs one property write per frame, and the two
+ * layers move at different rates in opposite directions — which is the only
+ * reason it reads as depth rather than as a section that wobbles.
+ *
+ * Unset, all of it resolves to translate(0) and the section is a set of ruled
+ * rows. That is the no-script state and the reduced-motion state both.
+ */
+/*
+ * Static. This layer used to drift, and the drift was measurable and
+ * completely invisible: a regular grid translated by any amount is congruent
+ * with itself, so nothing about it changes except the edges the mask is
+ * already hiding. Parallax needs a layer whose position can be read — hence
+ * `.benefits__mark` below. This one is texture.
+ */
+.benefits__field {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  color: color-mix(in srgb, var(--color-ink) 7%, transparent);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 24%,
+    #000 68%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 24%,
+    #000 68%,
+    transparent
+  );
+}
+
+/*
+ * The numeral, and the section's one unmistakable moving object.
+ *
+ * 130px each way — 260px of travel across the passage — because this is a
+ * shape roughly a third of the viewport tall with a fixed grid behind it and
+ * fixed hairlines in front: at the 56px the field used to drift it would still
+ * read as static. It sits on the empty right-hand quarter the ledger leaves,
+ * so nothing it passes behind is text.
+ */
+.benefits__mark {
+  position: absolute;
+  /* Oversized past the drift on both edges so the numeral is never clipped
+     into the section by its own travel. */
+  inset: -160px 0;
+  z-index: -1;
+  transform: translate3d(0, calc(var(--ben-p, 0) * 130px), 0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/*
+ * Scoped down from the shared 34vw. That size is for a band where the numeral
+ * is the only thing on the right-hand side; here it would run back under the
+ * paragraph column, and a watermark that crosses body copy is a texture over
+ * the text rather than a shape behind it. At 20vw it fits the quarter of the
+ * row the ledger leaves empty.
+ *
+ * A little more ink than the shared tone, too: this is no longer decoration
+ * behind other content, it is the thing whose travel the visitor is meant to
+ * see.
+ */
+.benefits__mark .display-watermark {
+  right: 4%;
+  font-size: clamp(8rem, 20vw, 21rem);
+  -webkit-text-stroke-width: 1.5px;
+  -webkit-text-stroke-color: rgb(20 24 29 / 0.11);
+}
+
+:root[data-theme="dark"] .benefits__mark .display-watermark {
+  -webkit-text-stroke-color: rgb(244 242 239 / 0.1);
+}
+
+/*
+ * On a phone the rows run the full width, so there is no empty margin to sit
+ * in and the numeral is behind the ledger whatever it does. Kept small and
+ * pushed to the corner, where it reads as a mark on the paper.
+ */
+@media (max-width: 640px) {
+  .benefits__mark .display-watermark {
+    right: -2%;
+    font-size: 9rem;
+    opacity: 0.75;
+  }
+}
+
+/*
+ * The head travels against the numeral, and against the list below it, which
+ * is what turns one moving object into a passage with depth. Small: this is
+ * the section's heading and it may not appear to come loose from the rows it
+ * introduces.
+ */
+.benefits__head {
+  transform: translate3d(0, calc(var(--ben-p, 0) * -24px), 0);
+  will-change: transform;
+}
+
+/*
+ * One rule above the first row; every row draws its own below. The container
+ * does not supply side borders — these rows run the full reading width and are
+ * separated, not boxed.
+ */
+.benefits__list {
+  border-top: 1px solid var(--color-rule);
+}
+
+.benefit-row {
+  position: relative;
+  display: grid;
+  gap: 0.75rem;
+  /*
+   * The negative inline margin cancels the padding, so the text still sits on
+   * the container's own left edge while the hover wash and the brand rule
+   * extend past it. Without it the row would either look inset from every
+   * other section on the page, or the hover state would stop exactly at the
+   * first character.
+   */
+  padding: 1.75rem 1rem 2rem;
+  /* Kept just inside the Container's own 1.25rem of phone padding: at parity
+     the brand rule would sit flush against the edge of the screen. */
+  margin-inline: -1rem;
+  border-bottom: 1px solid var(--color-rule);
+  transition: background-color 0.4s var(--ease-out-quint);
+}
+
+/* Overlaps its own hairline at both ends, so the rule reads as a continuous
+   edge on the row rather than a segment floating between two lines. */
+.benefit-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.45s var(--ease-out-quint);
+}
+
+/* The section is warm paper, so a row lifts to plain paper under the cursor —
+   the same accent-free way the services grid marks the row you are on. */
+.benefit-row:hover {
+  background-color: var(--color-paper);
+}
+
+.benefit-row:hover::before {
+  transform: scaleY(1);
+}
+
+/*
+ * The claim column is wide for the length of the claims — two or three words
+ * in `.display-3` — because the row's hairline runs the full container width
+ * and a narrow first column leaves the pair huddled against the left edge of a
+ * very long rule. Sized so the paragraph beside it ends around three quarters
+ * of the way across, which is where the tiers table above puts its last
+ * column.
+ */
+@media (min-width: 768px) {
+  .benefit-row {
+    grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+    gap: 3rem;
+    padding: 2.25rem 1.5rem 2.5rem;
+    margin-inline: -1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .benefit-row {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    gap: 5rem;
+  }
+}
+
+/*
+ * The claims travel against the field behind them, and each row a little
+ * further than the one above it — the `--i` the list writes on each row. A
+ * single rate for the whole column would slide as one block and read as a
+ * misaligned column; the stagger is what makes it shear.
+ *
+ * Still the smallest movement in the section, and it has to be: this is type
+ * sitting beside a paragraph that does not move, and past about 20px the pair
+ * stops reading as one row. The claims are not what carries the effect — the
+ * numeral is — so this stays a refinement on top of it.
+ */
+.benefit-row__title {
+  transform: translate3d(
+    0,
+    calc(var(--ben-p, 0) * (-8px - var(--i, 0) * 3px)),
+    0
+  );
+  will-change: transform;
+}
+
+html[data-motion="reduced"] {
+  .benefits__mark,
+  .benefits__head,
+  .benefit-row__title {
+    transform: none;
+    will-change: auto;
+  }
+
+  .benefit-row,
+  .benefit-row::before {
+    transition: none;
   }
 }
 

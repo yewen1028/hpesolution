@@ -53,7 +53,25 @@ hardcode hex values.
   register on mount and unregister on unmount. Reads are batched before writes.
   Don't add per-element scroll listeners.
   `speed` is total drift in px across a viewport of scrolling; `Parallax`
-  oversizes itself by that amount so drift never exposes an edge.
+  oversizes itself by that amount **and clamps its progress scalar to ±1**, so
+  peak drift equals the overhang and no viewport can uncover the frame. The two
+  are a pair — the clamp was missing, and a band taller than the window reached
+  1.5× speed and pulled a visible seam of bare overlay into the top edge.
+- **The service-page banner is one figure on all seven pages.**
+  `sections/service-band.tsx` is the single implementation; `band` in `site.ts`
+  supplies the photograph and the sentence and nothing about the movement. It
+  used to carry a `variant` of `drift | aperture` chosen per service, which
+  meant the same slot moved in two directions depending on which service you
+  had opened. Do not reintroduce a per-page movement prop. `ParallaxBand` still
+  takes `variant` because the home page's coverage band uses the aperture — that
+  is a different section, not a variant of this one.
+- `components/scroll-stage.tsx` — the section figures play **on arrival and on
+  departure, never in between**. Entry is keyed to the top edge arriving, exit
+  to the *bottom* edge leaving, and each span is capped at half the section so
+  the two can't overlap on a section shorter than the window. Everything
+  between is the settled state. Keying both phases off the top edge — which is
+  what it used to do — makes a tall section tip away and dim while it is still
+  being read.
 - `components/reveal.tsx` — `IntersectionObserver` reveal with a **2.5s
   safety-net timer**. Content starts hidden in CSS, so anything animated needs
   that net or it can stay invisible. Keep the `<noscript>` override in

@@ -6,6 +6,7 @@ import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { ServiceBand } from "@/components/sections/service-band";
+import { ServiceBenefits } from "@/components/sections/service-benefits";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
 import { SectionNav } from "@/components/section-nav";
 import { ScrollTimeline } from "@/components/scroll-timeline";
@@ -215,32 +216,7 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
       {service.band && <ServiceBand band={service.band} />}
 
       {/* Benefits */}
-      <section id="benefits" className="scroll-mt-28 border-t border-rule bg-paper-warm py-24 sm:py-32">
-        <Container>
-          <Reveal>
-            <SectionHeading
-              title="What changes once this is contracted out"
-            />
-          </Reveal>
-          <ul className="mt-14 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
-            {service.benefits.map((benefit, i) => (
-              <Reveal
-                as="li"
-                key={benefit.title}
-                delay={(i % 4) * 80}
-                className="bg-paper p-8"
-              >
-                <h3 className="font-display text-lg font-semibold text-ink">
-                  {benefit.title}
-                </h3>
-                <p className="mt-3 text-[0.925rem] leading-relaxed text-ink-soft">
-                  {benefit.body}
-                </p>
-              </Reveal>
-            ))}
-          </ul>
-        </Container>
-      </section>
+      <ServiceBenefits benefits={service.benefits} />
 
       {/* Sibling services */}
       <section className="border-t border-rule py-24 sm:py-32">
