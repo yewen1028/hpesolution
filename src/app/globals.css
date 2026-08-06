@@ -2934,6 +2934,7 @@ html[data-motion="reduced"] {
  * is what the rAF loop measures to find its wrap point.
  */
 .partner-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2957,11 +2958,53 @@ html[data-motion="reduced"] {
      carry: a tile that travels needs to sit above the band, not on it. */
   box-shadow: 0 18px 36px -24px rgb(20 24 29 / 0.55);
   cursor: default;
+  /*
+   * The hover figure is assembled from custom properties rather than from a
+   * `transform` per state, because two writers want this one property: the
+   * `:hover` rule below sets the scale, and the pointer loop in
+   * `partner-carousel.tsx` sets the tilt every frame. Declared once here, they
+   * compose; declared as two `transform` values, the later one silently wins.
+   *
+   * Unset — no script, no hover-capable pointer, reduced motion — every value
+   * is its identity and this is the plain card.
+   */
+  --card-scale: 1;
+  --tilt-x: 0;
+  --tilt-y: 0;
+  /*
+   * Flat at rest, and that is not just tidiness: `perspective()` is a 3D
+   * transform and a browser will promote every element carrying one to its own
+   * compositor layer. Thirty-four cards times a 208×176 surface is real memory
+   * on the low-end machines this component already bends over backwards for, to
+   * hold thirty-three identity matrices. The 3D form is switched on by the two
+   * rules below, which is exactly when it is doing something.
+   */
+  transform: scale(var(--card-scale));
   transition:
-    transform 300ms ease,
+    transform 320ms var(--ease-out-quint),
     filter 300ms ease,
+    opacity 300ms ease,
     border-color 300ms ease,
     box-shadow 300ms ease;
+}
+
+/*
+ * While the cursor is actually on the card the transform is being rewritten
+ * every frame, and a 320ms settle on top of that reads as the card lagging the
+ * pointer through treacle. Short enough to track, long enough to smooth the
+ * step between frames. The full easing comes back on the way out, because the
+ * property reverts the moment the attribute is dropped.
+ */
+.partner-card[data-pointing] {
+  transition-duration: 110ms;
+  will-change: transform;
+}
+
+/* The tilt itself, on the one card the pointer is over. */
+.partner-card:hover,
+.partner-card[data-pointing] {
+  transform: perspective(760px) rotateY(calc(var(--tilt-x) * 7deg))
+    rotateX(calc(var(--tilt-y) * -5.5deg)) scale(var(--card-scale));
 }
 
 /*
@@ -2974,21 +3017,78 @@ html[data-motion="reduced"] {
  * on it, which is the point: the logo is what the visitor is looking at.
  */
 .partner-card:hover {
-  transform: scale(1.05);
+  --card-scale: 1.06;
   filter: brightness(1.1);
-  border-color: var(--color-brand);
-  box-shadow: 0 26px 50px -22px rgb(242 111 33 / 0.5);
+  /*
+   * A warmed hairline, not a brand outline. The baseline rule below is the
+   * accent this card gets; an orange border around it as well is the same note
+   * played twice, and at seventeen cards it turns the strip into a row of
+   * outlined boxes rather than one card being pointed at.
+   */
+  border-color: rgb(242 111 33 / 0.38);
+  box-shadow: 0 26px 50px -22px rgb(242 111 33 / 0.42);
+}
+
+/*
+ * The accent, and it is **the site's own mark rather than a new one**: a brand
+ * rule drawn in from the left, which is what the footer links do, what
+ * `.eyebrow` is built from, and what the splash screen ends on.
+ *
+ * It replaces a cursor-following radial wash that was here before, for two
+ * reasons. It was cut off — a circle centred near the bottom of a 176px card
+ * meets the bottom edge long before it has faded, so it ended in a hard
+ * straight line across the card. And it was a wash of brand orange, which is
+ * the one thing the design system says this colour is never used as. A rule is
+ * the accent, and it has an edge because it is *supposed* to have an edge.
+ *
+ * Sits on the card's own bottom hairline (`bottom: -1px` covers the border) and
+ * stops short of the corners, so the straight rule never has to argue with the
+ * 0.75rem radius.
+ */
+.partner-card::after {
+  content: "";
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: -1px;
+  z-index: 2;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--color-brand);
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms var(--ease-out-quint);
+}
+
+.partner-card:hover::after {
+  transform: scaleX(1);
 }
 
 /* Reserves the logo's row so cards with a short mark and a tall one align. */
 .partner-card__mark {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 48px;
+  transition: transform 320ms var(--ease-out-quint);
+}
+
+/*
+ * The mark comes forward a little further than the card does. That difference
+ * is the whole point of the tilt — two planes moving by different amounts is
+ * what makes a flat rectangle read as having depth — and it is small enough
+ * that a wordmark never crowds the card's padding.
+ */
+.partner-card:hover .partner-card__mark {
+  transform: translateZ(0) scale(1.07);
 }
 
 .partner-card__name {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 600;
@@ -3003,11 +3103,41 @@ html[data-motion="reduced"] {
 }
 
 .partner-card__role {
+  position: relative;
+  z-index: 1;
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-ink-muted);
+  transition:
+    color 300ms var(--ease-out-quint),
+    letter-spacing 380ms var(--ease-out-quint);
+}
+
+/*
+ * The standing line opens up a fraction on hover. It is the smallest of the
+ * three movements on this card deliberately — it is the caption, not the
+ * subject — but a line of tracked-out uppercase that widens is a mark this
+ * site already uses in `.eyebrow`, so the card resolves into something
+ * familiar rather than into a new idea.
+ */
+.partner-card:hover .partner-card__role {
+  letter-spacing: 0.2em;
+  color: var(--color-brand);
+}
+
+/*
+ * Pointing at one card recedes the rest of the strip. Without this the hover
+ * competes with sixteen equally bright neighbours travelling past it and reads
+ * as noise; with it, the band has a subject. Kept as opacity and saturation
+ * only — a blur here would be a filter on a wide, permanently animating layer,
+ * which is the one thing the marquee's own comments warn low-end graphics get
+ * wrong.
+ */
+.marquee--cards:has(.partner-card:hover) .partner-card:not(:hover) {
+  opacity: 0.62;
+  filter: saturate(0.7);
 }
 
 /* The card strip sits on warm white, so the edge fades have to match it. */
@@ -3063,11 +3193,19 @@ html[data-motion="reduced"] {
  * is set. Unset — no script, reduced motion, or the prop off — both resolve to
  * 0 and the strip simply sits where it is.
  *
- * `--band-y` moves the clipping frame, `--band-x` moves an inner wrapper. The
- * component comments explain why those cannot be swapped.
+ * `--band-y`, `--band-rot`, `--band-scale` and `--band-fade` move the clipping
+ * frame; `--band-x` moves an inner wrapper. The component comments explain why
+ * the two axes cannot be swapped.
+ *
+ * The rotation and the scale go on the frame with the lift, in that order:
+ * rotating *then* scaling keeps the tilt's angle independent of how far into
+ * its settle the band is. `transform-origin` is the frame's centre, so the band
+ * banks about the middle of the strip rather than pivoting off one edge.
  */
 .marquee--parallax {
-  transform: translate3d(0, var(--band-y, 0px), 0);
+  transform: translate3d(0, var(--band-y, 0px), 0) rotate(var(--band-rot, 0deg))
+    scale(var(--band-scale, 1));
+  opacity: var(--band-fade, 1);
 }
 
 .marquee__drift {
@@ -3088,12 +3226,45 @@ html[data-motion="reduced"] {
 html[data-motion="reduced"] .marquee--parallax,
 html[data-motion="reduced"] .marquee--parallax .marquee__drift {
   transform: none;
+  opacity: 1;
   will-change: auto;
 }
 
+/*
+ * Reduced motion keeps the hover — a card that does not answer the cursor at
+ * all is a worse page, not a calmer one — and drops the movement in it. The
+ * tilt never arrives (the pointer loop bails out before registering), the scale
+ * and the mark's lift are neutralised here, and what is left is the colour, the
+ * border, the shadow and the glare: state changes rather than motion.
+ */
 html[data-motion="reduced"] {
-  .partner-card {
+  .partner-card,
+  .partner-card::after,
+  .partner-card__mark,
+  .partner-card__role {
     transition: none;
+  }
+
+  /* The rule is still the accent — it simply arrives rather than being drawn. */
+  .partner-card::after {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+
+  .partner-card:hover::after {
+    opacity: 1;
+  }
+
+  .partner-card:hover {
+    --card-scale: 1;
+  }
+
+  .partner-card:hover .partner-card__mark {
+    transform: none;
+  }
+
+  .partner-card:hover .partner-card__role {
+    letter-spacing: 0.14em;
   }
 }
 

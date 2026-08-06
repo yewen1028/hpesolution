@@ -5,6 +5,7 @@ import { registerScrollLayer } from "@/components/parallax";
 import { ServiceIcon } from "@/components/ui";
 import { partnerFallbackIcons, partnerLogos, partners } from "@/lib/site";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
+import { canHover } from "@/lib/scroll-motion";
 
 /**
  * The moving strip. Bubble shape follows the `HPE - refined` draft: a white
@@ -49,22 +50,43 @@ export type PartnerVariant = keyof typeof DURATION_S;
 export type PartnerTone = "light" | "dark";
 
 /**
- * Scroll parallax, in px, when `parallax` is on. The strip is displaced by these
+ * Scroll parallax, when `parallax` is on. The strip is displaced by these
  * amounts at each end of its pass through the viewport: the band drifts
  * vertically against the page, and the cards slide horizontally *against their
  * own travel*, so approaching the section and leaving it are different views of
  * the same strip rather than the same loop seen twice.
  *
- * Both ceilings are measured rather than picked. `Y` has the section's own
- * padding to play with — 80px at the smallest step, and the strip is the last
- * thing in the section — so 20px never puts a card into the description above.
- * `X` is bounded by nothing visual (the duplicated track runs thousands of
- * pixels past both edges, so no shift can expose an end) and instead by the
- * loop: at 70px it stays well under one card's width, so the horizontal
- * displacement reads as depth rather than as the marquee stuttering.
+ * **Every figure below is stated at t = ±1, which is off screen.** The signed
+ * progress only reaches ±0.5 while any part of the section is in the viewport
+ * (see the read pass), so a visitor sees half of each number at the extremes —
+ * ±22px of lift, ±75px of slide, ±0.7° of tilt. Sizing them at ±1 keeps the
+ * curve linear in scroll and the constants comparable to `Parallax`'s `speed`.
+ *
+ * The ceilings are measured rather than picked:
+ *
+ *   - `Y` has the section's own padding to play with — 80px at the smallest
+ *     step, and the strip is the last thing in the section — so ±22px never
+ *     puts a card into the description above.
+ *   - `X` is bounded by nothing visual (the duplicated track runs thousands of
+ *     pixels past both edges, so no shift can expose an end) and instead by the
+ *     loop: ±75px stays well under one card's 208px, so the displacement reads
+ *     as depth rather than as the marquee stuttering.
+ *   - `ROT` is the one figure that makes the approach and the exit read as
+ *     *opposite* rather than merely offset — the strip banks one way coming up
+ *     the screen and the other way leaving it. Held under a degree: past that
+ *     it stops being depth and becomes a crooked row. At ±0.7° a full-bleed
+ *     frame rises about 10px at its corners, which the same 80px of padding
+ *     absorbs.
+ *   - `SCALE` and `FADE` are the settle: the band arrives slightly small and
+ *     slightly recessed into the near-black, and is only at full size and full
+ *     strength while it is the thing you are looking at. Both are driven by
+ *     |t|, so they are symmetric — unlike the three above, which flip sign.
  */
-const PARALLAX_Y = 20;
-const PARALLAX_X = 70;
+const PARALLAX_Y = 44;
+const PARALLAX_X = 150;
+const PARALLAX_ROT = 1.4;
+const PARALLAX_SCALE = 0.1;
+const PARALLAX_FADE = 0.42;
 
 export function PartnerCarousel({
   variant = "bubble",
@@ -173,6 +195,9 @@ export function PartnerCarousel({
 
     let y = 0;
     let x = 0;
+    let rot = 0;
+    let scale = 1;
+    let fade = 1;
 
     const unregister = registerScrollLayer({
       el: frame,
@@ -183,23 +208,139 @@ export function PartnerCarousel({
         const progress =
           (viewportH / 2 - (rect.top + rect.height / 2)) / viewportH;
         const t = Math.max(-1, Math.min(1, progress));
+        const away = Math.abs(t);
+
         y = t * PARALLAX_Y;
         // Negative: the cards lag as the section rises, so the displacement
         // opposes the loop's own left-to-right travel instead of adding to it.
         x = -t * PARALLAX_X;
+        rot = t * PARALLAX_ROT;
+        scale = 1 - away * PARALLAX_SCALE;
+        fade = 1 - away * PARALLAX_FADE;
       },
       write() {
         frame.style.setProperty("--band-y", `${y.toFixed(2)}px`);
+        frame.style.setProperty("--band-rot", `${rot.toFixed(3)}deg`);
+        frame.style.setProperty("--band-scale", scale.toFixed(4));
+        frame.style.setProperty("--band-fade", fade.toFixed(3));
         drift.style.setProperty("--band-x", `${x.toFixed(2)}px`);
       },
     });
 
     return () => {
       unregister();
-      frame.style.removeProperty("--band-y");
+      for (const prop of ["--band-y", "--band-rot", "--band-scale", "--band-fade"])
+        frame.style.removeProperty(prop);
       drift.style.removeProperty("--band-x");
     };
   }, [parallax]);
+
+  /*
+   * Pointer tilt, `card` variant only.
+   *
+   * The card leans towards the cursor, from two custom properties written here:
+   * `--tilt-x` and `--tilt-y`, in -1…1 across and down the card. The transform
+   * itself is declared once in `.partner-card`, so hover scale and tilt compose
+   * instead of overwriting each other. Everything else about the hover — the
+   * brand rule, the border, the type — is CSS off `:hover` and needs nothing
+   * from this loop.
+   *
+   * Three things about this strip make it different from an ordinary tilt-card:
+   *
+   *   - **One listener on the frame**, not one per card. There are 34 cards
+   *     (two passes over seventeen) and they are replaced by nothing — the same
+   *     nodes travel forever — so delegation is both cheaper and simpler.
+   *   - **The card moves under a stationary cursor.** A `pointermove`-driven
+   *     tilt goes stale the moment the visitor stops moving the mouse, which on
+   *     a strip that is still sliding is exactly when it looks broken. So the
+   *     tilt is recomputed every frame from the last known pointer position for
+   *     as long as the pointer is over the band, and the card under it is
+   *     re-resolved with `elementFromPoint` rather than trusted from the last
+   *     event — the pointer can end up over a different card without moving.
+   *   - **The loop only exists while the pointer is inside the band.** It is
+   *     started by `pointerenter` and cancelled by `pointerleave`, so a page
+   *     that nobody is pointing at costs nothing.
+   *
+   * Bails out entirely without a hover-capable pointer — on touch the whole
+   * figure is unreachable, and `canHover` is the site's existing test for that
+   * — and under reduced motion, where the card keeps its colour hover and drops
+   * the movement. `MotionScope` remounts on a toggle, so deciding once is
+   * enough.
+   */
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || variant !== "card") return;
+    if (!canHover() || prefersReducedMotion()) return;
+
+    let raf = 0;
+    let active: HTMLElement | null = null;
+    let px = 0;
+    let py = 0;
+
+    function release(card: HTMLElement) {
+      card.removeAttribute("data-pointing");
+      card.style.removeProperty("--tilt-x");
+      card.style.removeProperty("--tilt-y");
+    }
+
+    function tick() {
+      raf = requestAnimationFrame(tick);
+
+      const under = document.elementFromPoint(px, py);
+      const card =
+        under instanceof Element
+          ? (under.closest(".partner-card") as HTMLElement | null)
+          : null;
+
+      if (card !== active) {
+        if (active) release(active);
+        active = card;
+        // Set while tracking so the card can shorten its transform transition:
+        // the settle that reads well on enter and exit reads as lag under a
+        // moving cursor.
+        card?.setAttribute("data-pointing", "");
+      }
+
+      if (!card) return;
+
+      const rect = card.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const u = (px - rect.left) / rect.width; // 0 at the left edge, 1 at the right
+      const v = (py - rect.top) / rect.height;
+      const tx = Math.max(-1, Math.min(1, u * 2 - 1));
+      const ty = Math.max(-1, Math.min(1, v * 2 - 1));
+
+      card.style.setProperty("--tilt-x", tx.toFixed(3));
+      card.style.setProperty("--tilt-y", ty.toFixed(3));
+    }
+
+    function onMove(event: PointerEvent) {
+      if (event.pointerType === "touch") return;
+      px = event.clientX;
+      py = event.clientY;
+      if (!raf) raf = requestAnimationFrame(tick);
+    }
+
+    function onLeave() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      if (active) release(active);
+      active = null;
+    }
+
+    frame.addEventListener("pointermove", onMove);
+    frame.addEventListener("pointerleave", onLeave);
+    // A drag or a tab switch can swallow the leave; both surface here.
+    window.addEventListener("blur", onLeave);
+
+    return () => {
+      frame.removeEventListener("pointermove", onMove);
+      frame.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("blur", onLeave);
+      onLeave();
+    };
+  }, [variant]);
 
   return (
     <div

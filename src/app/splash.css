@@ -7,7 +7,12 @@
   display: none;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-paper);
+  /*
+   * No background here — the two panels carry it, because the exit parts them.
+   * `overflow: hidden` is what lets the seam overshoot the window rather than
+   * be measured to fit it.
+   */
+  overflow: hidden;
 }
 
 html.splash-pending .splash {
@@ -20,17 +25,119 @@ html.splash-pending body {
 }
 
 .splash[data-leaving] {
-  opacity: 0;
-  transition: opacity 550ms cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
+/* --- The exit -------------------------------------------------------------
+ * A reveal, not a fade. In order: the logo and its rule lift out, the seam runs
+ * to both edges of the window, and the overlay parts along it. The page has
+ * been sitting there fully rendered the whole time — this uncovers it.
+ *
+ * The whole figure is transform and opacity on four elements, so it composites
+ * and nothing here can cost a layout on the frame the page becomes interactive.
+ */
+
+.splash__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  background-color: var(--color-paper);
+  /*
+   * The parting starts once the logo is most of the way out — overlapping them
+   * fully makes two movements that read as one smear, and running them strictly
+   * in sequence makes the intro feel padded.
+   */
+  transition: transform 700ms var(--ease-out-quint) 240ms;
+}
+
+/*
+ * Split at the measured seam, defaulting to the middle if the measurement never
+ * ran. The extra pixel on each is for fractional device pixels: without it a
+ * half-pixel of the page can show through the join before anything has moved.
+ */
+.splash__panel--top {
+  top: 0;
+  height: calc(var(--splash-seam, 50%) + 1px);
+}
+
+.splash__panel--bottom {
+  top: var(--splash-seam, 50%);
+  bottom: 0;
+}
+
+.splash[data-leaving] .splash__panel--top {
+  transform: translate3d(0, -100%, 0);
+}
+
+.splash[data-leaving] .splash__panel--bottom {
+  transform: translate3d(0, 100%, 0);
+}
+
+/*
+ * The line the page opens along, sitting exactly where the loading rule was.
+ * It spans the window and is drawn out from its centre with `scaleX`, so the
+ * short brand rule under the logo appears to run out to both edges. A width
+ * animation would do the same thing and cost a layout on every frame of it.
+ */
+.splash__seam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--splash-seam, 50%);
+  z-index: 2;
+  height: 2px;
+  margin-top: -1px;
+  background-color: var(--color-brand);
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.splash[data-leaving] .splash__seam {
+  transform: scaleX(1);
+  transition: transform 420ms var(--ease-out-quint);
+  animation: splash-seam-out 980ms linear both;
+}
+
+/*
+ * The stretch and the fade are on different clocks — the line has to be at full
+ * strength while it draws and gone by the time the panels have cleared — so the
+ * transition carries the stretch and this keyframe carries the fade. One
+ * transition cannot hold a property at its start value for half a second and
+ * then drop it.
+ */
+@keyframes splash-seam-out {
+  0%,
+  53% {
+    opacity: 1;
+  }
+  85%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .splash__inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.75rem;
   padding: 1.5rem;
+  transition:
+    transform 420ms var(--ease-out-quint),
+    opacity 260ms ease;
+}
+
+/*
+ * The logo leaves the way it arrived, in reverse and a little further: up and
+ * back, as though the page it is standing on has moved on. Sized against the
+ * arrival's 10px so the two read as the same gesture.
+ */
+.splash[data-leaving] .splash__inner {
+  opacity: 0;
+  transform: translate3d(0, -14px, 0) scale(0.97);
 }
 
 .splash__logo {
@@ -86,5 +193,37 @@ html[data-motion="reduced"] {
 
   .splash__bar::after {
     transform: none;
+  }
+
+  /*
+   * The exit goes back to being a fade — the whole overlay at once, panels
+   * included, which is what fading `.splash` gets now that they carry the
+   * paint. Nothing parts, nothing lifts, and the seam never draws: a reveal is
+   * the one part of this component that is purely movement, so it is the part
+   * that goes.
+   *
+   * Kept well inside the 980ms the component waits before unmounting, so the
+   * page is never left under an invisible overlay that still owns its
+   * scrolling.
+   */
+  .splash__panel,
+  .splash__inner {
+    transition: none;
+  }
+
+  .splash__seam {
+    display: none;
+  }
+
+  .splash[data-leaving] {
+    opacity: 0;
+    transition: opacity 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .splash[data-leaving] .splash__panel--top,
+  .splash[data-leaving] .splash__panel--bottom,
+  .splash[data-leaving] .splash__inner {
+    transform: none;
+    opacity: 1;
   }
 }
