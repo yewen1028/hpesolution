@@ -55,7 +55,12 @@ export default function HomePage() {
 
       <OperationsBand />
 
-      <Positioning />
+      {/*
+        No top rule: `OperationsBand` ends on an angled `SectionDivider` already
+        cut in this section's `paper-warm`, so the handover is drawn. A straight
+        border on top of it read as a line across the foot of the band's photo.
+      */}
+      <Positioning topRule={false} />
 
       <ScrollStage variant="pan">
         <CasePreview />

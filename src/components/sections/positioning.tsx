@@ -5,9 +5,31 @@ import { Reveal } from "@/components/reveal";
 import { ButtonLink, Container } from "@/components/ui";
 import { drivers } from "@/lib/site";
 
-export function Positioning() {
+/**
+ * Used on two pages, and what sits above it differs — which is the whole reason
+ * `topRule` exists.
+ *
+ * On `/about-us` the previous section is also `paper-warm`, so without a rule
+ * the two run together as one block: it stays on, and that is the default.
+ *
+ * On the home page the previous section is the SLA band, which ends on an
+ * angled `SectionDivider` **cut in this section's own `paper-warm`** — the
+ * handover is already drawn, on the diagonal. A straight rule there is a second
+ * separator that disagrees with the first: it ran the full width across the
+ * foot of the band's photograph, a few pixels below where the angle had already
+ * given the page over. So the home page passes `topRule={false}`.
+ *
+ * The test for any new caller is that one question: does the section above end
+ * on a divider? If it does, this rule is redundant and will be visible as a
+ * line across the bottom of that section's artwork.
+ */
+export function Positioning({ topRule = true }: { topRule?: boolean } = {}) {
   return (
-    <section className="border-t border-rule bg-paper-warm py-24 sm:py-32">
+    <section
+      className={`bg-paper-warm py-24 sm:py-32 ${
+        topRule ? "border-t border-rule" : ""
+      }`}
+    >
       <Container>
         <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
           {/* Photo column — the parallax frame is fixed height, the layer drifts. */}
