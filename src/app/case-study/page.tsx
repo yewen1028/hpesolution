@@ -96,25 +96,36 @@ export default function CaseStudyPage() {
                 </div>
               ) : (
               <ul className="mt-16 space-y-px bg-rule">
-                {items.map((study, i) => (
-                  <Reveal
-                    as="li"
-                    key={`${study.title}-${i}`}
-                    delay={(i % 3) * 90}
-                    className="bg-paper"
-                  >
+                {items.map((study, i) => {
+                  /*
+                    The picture changes sides down the list. Five rows built
+                    identically read as a template; alternating them gives the
+                    page a rhythm and costs one `order` class, and the seam
+                    between picture and type moves with it so the eye has
+                    something new to land on each time.
+
+                    It is also what decides which way each half arrives: every
+                    column enters from the outside edge it occupies, so the row
+                    assembles inward towards its own seam. Reading that off the
+                    same expression as the `order` class is what keeps the two
+                    from disagreeing — a picture that sits right and arrives
+                    from the left crosses the type on its way in.
+                  */
+                  const pictureFirst = i % 2 === 0;
+
+                  return (
+                  <li key={`${study.title}-${i}`} className="bg-paper">
                     <CaseRow>
-                      <article className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
-                        {/*
-                          The picture changes sides down the list. Five rows
-                          built identically read as a template; alternating them
-                          gives the page a rhythm and costs one `order` class,
-                          and the seam between picture and type moves with it so
-                          the eye has something new to land on each time.
-                        */}
-                        <div
+                      {/*
+                        `case-row__body` carries the departure. It cannot go on
+                        `CaseRow` itself — see the note there.
+                      */}
+                      <article className="case-row__body grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
+                        <Reveal
+                          as="div"
+                          from={pictureFirst ? "left" : "right"}
                           className={`case-row__media relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-64 ${
-                            i % 2 === 1 ? "lg:order-2" : ""
+                            pictureFirst ? "" : "lg:order-2"
                           }`}
                         >
                           <Media
@@ -127,9 +138,20 @@ export default function CaseStudyPage() {
                           <span className="absolute left-0 top-0 z-10 bg-brand px-3.5 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-white">
                             {study.sector}
                           </span>
-                        </div>
+                        </Reveal>
 
-                        <div className="flex flex-col justify-center p-8 lg:p-12">
+                        {/*
+                          The type follows the picture in rather than landing
+                          with it. 120ms is enough to read as an order of
+                          arrival and short enough that the row still assembles
+                          as one gesture.
+                        */}
+                        <Reveal
+                          as="div"
+                          from={pictureFirst ? "right" : "left"}
+                          delay={120}
+                          className="flex flex-col justify-center p-8 lg:p-12"
+                        >
                           {/*
                             The same numbering the services grid uses, so a
                             reader who has seen one list recognises the other.
@@ -160,11 +182,12 @@ export default function CaseStudyPage() {
                               </div>
                             ))}
                           </dl>
-                        </div>
+                        </Reveal>
                       </article>
                     </CaseRow>
-                  </Reveal>
-                ))}
+                  </li>
+                  );
+                })}
               </ul>
               )}
             </Container>

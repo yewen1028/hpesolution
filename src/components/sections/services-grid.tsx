@@ -6,19 +6,29 @@ import { READING_DRIFT } from "@/components/scroll-stage";
 import { DrawIcon } from "@/components/draw-icon";
 import { FlickeringGrid } from "@/components/flickering-grid";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
-import { services, type Service } from "@/lib/site";
+import { services } from "@/lib/site";
 
 /*
- * The services list, read as a contract schedule rather than as seven summary
- * lines.
+ * The services list: seven cells, each an icon, a name, one line of what it is,
+ * and a way in.
  *
- * What fills the cells is `features[].title`: the actual line items of each
- * service, in the trade's own vocabulary — "Fault ticketing and escalation",
- * "Backfill staffing", "SD-WAN". They were already written and were only ever
- * shown one level down. A visitor choosing between seven services could not
- * tell any of them apart from a single summary line, and every cell carried a
- * hollow gap under that line, because grid rows equalise to the tallest title
- * and the content did not reach the bottom.
+ * **The cells used to carry a schedule** — `featureHeading` plus the first three
+ * `features[].title` on ruled rows, plus a "+4 more" count. It was put there
+ * because a summary-only cell left a hollow gap under its one line, grid rows
+ * being equalised to the tallest title. That fixed the gap by filling it, which
+ * is the wrong move twice over: it made the visitor read roughly sixty words per
+ * cell to choose between seven services, and it duplicated the service page's
+ * own contents list one click before you got to it.
+ *
+ * The gap is now closed at the bottom instead. The affordance is pinned there
+ * with `mt-auto`, so every cell has a defined floor and the slack falls as
+ * deliberate space between the summary and the arrow rather than as a void in
+ * the middle of the content. Nothing needs padding out to fill a cell.
+ *
+ * `short` in `site.ts` is doing the work, and it is already written for it —
+ * every one is between 56 and 67 characters, concrete, in the trade's own
+ * vocabulary. If a cell ever looks thin, shorten the neighbouring one; do not
+ * add a second paragraph.
  *
  * Deliberately NOT here:
  *
@@ -28,13 +38,9 @@ import { services, type Service } from "@/lib/site";
  *     that the Service Level Assurance band further down this same page
  *     already carries it, and nothing should say the same thing twice.
  *   - **A double-height cell for the contracted service.** Tried, measured,
- *     cut. The section's lede does claim a hierarchy — "one contract and add
- *     scope as it proves itself" — and spanning two rows states it. But the
- *     row heights are set by the *other* cells, so the tall cell came out
- *     1013px against ~470px of content: a bigger void than the one this was
- *     fixing. Filling it with the 10-point recurring scope very nearly worked
- *     at one viewport width, which is a pixel coincidence rather than a
- *     layout. The schedule below is the idea; the span was an accessory.
+ *     cut. The row heights are set by the *other* cells, so the tall cell came
+ *     out 1013px against ~470px of content: a bigger void than the one it was
+ *     fixing.
  *
  * Grid rules are unchanged: the list supplies the top and left hairlines,
  * every cell supplies its own right and bottom. No nth-child arithmetic, so
@@ -43,64 +49,16 @@ import { services, type Service } from "@/lib/site";
  * for the panel at lg.
  */
 
-/** Line items per cell before the remainder is counted. */
-const SCOPE_ROWS = 3;
-
-/** The schedule under each summary: what the service actually covers. */
-function ScopeList({ service }: { service: Service }) {
-  const shown = service.features.slice(0, SCOPE_ROWS);
-  const rest = service.features.length - shown.length;
-
-  return (
-    <div className="mt-7">
-      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-ink-muted">
-        {service.featureHeading}
-      </p>
-
-      {/*
-        Ruled rows, because a schedule is a ruled document and this site draws
-        with hairlines. `divide-y` rather than a border per row so the list
-        cannot end on a stray rule under its last item.
-
-        The rows are ruled at 55% of `--color-rule` while the list's own top
-        edge is at full strength. At equal weight the schedule's rules read as
-        the same order of structure as the grid's own hairlines, and a cell
-        stopped being one thing containing a list and became a stack of eight
-        bands. The frame is the structure; these are inside it.
-      */}
-      <ul className="mt-3 divide-y divide-rule/55 border-t border-rule">
-        {shown.map((feature) => (
-          <li
-            key={feature.title}
-            className="py-2 text-[0.85rem] leading-snug text-ink-soft"
-          >
-            {feature.title}
-          </li>
-        ))}
-
-        {rest > 0 && (
-          /*
-            The count is the one orange mark inside a cell, and it earns it: it
-            is the only thing on the card that says how much more there is, so
-            it is also the reason to open the page. `tabular` keeps the digits
-            aligned down the column of cards.
-          */
-          <li className="py-2 text-[0.85rem] leading-snug text-ink-muted">
-            <span className="tabular font-semibold text-brand">+{rest}</span>{" "}
-            more
-          </li>
-        )}
-      </ul>
-    </div>
-  );
-}
-
 export function ServicesGrid({
   // No default eyebrow. "Our services" over "Seven service lines" is the
   // headline said twice; the caller can still pass one where it earns itself.
   eyebrow,
   title = "Seven service lines, one support partner",
-  lede = "Most clients start with one contract and add scope as it proves itself. Each service stands alone, and each is measured against the same service level commitment.",
+  // Two clauses, both load-bearing: each service can be bought alone, and all
+  // of them carry the same SLA. The sentence about clients starting with one
+  // contract and adding scope was setting up a hierarchy the grid does not
+  // draw — seven equal cells — so it argued against what it introduced.
+  lede = "Each service stands alone, and every one is measured against the same service level commitment.",
 }: {
   eyebrow?: string;
   title?: string;
@@ -197,22 +155,32 @@ export function ServicesGrid({
                     </p>
 
                     {/*
-                      `flex-1` moved off the summary and onto the schedule, so
-                      the slack in a cell falls *below* the content rather than
-                      opening a gap in the middle of it. That gap was the whole
-                      reason these cells read as empty.
-                    */}
-                    <div className="flex-1">
-                      <ScopeList service={service} />
-                    </div>
+                      The arrow alone, pinned to the floor of the cell.
 
-                    <span className="mt-8 inline-flex items-center gap-1.5 text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-ink-muted transition-colors group-hover:text-brand">
-                      Read more
+                      It replaced a "Read more" label, which was the same
+                      instruction printed seven times under seven headings that
+                      already said what they were. The whole cell is the link
+                      and answers the pointer four ways — the surface warms, the
+                      cursor wash follows, the icon fills brand, this turns —
+                      so the label was telling a visitor something the card was
+                      already demonstrating.
+
+                      `mt-auto` is what gives the cell a floor, and it is the
+                      reason the summary can stand on its own line without the
+                      slack reading as an unfinished cell.
+                    */}
+                    {/*
+                      The wrapper carries the spacing, not the icon. An `svg`
+                      inherits `box-sizing: border-box` from preflight and
+                      carries its size as `width`/`height` attributes, so
+                      padding on it eats the glyph rather than sitting above it.
+                    */}
+                    <span className="mt-auto pt-10">
                       <ArrowUpRight
-                        size={14}
-                        strokeWidth={2.5}
+                        size={20}
+                        strokeWidth={1.75}
                         aria-hidden="true"
-                        className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                        className="text-ink-muted transition-[color,transform] duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand"
                       />
                     </span>
                   </Link>
@@ -252,9 +220,12 @@ export function ServicesGrid({
                 <h3 className="display-3 max-w-md text-white">
                   Not sure which scope you need?
                 </h3>
+                {/* Kept short and kept the second half: telling a prospect what
+                    they can leave alone is the line that makes the offer read
+                    as advice rather than as a pitch. */}
                 <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-white/65">
-                  Send us the estate and we will tell you which of these
-                  actually applies, and which you can leave alone.
+                  Send us the estate. We will tell you what applies, and what
+                  you can leave alone.
                 </p>
                 <span className="mt-8 inline-flex items-center gap-2 text-[0.8rem] font-semibold uppercase tracking-[0.14em] text-brand">
                   Talk to our team

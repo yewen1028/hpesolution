@@ -134,6 +134,19 @@ It lives **inside** `<header>`, not above it in `layout.tsx`. The header is
   safety-net timer**. Content starts hidden in CSS, so anything animated needs
   that net or it can stay invisible. Keep the `<noscript>` override in
   `layout.tsx` in sync.
+  `from` takes `up` (the default, and what nearly everything uses) or
+  `left`/`right`, for two-column content whose halves each arrive from the
+  outside edge they occupy. **Use it in pairs**, and read the direction off the
+  same expression that decides the layout — on `/case-study` the rows alternate
+  which side the photograph sits on, and a picture that sits right but arrives
+  from the left crosses the type on its way in.
+- The case-study rows carry the page's whole figure: `components/case-row.tsx`
+  writes `--case-shift` (the photograph and the metrics counter-drifting inside
+  a card that stays put), `--case-zoom` (the picture settles to 1.06 as the row
+  centres and opens to ~1.105 at the ends — **only ever adding** scale, so the
+  `overflow-hidden` frame gains cover rather than losing it), and `--case-exit`
+  (the departure). **Nothing may transform `.case-row` itself** — it is the
+  measured element, so the departure lives on `.case-row__body` inside it.
 - Everything bails out when motion is off — with one deliberate exception,
   `components/partner-carousel.tsx`, which drives its own transform from
   `requestAnimationFrame` instead, because a carousel that has stopped reads as

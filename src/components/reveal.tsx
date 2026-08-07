@@ -18,12 +18,24 @@ import {
 export function Reveal({
   as: Tag = "div",
   delay = 0,
+  /**
+   * Which edge the content arrives from. `up` is the default and is what the
+   * whole site uses; `left` and `right` exist for content laid out in two
+   * columns, where having each half arrive from its own outside edge says the
+   * row is being assembled rather than simply appearing.
+   *
+   * Use it in pairs and only where the columns are genuinely side by side. A
+   * single element sliding in from an edge for no reason is the kind of motion
+   * that reads as decoration.
+   */
+  from = "up",
   className = "",
   style,
   children,
 }: {
   as?: ElementType;
   delay?: number;
+  from?: "up" | "left" | "right";
   className?: string;
   style?: CSSProperties;
   children: ReactNode;
@@ -61,6 +73,9 @@ export function Reveal({
     <Tag
       ref={ref}
       data-reveal=""
+      // Omitted entirely for the default, so the plain `[data-reveal]` rule
+      // stays the one that matches on almost every element on the site.
+      data-from={from === "up" ? undefined : from}
       className={className}
       style={{ ...style, "--reveal-delay": `${delay}ms` } as CSSProperties}
     >

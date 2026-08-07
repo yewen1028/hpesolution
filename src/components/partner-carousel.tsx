@@ -377,14 +377,18 @@ export function PartnerCarousel({
                         this variant is allowed a radius where the rest of the
                         site is square.
                       */}
+                      {/*
+                        Logo and name, and nothing under them. The card used to
+                        carry a standing "Authorised partner" line, which was
+                        the same three words repeated seventeen times across a
+                        moving strip — it said nothing that distinguished one
+                        card from the next, and the band's own heading already
+                        frames what these companies are.
+                      */}
                       <article className="partner-card group">
                         <span className="partner-card__mark">{mark}</span>
 
                         <span className="partner-card__name">{partner}</span>
-
-                        <span className="partner-card__role">
-                          Authorised partner
-                        </span>
                       </article>
                     </li>
                   );

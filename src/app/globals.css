@@ -224,6 +224,39 @@
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+/*
+ * The directional variants, for two-column content whose halves each arrive
+ * from their own outside edge. `Reveal`'s `from` prop writes the attribute, and
+ * only when it is not the default — the bare rule above stays the one that
+ * matches nearly everything.
+ *
+ * The distance is a `clamp` rather than a constant because this travels across
+ * the layout, not down it: 56px is a seventh of a stacked phone column and a
+ * twentieth of a desktop one, so a fixed number is either a lurch at one end or
+ * invisible at the other. `vw` keeps it proportional to the width it crosses.
+ *
+ * **The floor is the number that matters**, and it is set against the same
+ * constraint `[data-stage="pan"]` records: sideways travel has the viewport
+ * edge close by on both sides, and `html { overflow-x: clip }` is a net rather
+ * than a licence. 28px on a narrow screen is in line with pan's 26px, and the
+ * ceiling only applies at widths where the container already has margins wider
+ * than the travel. An element mid-entry may still be clipped at the edge, which
+ * is the one case where that is the intended reading — it is arriving from off
+ * screen — but nothing here can produce a horizontal scrollbar.
+ *
+ * `transform: none` on the shown state resolves all three variants, which is
+ * why there is no per-direction shown rule. Both overrides that must beat these
+ * still do: `html[data-motion="reduced"] [data-reveal]` outranks them on
+ * specificity, and `.no-js [data-reveal]` ties and wins on source order.
+ */
+[data-reveal][data-from="left"] {
+  transform: translateX(calc(clamp(28px, 4vw, 56px) * -1));
+}
+
+[data-reveal][data-from="right"] {
+  transform: translateX(clamp(28px, 4vw, 56px));
+}
+
 [data-reveal="shown"] {
   opacity: 1;
   transform: none;
@@ -3455,17 +3488,23 @@ html[data-motion="reduced"] {
 }
 
 /*
- * Scale and brighten, which is the reference's hover exactly — and it replaces
- * the 6px lift rather than joining it. A card that both rose and grew read as
- * two effects disagreeing about which direction "forward" is; on a strip that
- * is already moving sideways, the scale alone is the clearer of the two.
+ * Scale, which replaces the 6px lift rather than joining it. A card that both
+ * rose and grew read as two effects disagreeing about which direction "forward"
+ * is; on a strip already moving sideways, the scale alone is the clearer.
  *
- * `brightness` is doing very little to a white card and a good deal to the mark
- * on it, which is the point: the logo is what the visitor is looking at.
+ * **`saturate`, not `brightness` — the brightness was working against itself.**
+ * The intent recorded here was that the filter does little to a white card and
+ * a good deal to the mark on it, the logo being what the visitor is looking at.
+ * That is true of the mechanism and backwards in effect: `brightness(1.1)`
+ * lifts every channel toward white, so on the many marks that are black or
+ * near-black ink — AMP, Cyberoam, Ruckus, Cisco's navy — it *lowers* contrast
+ * against the white card. The card being pointed at was the washed-out one
+ * while its neighbours merely desaturated. Saturation deepens the brand colours
+ * and leaves the black ink alone, which is the reading that was wanted.
  */
 .partner-card:hover {
   --card-scale: 1.06;
-  filter: brightness(1.1);
+  filter: saturate(1.18);
   /*
    * A warmed hairline, not a brand outline. The baseline rule below is the
    * accent this card gets; an orange border around it as well is the same note
@@ -3528,9 +3567,30 @@ html[data-motion="reduced"] {
  * is the whole point of the tilt — two planes moving by different amounts is
  * what makes a flat rectangle read as having depth — and it is small enough
  * that a wordmark never crowds the card's padding.
+ *
+ * The scale was the only part of that difference actually implemented. The
+ * logo now also **shifts against the lean**, off the same `--tilt-x`/`--tilt-y`
+ * the card is already reading, so the two planes separate as the card turns
+ * rather than only as it grows. Counter to the tilt, because a nearer plane
+ * swings further: lean the card left and the mark should sit right of where the
+ * card carried it. 7px and 5px are what fit inside the padding at the tilt's
+ * own ±7deg / ±5.5deg extremes without a wide lockup touching an edge.
+ *
+ * No new script — the pointer loop in `partner-carousel.tsx` already writes
+ * these two properties every frame for the card's own rotation.
  */
 .partner-card:hover .partner-card__mark {
-  transform: translateZ(0) scale(1.07);
+  transform: translate(calc(var(--tilt-x) * -7px), calc(var(--tilt-y) * -5px))
+    scale(1.09);
+}
+
+/*
+ * Same reason the card itself shortens its transition while the pointer is on
+ * it: the mark is now driven by the pointer too, and a 320ms settle on a value
+ * being rewritten every frame reads as the logo swimming behind the cursor.
+ */
+.partner-card[data-pointing] .partner-card__mark {
+  transition-duration: 110ms;
 }
 
 .partner-card__name {
@@ -3549,31 +3609,6 @@ html[data-motion="reduced"] {
   color: var(--color-brand);
 }
 
-.partner-card__role {
-  position: relative;
-  z-index: 1;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-ink-muted);
-  transition:
-    color 300ms var(--ease-out-quint),
-    letter-spacing 380ms var(--ease-out-quint);
-}
-
-/*
- * The standing line opens up a fraction on hover. It is the smallest of the
- * three movements on this card deliberately — it is the caption, not the
- * subject — but a line of tracked-out uppercase that widens is a mark this
- * site already uses in `.eyebrow`, so the card resolves into something
- * familiar rather than into a new idea.
- */
-.partner-card:hover .partner-card__role {
-  letter-spacing: 0.2em;
-  color: var(--color-brand);
-}
-
 /*
  * Pointing at one card recedes the rest of the strip. Without this the hover
  * competes with sixteen equally bright neighbours travelling past it and reads
@@ -3583,8 +3618,8 @@ html[data-motion="reduced"] {
  * wrong.
  */
 .marquee--cards:has(.partner-card:hover) .partner-card:not(:hover) {
-  opacity: 0.62;
-  filter: saturate(0.7);
+  opacity: 0.5;
+  filter: saturate(0.45);
 }
 
 /* The card strip sits on warm white, so the edge fades have to match it. */
@@ -3623,10 +3658,6 @@ html[data-motion="reduced"] {
 
 .marquee--deep .partner-card__name {
   color: var(--color-ink-fixed);
-}
-
-.marquee--deep .partner-card__role {
-  color: rgb(20 24 29 / 0.55);
 }
 
 .marquee--deep .partner-card:hover .partner-card__name {
@@ -3669,14 +3700,19 @@ html[data-motion="reduced"] .marquee--parallax {
  * Reduced motion keeps the hover — a card that does not answer the cursor at
  * all is a worse page, not a calmer one — and drops the movement in it. The
  * tilt never arrives (the pointer loop bails out before registering), the scale
- * and the mark's lift are neutralised here, and what is left is the colour, the
- * border, the shadow and the glare: state changes rather than motion.
+ * and the mark's shift are neutralised here, and what is left is the
+ * saturation, the name, the border, the shadow and the rule: state changes
+ * rather than motion.
+ *
+ * The mark's `transform: none` below covers the pointer shift as well as the
+ * scale. It has to stay: `--tilt-x`/`--tilt-y` hold their 0 defaults when the
+ * loop never runs, so the shift would resolve to zero anyway — but only by
+ * accident of the loop being absent, not by this rule's intent.
  */
 html[data-motion="reduced"] {
   .partner-card,
   .partner-card::after,
-  .partner-card__mark,
-  .partner-card__role {
+  .partner-card__mark {
     transition: none;
   }
 
@@ -3696,10 +3732,6 @@ html[data-motion="reduced"] {
 
   .partner-card:hover .partner-card__mark {
     transform: none;
-  }
-
-  .partner-card:hover .partner-card__role {
-    letter-spacing: 0.14em;
   }
 }
 
@@ -5213,8 +5245,16 @@ html[data-motion="reduced"] .footer-link::after {
  * type, so any differential between them opens a seam down the middle of the
  * card.
  */
+/*
+ * The scale is a variable now, not the flat 1.06 it was. `--case-zoom` opens it
+ * to about 1.105 at the ends of the row's passage and closes it back to 1.06 as
+ * the row centres, so the photograph settles when it is being looked at and
+ * breathes open again as it leaves. The default in the `var()` is the old
+ * constant, so no script and reduced motion both give the picture it always had.
+ */
 .case-row__image {
-  transform: translate3d(0, var(--case-shift, 0px), 0) scale(1.06);
+  transform: translate3d(0, var(--case-shift, 0px), 0)
+    scale(var(--case-zoom, 1.06));
   will-change: transform;
 }
 
@@ -5222,12 +5262,36 @@ html[data-motion="reduced"] .footer-link::after {
   transform: translate3d(0, calc(var(--case-shift, 0px) * -0.34), 0);
 }
 
-html[data-motion="reduced"] .case-row__image {
-  transform: none;
+/*
+ * The departure. `--case-exit` runs 0 to 1 over the last stretch of the row's
+ * passage — see `EXIT_SPAN` in `case-row.tsx` for why it starts as late as it
+ * does — and the row recedes rather than simply scrolling away.
+ *
+ * **On the article, not on `.case-row`.** That element is what the scroll loop
+ * measures, and a transform on it would feed its own last frame back into the
+ * next measurement.
+ *
+ * The fade stops at 0.55 and the scale at 0.98. A row that went to nothing
+ * would leave the list's hairline rules framing an empty band, and the point is
+ * a row handing over to the next one, not a row being deleted.
+ */
+.case-row__body {
+  transform: translate3d(0, calc(var(--case-exit, 0) * -26px), 0)
+    scale(calc(1 - var(--case-exit, 0) * 0.02));
+  transform-origin: center top;
+  opacity: calc(1 - var(--case-exit, 0) * 0.45);
 }
 
-html[data-motion="reduced"] .case-row__metrics {
-  transform: none;
+html[data-motion="reduced"] {
+  .case-row__image,
+  .case-row__metrics,
+  .case-row__body {
+    transform: none;
+  }
+
+  .case-row__body {
+    opacity: 1;
+  }
 }
 
 /* --- Hero figure strip ------------------------------------------------------ */
