@@ -47,6 +47,34 @@ hardcode hex values.
 - **Icons only, never emoji.** `lucide-react`, `strokeWidth={1.5}` for feature
   icons, `2`–`2.5` for inline UI. Always `aria-hidden="true"`.
 
+## Header
+
+`components/site-header.tsx` is **two stacked rows** inside one fixed element:
+`components/top-bar.tsx` (the email and phone number, near-black) above the nav
+row (logo, navigation, toggles, phone CTA).
+
+Four tokens, and which one to reach for is the whole of it:
+
+- `--topbar-h` (36px) and `--nav-h` (76px) — the two rows.
+- `--header-h` = their sum. The **layout constant**: what `main` pads by, and
+  the only thing that may assume the header is at rest. It is a `calc()` now,
+  so `parseFloat(getPropertyValue("--header-h"))` is `NaN` — script that needs
+  the number adds the two rows up instead (see `measure()` in the header).
+- `--nav-h-shrunk` (60px) — the header's height past the hero, since the
+  contact strip folds away at that point. **Anything positioned against the
+  header's underside needs a `[data-shrunk]` rule pointing at this**: the
+  progress bar, the section nav, the services scrim, the mobile panel. That
+  number was a literal `60px` in four places and two of the four had been
+  missed, so the scrim and the mobile panel hung 16px low whenever the page was
+  scrolled.
+
+The strip folds off the header's own `data-shrunk` state rather than a second
+scroll threshold — one threshold governs the header, and two could disagree.
+`overflow: hidden` on `.topbar` is what makes the fold clean.
+
+It lives **inside** `<header>`, not above it in `layout.tsx`. The header is
+`position: fixed`, so a sibling placed before it scrolls away underneath it.
+
 ## Motion
 
 - `components/parallax.tsx` — a **single** rAF loop drives every layer. Layers
@@ -111,6 +139,41 @@ still site on arrival.
   `{children}` in `layout.tsx`) remounts the page on a switch. Providers that
   sit outside it — `press.tsx`, `spotlight.tsx` — subscribe instead.
 
+## Hero carousel
+
+The home hero's background is four clips, not one still —
+`components/hero-carousel.tsx` over `heroSlides` in `site.ts`. It still sits
+inside the same `Parallax` frame the still did, so the masthead's drift against
+the page is unchanged; only what is inside the frame moves on its own.
+
+- **Three things advance it, answering three visitors**: a 10s timer for
+  someone reading, scroll distance for someone moving through it, and
+  `sessionStorage` for someone who reloads. Drop any one and a whole kind of
+  visit sees a static hero.
+- **Scroll advance is measured in distance travelled, not position in the
+  hero** — position ties the number of changes to the breakpoint, and the hero
+  is several windows tall on a phone. It registers on the shared rAF loop
+  (`registerScrollLayer`), not its own listener: the advance goes in `write`,
+  never in `read`.
+- **The reload position is written once, on mount, not on every advance.** The
+  read is cached for the life of the page — it feeds `useSyncExternalStore`,
+  which calls `getSnapshot` every render and would spin on a value changing
+  underneath it — so a later write would have no reader anyway, and one reload
+  should move the hero on by exactly one picture however long it was left open.
+- **`poster` is load-bearing, not a placeholder.** It is the frame shown when
+  autoplay is refused (iOS Low Power Mode refuses all of it) and the frame
+  shown outright under reduced motion, where the hero is the first still and
+  nothing else. Same rule as `components/video-band.tsx`.
+- Only slides that have been shown get a poster in the DOM and a `src` on their
+  video, so the hero costs one image and one clip on arrival rather than four
+  of each, and the timer stops when the hero leaves the viewport or the tab
+  goes to the background. The set of shown slides is **derived** from the step
+  count rather than tracked separately — two pieces of state here drifted.
+- `heroSlides` is ordered dark to light because `.masthead-tint` thins to 0.6
+  on its right edge; only the last frame can afford to be a bright one there.
+  The tint is what holds four different photographs to one tonal range, so the
+  headline sits on the same contrast whichever clip is playing.
+
 ## Splash screen
 
 Shows **once per browsing session, on first entry only**. An inline script in
@@ -132,6 +195,17 @@ committing, and update the `alt` text with it.
 The background video is lazy-loaded by `components/video-band.tsx` — it only
 fetches once near the viewport and never plays under reduced motion, so the
 poster has to stand on its own.
+
+`scripts/fetch-media.mjs` also downloads the four home-hero clips and their
+stills (`HERO` in that file, `heroSlides` in `site.ts`). Two things differ from
+the photos: Pexels' poster filename carries a per-clip slug and its video
+filename a per-rendition id, so neither is derivable from the clip id and both
+are written out in full; and the rendition is chosen per clip rather than
+globally — these sit behind a heavy tint, so the rule is "the smallest
+rendition that is not visibly soft at full bleed", which is why two of the four
+are 960 wide. The eye-check rule bites hardest here, because a clip's *poster*
+is a frame of the clip: a search for "data center" returned a factory
+production line that read as a rack aisle at thumbnail size.
 
 ### Partner logos
 
@@ -158,11 +232,20 @@ stays white in both themes), `/business-partner` takes the `bubble` strip. A
 page picks one variant, never both. `components/ui/marquee-along-svg-path.tsx`
 drew the home page's earlier curved ribbon and is currently unused.
 
-The home page also passes `parallax`, which displaces the strip as the section
-passes: `--band-y` on the clipping frame, `--band-x` on an inner wrapper, both
-written by `registerScrollLayer`. The axes cannot be swapped — Y inside the clip
-shaves the cards, and X on the track fights the marquee's own transform. Unlike
-the marquee itself, the parallax takes the standard reduced-motion bail-out.
+The home page also passes `parallax`: **one** property, `--band-y` on the
+clipping frame, written by `registerScrollLayer`, drifting the band vertically
+as the section arrives and as it leaves. It has to go on the frame — Y written
+to anything inside the clip shaves the top or bottom off every card. Unlike the
+marquee itself, the parallax takes the standard reduced-motion bail-out.
+
+**The scroll position moves the band; the pointer moves the cards. Keep those
+apart.** This used to be five scroll-driven properties — a horizontal slide on
+an inner wrapper plus a rotate, a scale and an opacity on the frame — and the
+other four all read on the *cards*, which were therefore banking, shrinking and
+dimming while the marquee carried them sideways and the pointer tilt leaned them
+at the cursor. A card had no settled state to be looked at. Adding a second
+scroll-driven property here means deciding what it does to a card that is being
+hovered at the same time.
 
 ### Replacing an image at an existing path
 

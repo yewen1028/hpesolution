@@ -1,4 +1,4 @@
-// Downloads the Pexels stills used across the site into /public/media.
+// Downloads the Pexels stills and clips used across the site into /public/media.
 // Every id below was picked from Pexels search results and then checked by eye
 // against the section it serves — do not swap ids without re-checking the frame.
 //
@@ -12,8 +12,10 @@ const OUT = new URL("../public/media/", import.meta.url);
 
 /** @type {[id: string, file: string, width: number, subject: string][]} */
 const PHOTOS = [
-  // Full-bleed bands
-  ["1148820", "hero-datacentre.jpg", 2400, "server blades and patch cabling"],
+  // Full-bleed bands.
+  //
+  // The home hero used to take a still from here (1148820, server blades and
+  // patch cabling). It is a carousel of clips now — see HERO below.
   ["325229", "band-network-rack.jpg", 2400, "datacentre rack aisle"],
   ["12903158", "band-office.jpg", 2400, "open-plan office, staff at desktop workstations"],
   ["6804068", "band-workspace.jpg", 2000, "developers at desks in a tech office"],
@@ -40,6 +42,60 @@ const PHOTOS = [
   ["4610271", "case-government.jpg", 1400, "Perdana Putra, Putrajaya"],
 ];
 
+/*
+ * The home hero's video carousel — `components/hero-carousel.tsx`.
+ *
+ * Four clips, ordered hardware → network → site → people, and deliberately
+ * ordered dark to light: the masthead tint sits at 0.6 opacity on its right
+ * edge, so a bright frame reads brightest there and only the last slide is
+ * allowed to be one.
+ *
+ * Each clip ships with the matching still, which is the `poster` and is also
+ * what the hero shows outright under reduced motion — so the stills have to
+ * stand on their own, exactly as `components/video-band.tsx` requires.
+ *
+ * Pexels' poster filename carries a per-clip slug and the video filename a
+ * per-rendition id, so neither is derivable from the clip id the way a photo's
+ * is. Both are written out in full.
+ *
+ * Rendition choice is per clip, not a global: these are backgrounds behind a
+ * heavy tint, so the rule is "the smallest rendition that is not visibly soft
+ * at full bleed". 1085656 and 5028622 are shallow-focus and handheld
+ * respectively and lose nothing at 960 wide, which halves them.
+ *
+ * @type {[posterUrl: string, poster: string, videoUrl: string, video: string, subject: string][]}
+ */
+const HERO = [
+  [
+    "https://images.pexels.com/videos/7140931/pexels-photo-7140931.jpeg",
+    "hero-servers.jpg",
+    "https://videos.pexels.com/video-files/7140931/7140931-hd_1280_720_24fps.mp4",
+    "hero-servers.mp4",
+    "rack-mounted server front panels lit blue, drive bays and status LEDs",
+  ],
+  [
+    "https://images.pexels.com/videos/1085656/free-video-1085656.jpg",
+    "hero-network.jpg",
+    "https://videos.pexels.com/video-files/1085656/1085656-sd_960_540_25fps.mp4",
+    "hero-network.mp4",
+    "patch panel under blue light, copper leads and green link LEDs",
+  ],
+  [
+    "https://images.pexels.com/videos/5028622/pexels-photo-5028622.jpeg",
+    "hero-rackroom.jpg",
+    "https://videos.pexels.com/video-files/5028622/5028622-sd_960_540_25fps.mp4",
+    "hero-rackroom.mp4",
+    "comms room: open racks, patch panel and NAS on site",
+  ],
+  [
+    "https://images.pexels.com/videos/8865706/call-center-office-talk-work-8865706.jpeg",
+    "hero-helpdesk.jpg",
+    "https://videos.pexels.com/video-files/8865706/8865706-hd_1280_720_25fps.mp4",
+    "hero-helpdesk.mp4",
+    "three support agents in headsets at a shared desk",
+  ],
+];
+
 async function download(url, name) {
   const target = new URL(name, OUT);
   try {
@@ -48,7 +104,7 @@ async function download(url, name) {
   } catch {}
 
   const res = await fetch(url, {
-    headers: { "user-agent": "Mozilla/5.0", accept: "image/*" },
+    headers: { "user-agent": "Mozilla/5.0", accept: "image/*,video/*" },
   });
   if (!res.ok) throw new Error(`${res.status} ${name} <- ${url}`);
   await pipeline(Readable.fromWeb(res.body), createWriteStream(target));
@@ -59,14 +115,18 @@ async function download(url, name) {
 
 await mkdir(OUT, { recursive: true });
 
-const results = await Promise.allSettled(
-  PHOTOS.map(([id, name, w]) =>
+const results = await Promise.allSettled([
+  ...PHOTOS.map(([id, name, w]) =>
     download(
       `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`,
       name,
     ),
   ),
-);
+  ...HERO.flatMap(([posterUrl, poster, videoUrl, video]) => [
+    download(`${posterUrl}?auto=compress&cs=tinysrgb&w=2000`, poster),
+    download(videoUrl, video),
+  ]),
+]);
 
 let failed = 0;
 for (const r of results) {

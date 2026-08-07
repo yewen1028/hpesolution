@@ -15,6 +15,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MotionToggle } from "@/components/motion-toggle";
 import { ServiceIcon } from "@/components/service-icon";
+import { TopBar } from "@/components/top-bar";
 import { contact, navigation, services } from "@/lib/site";
 
 export function SiteHeader() {
@@ -43,9 +44,19 @@ export function SiteHeader() {
 
     const measure = () => {
       const hero = document.querySelector<HTMLElement>("[data-site-hero]");
-      const headerH = parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue("--header-h"),
-      ) || 76;
+      /*
+       * The header's **resting** height, summed from its two rows rather than
+       * read off `--header-h`. That token is a `calc()` of the two now, so
+       * `getPropertyValue` hands back the unresolved expression and
+       * `parseFloat` makes `NaN` of it. Measuring the element instead would
+       * resolve, but it reports 60px whenever this re-runs while the bar is
+       * already shrunk — and a threshold that moves with the state it controls
+       * is how a header ends up flickering at the boundary.
+       */
+      const root = getComputedStyle(document.documentElement);
+      const px = (name: string, fallback: number) =>
+        parseFloat(root.getPropertyValue(name)) || fallback;
+      const headerH = px("--nav-h", 76) + px("--topbar-h", 36);
 
       shrinkAt = hero
         ? Math.max(headerH, hero.offsetTop + hero.offsetHeight - headerH)
@@ -134,7 +145,15 @@ export function SiteHeader() {
       */}
       {servicesOpen && <div className="svc-scrim" aria-hidden="true" />}
 
-      <div className="mx-auto flex h-full max-w-[88rem] items-center gap-4 px-5 sm:px-8">
+      {/*
+        The contact strip. Inside <header> rather than above it in the layout,
+        because the header is fixed — a sibling before it would scroll away
+        under the bar. Being a child is also what gets it `data-shrunk` for
+        free, so it folds on the same threshold the rest of the header uses.
+      */}
+      <TopBar />
+
+      <div className="site-header__bar mx-auto flex max-w-[88rem] items-center gap-4 px-5 sm:px-8">
         {/*
           `flex items-center` rather than the default inline box: an <img> in
           an inline anchor sits on a text baseline, so the anchor was a few
@@ -418,8 +437,9 @@ export function SiteHeader() {
       {mobileOpen && (
         <div
           id="mobile-nav"
-          className="fixed inset-x-0 bottom-0 overflow-y-auto border-t border-rule bg-paper xl:hidden"
-          style={{ top: "var(--header-h)" }}
+          /* `top` is in CSS (`.site-header__mobile`), not inline: it has to
+             track the bar's current height, and an inline value cannot. */
+          className="site-header__mobile fixed inset-x-0 bottom-0 overflow-y-auto border-t border-rule bg-paper xl:hidden"
         >
           <nav aria-label="Main" className="px-5 py-6 sm:px-8">
             <ul className="divide-y divide-rule">

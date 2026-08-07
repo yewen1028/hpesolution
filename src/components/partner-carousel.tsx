@@ -50,43 +50,27 @@ export type PartnerVariant = keyof typeof DURATION_S;
 export type PartnerTone = "light" | "dark";
 
 /**
- * Scroll parallax, when `parallax` is on. The strip is displaced by these
- * amounts at each end of its pass through the viewport: the band drifts
- * vertically against the page, and the cards slide horizontally *against their
- * own travel*, so approaching the section and leaving it are different views of
- * the same strip rather than the same loop seen twice.
+ * Scroll parallax, when `parallax` is on: the band drifts vertically against
+ * the page as it comes up the screen and as it leaves. One axis, on the band,
+ * and nothing scroll-driven reaches the cards.
  *
- * **Every figure below is stated at t = ±1, which is off screen.** The signed
- * progress only reaches ±0.5 while any part of the section is in the viewport
- * (see the read pass), so a visitor sees half of each number at the extremes —
- * ±22px of lift, ±75px of slide, ±0.7° of tilt. Sizing them at ±1 keeps the
- * curve linear in scroll and the constants comparable to `Parallax`'s `speed`.
+ * It used to be five figures. The other four — a horizontal slide against the
+ * strip's own travel, a bank of up to 0.7°, and a scale and a fade keyed to
+ * distance from centre — all landed on the cards rather than on the band, and
+ * between them meant a card was tilting, shrinking and dimming while the
+ * marquee was already moving it sideways. The card's one legible state became
+ * whichever frame you happened to catch. **The cards answer the pointer and
+ * nothing else now**; the scroll belongs to the band underneath them.
  *
- * The ceilings are measured rather than picked:
- *
- *   - `Y` has the section's own padding to play with — 80px at the smallest
- *     step, and the strip is the last thing in the section — so ±22px never
- *     puts a card into the description above.
- *   - `X` is bounded by nothing visual (the duplicated track runs thousands of
- *     pixels past both edges, so no shift can expose an end) and instead by the
- *     loop: ±75px stays well under one card's 208px, so the displacement reads
- *     as depth rather than as the marquee stuttering.
- *   - `ROT` is the one figure that makes the approach and the exit read as
- *     *opposite* rather than merely offset — the strip banks one way coming up
- *     the screen and the other way leaving it. Held under a degree: past that
- *     it stops being depth and becomes a crooked row. At ±0.7° a full-bleed
- *     frame rises about 10px at its corners, which the same 80px of padding
- *     absorbs.
- *   - `SCALE` and `FADE` are the settle: the band arrives slightly small and
- *     slightly recessed into the near-black, and is only at full size and full
- *     strength while it is the thing you are looking at. Both are driven by
- *     |t|, so they are symmetric — unlike the three above, which flip sign.
+ * The figure is stated at t = ±1, which is off screen. The signed progress only
+ * reaches ±0.5 while any part of the section is in the viewport (see the read
+ * pass), so a visitor sees ±22px of lift at the extremes. Sizing it at ±1 keeps
+ * the curve linear in scroll and the constant comparable to `Parallax`'s
+ * `speed`. The ceiling is measured: the section's own padding is 80px at the
+ * smallest step and the strip is the last thing in it, so ±22px never puts a
+ * card into the description above.
  */
 const PARALLAX_Y = 44;
-const PARALLAX_X = 150;
-const PARALLAX_ROT = 1.4;
-const PARALLAX_SCALE = 0.1;
-const PARALLAX_FADE = 0.42;
 
 export function PartnerCarousel({
   variant = "bubble",
@@ -98,7 +82,6 @@ export function PartnerCarousel({
   parallax?: boolean;
 } = {}) {
   const frameRef = useRef<HTMLDivElement>(null);
-  const driftRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -170,19 +153,14 @@ export function PartnerCarousel({
    * the same one the photo layers use, so this costs no extra scroll listener
    * and no extra layout pass. Reads are batched before writes across the page.
    *
-   * The two axes are written to two different elements, and that split is
-   * load-bearing rather than tidiness:
-   *
-   *   - **Y goes on the frame**, which is the clipping box. Drifting the box
-   *     itself moves the whole strip against the page. Putting Y on something
-   *     *inside* `overflow: hidden` would slide the cards under their own clip
-   *     and shave the top or bottom off every one of them.
-   *   - **X goes on the inner wrapper**, never the track: the track's transform
-   *     is the marquee itself, driven by the CSS animation and, under reduced
-   *     motion, by the rAF loop above. A second writer on that property would
-   *     fight both. The wrapper is free, and the duplicated track runs
-   *     thousands of pixels past both edges of the frame, so a 70px shift can
-   *     never pull an end into view.
+   * **The drift goes on the frame, which is the clipping box.** Moving the box
+   * itself carries the whole strip against the page and leaves the cards'
+   * relationship to it untouched. Writing it to anything *inside*
+   * `overflow: hidden` would slide the cards under their own clip and shave the
+   * top or bottom off every one of them — which is also why there is no longer
+   * an inner wrapper here. The horizontal axis it used to carry is gone, and an
+   * element that exists to hold a property nobody writes is just a promoted
+   * layer with no job.
    *
    * Unlike the marquee, this is ordinary decoration and bails out entirely when
    * motion is off — the strip still travels, it simply stops being displaced by
@@ -190,14 +168,9 @@ export function PartnerCarousel({
    */
   useEffect(() => {
     const frame = frameRef.current;
-    const drift = driftRef.current;
-    if (!parallax || !frame || !drift || prefersReducedMotion()) return;
+    if (!parallax || !frame || prefersReducedMotion()) return;
 
     let y = 0;
-    let x = 0;
-    let rot = 0;
-    let scale = 1;
-    let fade = 1;
 
     const unregister = registerScrollLayer({
       el: frame,
@@ -207,31 +180,16 @@ export function PartnerCarousel({
         // after a long scroll cannot keep accumulating displacement.
         const progress =
           (viewportH / 2 - (rect.top + rect.height / 2)) / viewportH;
-        const t = Math.max(-1, Math.min(1, progress));
-        const away = Math.abs(t);
-
-        y = t * PARALLAX_Y;
-        // Negative: the cards lag as the section rises, so the displacement
-        // opposes the loop's own left-to-right travel instead of adding to it.
-        x = -t * PARALLAX_X;
-        rot = t * PARALLAX_ROT;
-        scale = 1 - away * PARALLAX_SCALE;
-        fade = 1 - away * PARALLAX_FADE;
+        y = Math.max(-1, Math.min(1, progress)) * PARALLAX_Y;
       },
       write() {
         frame.style.setProperty("--band-y", `${y.toFixed(2)}px`);
-        frame.style.setProperty("--band-rot", `${rot.toFixed(3)}deg`);
-        frame.style.setProperty("--band-scale", scale.toFixed(4));
-        frame.style.setProperty("--band-fade", fade.toFixed(3));
-        drift.style.setProperty("--band-x", `${x.toFixed(2)}px`);
       },
     });
 
     return () => {
       unregister();
-      for (const prop of ["--band-y", "--band-rot", "--band-scale", "--band-fade"])
-        frame.style.removeProperty(prop);
-      drift.style.removeProperty("--band-x");
+      frame.style.removeProperty("--band-y");
     };
   }, [parallax]);
 
@@ -349,17 +307,11 @@ export function PartnerCarousel({
         tone === "dark" ? "marquee--deep" : ""
       } ${parallax ? "marquee--parallax" : ""}`}
     >
-      {/*
-       * Carries the horizontal parallax only. Present in every configuration so
-       * the tree does not change shape with a prop; with `--band-x` unset it
-       * resolves to 0 and this is an inert wrapper.
-       */}
-      <div ref={driftRef} className="marquee__drift">
-        <ul
-          ref={trackRef}
-          className={`marquee__track ${variant === "card" ? "py-8" : "py-5"}`}
-        >
-          {/*
+      <ul
+        ref={trackRef}
+        className={`marquee__track ${variant === "card" ? "py-8" : "py-5"}`}
+      >
+        {/*
          * Two passes over the same list. The second is the visual tail that
          * makes the loop seamless, so it is hidden from assistive tech — a
          * screen reader reads the partner list once.
@@ -438,8 +390,7 @@ export function PartnerCarousel({
             </ul>
           </li>
         ))}
-        </ul>
-      </div>
+      </ul>
     </div>
   );
 }

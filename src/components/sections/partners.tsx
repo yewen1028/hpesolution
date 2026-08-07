@@ -52,11 +52,14 @@ export function Partners() {
        * script is slow to boot on a low-powered machine.
        */}
       {/*
-       * `parallax` displaces the strip as the section passes: the band drifts
-       * vertically against the page and the cards slide horizontally against
-       * their own travel, so the approach and the exit are different views of
-       * the same loop. It runs on the site's shared scroll loop and switches
-       * off with the motion preference — see the effect in `partner-carousel`.
+       * `parallax` drifts the band vertically against the page as the section
+       * arrives and as it leaves — one axis, on the strip's frame, so the
+       * approach and the exit read as depth. It runs on the site's shared
+       * scroll loop and switches off with the motion preference; see the effect
+       * in `partner-carousel`.
+       *
+       * Nothing scroll-driven reaches the cards. Their only response is to the
+       * pointer — the tilt, the lift and the brand rule, all on hover.
        */}
       <PartnerCarousel variant="card" tone="dark" parallax />
     </section>

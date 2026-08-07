@@ -1,9 +1,9 @@
-import { Media } from "@/components/media";
+import { HeroCarousel } from "@/components/hero-carousel";
 import { Parallax } from "@/components/parallax";
 import { Reveal } from "@/components/reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ButtonLink, Container } from "@/components/ui";
-import { stats } from "@/lib/site";
+import { heroSlides, stats } from "@/lib/site";
 import { Counter } from "@/components/counter";
 import { StatParallax } from "@/components/stat-parallax";
 
@@ -13,18 +13,26 @@ export function Hero() {
       data-site-hero
       className="relative isolate overflow-hidden bg-paper-deep"
     >
+      {/*
+        The background is a carousel of clips rather than one still — see
+        `heroSlides` in `site.ts` for the four and the order. It drifts inside
+        the same `Parallax` frame the still used, so the movement of the
+        masthead against the page is unchanged; only what is inside it moves
+        on its own now.
+
+        Under reduced motion the carousel renders its first poster and nothing
+        else, which is what this slot was before.
+      */}
       <Parallax speed={130} className="absolute inset-x-0 -z-10">
-        <Media
-          src="/media/hero-datacentre.jpg"
-          alt="Server hardware and structured cabling inside a datacentre"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+        <HeroCarousel slides={heroSlides} />
       </Parallax>
 
-      {/* Shared with `page-hero.tsx`; see `.masthead-tint` in globals.css. */}
+      {/*
+        Shared with `page-hero.tsx`; see `.masthead-tint` in globals.css. It
+        does more work here than it does there: it is what holds four different
+        photographs to one tonal range, so the headline sits on the same
+        contrast whichever clip is playing behind it.
+      */}
       <div className="masthead-tint absolute inset-0 -z-10" aria-hidden="true" />
 
       <Container className="pb-20 pt-24 sm:pb-28 sm:pt-32 lg:pb-32 lg:pt-40">

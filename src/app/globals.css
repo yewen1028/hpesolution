@@ -44,7 +44,26 @@
 }
 
 :root {
-  --header-h: 76px;
+  /*
+   * The header is two stacked rows, and these are their heights.
+   *
+   * `--topbar-h` is the contact strip (`components/top-bar.tsx`), `--nav-h` the
+   * row with the logo and the navigation. `--header-h` is their sum and stays
+   * what it has always been: the **layout constant** that `main` pads by, so
+   * the page never reflows when the bar changes size.
+   *
+   * `--nav-h-shrunk` is the height of the whole header past the hero, because
+   * the contact strip folds away at that point and the nav row is all that is
+   * left. Anything positioned against the header's *current* height — the
+   * progress bar, the section nav, the services scrim, the mobile panel — has
+   * a `[data-shrunk]` rule pointing at this token. That number used to be
+   * written as a literal `60px` in four places.
+   */
+  /* px, not rem, so `site-header.tsx` can add the two up with `parseFloat`. */
+  --topbar-h: 36px;
+  --nav-h: 76px;
+  --nav-h-shrunk: 60px;
+  --header-h: calc(var(--nav-h) + var(--topbar-h));
 
   /*
    * One height for every control in the header bar.
@@ -66,8 +85,15 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    /* Parallax layers read this; JS keeps it in sync with scrollY. */
-    scroll-padding-top: calc(var(--header-h) + 1rem);
+    /*
+     * Parallax layers read this; JS keeps it in sync with scrollY.
+     *
+     * `--nav-h`, not `--header-h`: reaching an anchor means scrolling down,
+     * which is what folds the contact strip away, so by the time the jump
+     * lands the header is the nav row alone. Padding by the resting total
+     * would leave the strip's height as dead space above every target.
+     */
+    scroll-padding-top: calc(var(--nav-h) + 1rem);
 
     /*
      * This page scrolls one way. Nothing on a marketing site should ever be
@@ -1680,10 +1706,16 @@ html[data-motion="reduced"] {
 .svc-scrim {
   position: fixed;
   inset: var(--header-h) 0 0 0;
+  /* Tracks the bar it hangs from, or it uncovers a strip of lit page. */
+  transition: inset 0.32s var(--ease-out-quint);
   z-index: 0;
   background: rgb(20 24 29 / 0.22);
   backdrop-filter: blur(2px);
   animation: svc-scrim-in 260ms var(--ease-out-quint) backwards;
+}
+
+.site-header[data-shrunk] .svc-scrim {
+  inset: var(--nav-h-shrunk) 0 0 0;
 }
 
 @keyframes svc-scrim-in {
@@ -2150,6 +2182,102 @@ html[data-motion="reduced"] {
 }
 
 /*
+ * The nav row inside it. It cannot be `h-full` any more — the header is now
+ * two rows, and full height would have the logo and the navigation centred
+ * across the contact strip as well as their own row.
+ */
+.site-header__bar {
+  height: var(--nav-h);
+  transition: height 0.32s var(--ease-out-quint);
+}
+
+.site-header[data-shrunk] .site-header__bar {
+  height: var(--nav-h-shrunk);
+}
+
+/* --- Contact strip -------------------------------------------------------- */
+
+/*
+ * `components/top-bar.tsx`: the email and phone number above the nav row.
+ *
+ * It folds rather than scrolls away, off the header's own `data-shrunk` state,
+ * so it is on offer while a visitor is still deciding and gone once they are
+ * reading — and so there is one scroll threshold governing the header rather
+ * than two that could disagree. `overflow: hidden` is what makes the fold
+ * clean: the strip's contents are clipped by the collapsing box instead of
+ * spilling over the nav row on the way out.
+ *
+ * Near-black under the white nav row. `--color-paper-deep` is a themed token,
+ * so the strip inverts with the page; the text is white in both because the
+ * surface is dark in both.
+ */
+.topbar {
+  height: var(--topbar-h);
+  overflow: hidden;
+  background: var(--color-paper-deep);
+  transition:
+    height 0.32s var(--ease-out-quint),
+    opacity 0.24s linear;
+}
+
+.site-header[data-shrunk] .topbar {
+  height: 0;
+  opacity: 0;
+}
+
+.topbar__note {
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.topbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  /*
+   * The negative margin keeps the strip 36px tall while the tap target is 30px
+   * of it — a bare 12px line would be a 17px target. It cannot grow past the
+   * strip's own height, which is why this is padding absorbed by a margin
+   * rather than a taller box.
+   */
+  margin-block: -0.5rem;
+  padding: 0.5rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.78);
+  transition: color 0.2s linear;
+}
+
+.topbar__link svg {
+  color: var(--color-brand);
+  transition: color 0.2s linear;
+}
+
+.topbar__link:hover {
+  color: #fff;
+}
+
+.topbar__link:hover svg {
+  color: var(--color-brand-strong);
+}
+
+/* The hairline between the two. Drawn, not typed — no bullet character. */
+.topbar__sep {
+  width: 1px;
+  height: 0.85rem;
+  background: rgb(255 255 255 / 0.16);
+}
+
+/*
+ * Both addresses are shown at every width, and measurement rather than nerve
+ * decided that: the pair is 293px on one line, which clears a 320px screen
+ * with its 20px gutters. An earlier version hid the email below 400px and left
+ * a bare envelope glyph next to the phone number — an icon-only control whose
+ * whole value is the address it is not showing.
+ */
+
+/*
  * The lockup is a wide one — 390x120, so 3.25:1 — which means height is the
  * only dial and every step in it costs three times as much width. These sizes
  * are the largest the bar can carry: the link adds 8px of hit area on every
@@ -2168,14 +2296,33 @@ html[data-motion="reduced"] {
   }
 }
 
-/* Past the hero: 76px → 60px, logo 3rem → 2.25rem. */
+/*
+ * Past the hero: the contact strip folds away and the nav row goes 76px → 60px,
+ * logo 3rem → 2.25rem. The header as a whole is `--nav-h-shrunk` from here on,
+ * which is what every rule anchored to its underside points at.
+ */
 .site-header[data-shrunk] {
-  height: 60px;
+  height: var(--nav-h-shrunk);
   box-shadow: 0 1px 0 rgb(20 24 29 / 0.04), 0 10px 30px -22px rgb(20 24 29 / 0.5);
 }
 
 .site-header[data-shrunk] .site-header__logo {
   height: 2.25rem;
+}
+
+/*
+ * The mobile panel hangs off the underside of the bar, so its top is the bar's
+ * *current* height and not the layout constant. This was an inline
+ * `top: var(--header-h)` in the markup, which was already 16px out once the
+ * header shrank and would have been 52px out with the contact strip counted in.
+ */
+.site-header__mobile {
+  top: var(--header-h);
+  transition: top 0.32s var(--ease-out-quint);
+}
+
+.site-header[data-shrunk] .site-header__mobile {
+  top: var(--nav-h-shrunk);
 }
 
 /* --- Scroll progress ------------------------------------------------------ */
@@ -2196,7 +2343,7 @@ html[data-motion="reduced"] {
 /* Rides the header down when it shrinks. */
 .site-header[data-shrunk] ~ .scroll-progress,
 body:has(.site-header[data-shrunk]) .scroll-progress {
-  top: 60px;
+  top: var(--nav-h-shrunk);
 }
 
 /* Short page: nothing worth tracking. */
@@ -2271,7 +2418,7 @@ html[data-motion="reduced"] {
 }
 
 body:has(.site-header[data-shrunk]) .section-nav--bar {
-  top: 60px;
+  top: var(--nav-h-shrunk);
 }
 
 .section-nav--bar ul {
@@ -3459,43 +3606,31 @@ html[data-motion="reduced"] {
 
 /*
  * Written by the shared scroll loop in `partner-carousel.tsx` when `parallax`
- * is set. Unset — no script, reduced motion, or the prop off — both resolve to
- * 0 and the strip simply sits where it is.
+ * is set. Unset — no script, reduced motion, or the prop off — it resolves to 0
+ * and the strip simply sits where it is.
  *
- * `--band-y`, `--band-rot`, `--band-scale` and `--band-fade` move the clipping
- * frame; `--band-x` moves an inner wrapper. The component comments explain why
- * the two axes cannot be swapped.
- *
- * The rotation and the scale go on the frame with the lift, in that order:
- * rotating *then* scaling keeps the tilt's angle independent of how far into
- * its settle the band is. `transform-origin` is the frame's centre, so the band
- * banks about the middle of the strip rather than pivoting off one edge.
+ * **One property, on the clipping frame, and it is the only thing the scroll
+ * position is allowed to touch here.** There were five: a horizontal slide on
+ * an inner wrapper, plus a rotate, a scale and an opacity alongside this
+ * translate. All four of those read on the *cards* rather than on the band, so
+ * a card was banking, shrinking and dimming while the marquee was already
+ * carrying it sideways and the pointer tilt was leaning it towards the cursor.
+ * The cards answer the pointer now; the page's scroll moves the band they sit
+ * on and nothing else. Do not put a second scroll-driven property back on this
+ * element without deciding what it does to a card that is also being hovered.
+ */
+/*
+ * `will-change` sits here too, on the one element script actually drives — the
+ * track underneath is animating its own transform for the life of the page and
+ * does not need a second promoted layer stacked on it.
  */
 .marquee--parallax {
-  transform: translate3d(0, var(--band-y, 0px), 0) rotate(var(--band-rot, 0deg))
-    scale(var(--band-scale, 1));
-  opacity: var(--band-fade, 1);
-}
-
-.marquee__drift {
-  transform: translate3d(var(--band-x, 0px), 0, 0);
-}
-
-/*
- * `will-change` only on the axis that is actually driven from script, and only
- * on the two elements that carry it — the track underneath is animating its own
- * transform for the life of the page and does not need a third promoted layer
- * stacked on it.
- */
-.marquee--parallax,
-.marquee--parallax .marquee__drift {
+  transform: translate3d(0, var(--band-y, 0px), 0);
   will-change: transform;
 }
 
-html[data-motion="reduced"] .marquee--parallax,
-html[data-motion="reduced"] .marquee--parallax .marquee__drift {
+html[data-motion="reduced"] .marquee--parallax {
   transform: none;
-  opacity: 1;
   will-change: auto;
 }
 

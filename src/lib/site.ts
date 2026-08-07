@@ -29,6 +29,48 @@ export const contact = {
     "https://hpe.com.my/wp-content/uploads/2023/05/HPE-PrivacyNotice-2023-05.pdf",
 } as const;
 
+/**
+ * The home hero's background: four clips behind the masthead, played one at a
+ * time by `components/hero-carousel.tsx`.
+ *
+ * The order is the argument the hero is making — hardware, network, the site
+ * itself, the people who answer — and it is also dark to light, because the
+ * masthead tint thins to 0.6 on its right edge and only the last frame can
+ * afford to be a bright one there.
+ *
+ * `poster` is not a loading placeholder. It is the frame the hero shows in
+ * full when motion is off, when autoplay is refused, and before a clip has
+ * arrived — so each still has to read on its own, and each `alt` describes the
+ * still rather than the clip.
+ *
+ * Sourced by `scripts/fetch-media.mjs`, which records the Pexels id, the
+ * rendition and why that rendition. Look at a clip before you swap one in.
+ */
+export type HeroSlide = { video: string; poster: string; alt: string };
+
+export const heroSlides: HeroSlide[] = [
+  {
+    video: "/media/hero-servers.mp4",
+    poster: "/media/hero-servers.jpg",
+    alt: "Rack-mounted servers under blue light, drive bays and status LEDs in a row",
+  },
+  {
+    video: "/media/hero-network.mp4",
+    poster: "/media/hero-network.jpg",
+    alt: "A patch panel in a darkened rack, copper leads seated against green link LEDs",
+  },
+  {
+    video: "/media/hero-rackroom.mp4",
+    poster: "/media/hero-rackroom.jpg",
+    alt: "A customer comms room: open racks, a patch panel and a storage array on site",
+  },
+  {
+    video: "/media/hero-helpdesk.mp4",
+    poster: "/media/hero-helpdesk.jpg",
+    alt: "Three support engineers in headsets working side by side at a shared desk",
+  },
+];
+
 export type Stat = {
   value: number;
   suffix: string;
