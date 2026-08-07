@@ -66,6 +66,7 @@ export function ChatWidget() {
 
   const panelId = useId();
   const fabRef = useRef<HTMLButtonElement>(null);
+  const nudgeRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
@@ -77,14 +78,12 @@ export function ChatWidget() {
     };
   }, []);
 
-  /* The nudge is a session-scoped courtesy: once dismissed or once the panel
-     has been opened, it does not come back and pester. */
+  /* The nudge is a page-scoped courtesy: once dismissed, or once the panel has
+     been opened, it does not come back and pester for the life of this page.
+     It is deliberately **not** persisted — a reload is a fresh arrival and the
+     prompt is the only label the launcher has, so it introduces the control
+     again rather than leaving a bare icon behind. */
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem("hpe:chat-nudge")) return;
-    } catch {
-      /* Storage blocked: show it, it is only a label. */
-    }
     const t = window.setTimeout(() => setNudge(true), NUDGE_DELAY_MS);
     timers.current.push(t);
     return () => window.clearTimeout(t);
@@ -92,12 +91,41 @@ export function ChatWidget() {
 
   const dismissNudge = useCallback(() => {
     setNudge(false);
-    try {
-      sessionStorage.setItem("hpe:chat-nudge", "1");
-    } catch {
-      /* Storage blocked: it reappears next navigation, which is acceptable. */
-    }
   }, []);
+
+  /*
+   * Publishes the label's height so the back-to-top arrow can stand clear of
+   * it.
+   *
+   * The corner is one column — launcher, label above it, arrow above that — but
+   * the arrow is a different component mounted elsewhere in the tree, so there
+   * is no shared flex parent to do the stacking. It reads this instead.
+   *
+   * Measured rather than guessed: the label is two lines of copy at one width
+   * and three at another, so any constant would be wrong at some viewport. The
+   * gap is added here, in the same 0.75rem the column uses, so an absent label
+   * contributes nothing at all rather than an empty gap.
+   */
+  useEffect(() => {
+    const el = nudgeRef.current;
+    const root = document.documentElement;
+    if (!el) return;
+
+    const publish = () =>
+      root.style.setProperty(
+        "--chat-nudge-h",
+        `calc(${el.offsetHeight}px + 0.75rem)`,
+      );
+
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--chat-nudge-h");
+    };
+  }, [nudge, open]);
 
   /* New content always ends up in view. `auto` under reduced motion, matching
      `back-to-top.tsx` — a long smooth scroll is the movement that preference
@@ -153,8 +181,13 @@ export function ChatWidget() {
     [respond],
   );
 
+  /*
+   * Opening the panel does not dismiss the label either — the ✕ is the only
+   * thing that does. The label is hidden while the panel is open regardless
+   * (it renders on `!open`), so this only decides whether it comes back after
+   * the panel is closed again, and it does.
+   */
   const toggle = () => {
-    dismissNudge();
     setOpen((v) => !v);
   };
 
@@ -252,29 +285,14 @@ export function ChatWidget() {
         The floating label. A real button, not a tooltip: it is the larger and
         more obvious target of the two, and on touch there is no hover state to
         reveal a tooltip in the first place.
-      */}
-      {/*
-        The standing label. Always above the launcher when the panel is shut,
-        so the control is never a bare icon a visitor has to guess at — the
-        larger prompt below replaces it for the first two and a half seconds of
-        the session and then hands the space back.
-      */}
-      {!nudge && !open && (
-        <button
-          type="button"
-          className="chat-tag"
-          onClick={toggle}
-          // The launcher is the real control and carries the accessible name;
-          // this is the same action twice, so it is not announced again.
-          tabIndex={-1}
-          aria-hidden="true"
-        >
-          Chat with us
-        </button>
-      )}
 
+        It is the *only* label — the standing "Chat with us" tag that used to
+        take this space back once the prompt was dismissed is gone. Two labels
+        for one control meant the space above the launcher was never quiet, and
+        the arrow that now sits there had nowhere to go.
+      */}
       {nudge && !open && (
-        <div className="chat-nudge">
+        <div ref={nudgeRef} className="chat-nudge">
           <button
             type="button"
             className="chat-nudge__body"
@@ -301,7 +319,14 @@ export function ChatWidget() {
         ref={fabRef}
         type="button"
         onClick={toggle}
-        onMouseEnter={dismissNudge}
+        /*
+          No `onMouseEnter={dismissNudge}` here.
+
+          The label sits directly above this button, so the pointer leaving the
+          label lands on the launcher on its way out — the prompt vanished
+          simply from being read. Hover is not a decision, and the ✕ is what the
+          label offers for making one.
+        */
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Close chat" : `Chat with ${company.name}`}

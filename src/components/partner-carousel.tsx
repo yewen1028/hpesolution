@@ -8,9 +8,11 @@ import { prefersReducedMotion, subscribeMotion } from "@/lib/motion";
 import { canHover } from "@/lib/scroll-motion";
 
 /**
- * The moving strip. Bubble shape follows the `HPE - refined` draft: a white
- * circle holding the mark, brand name underneath, hover lifts and scales the
- * circle only.
+ * The moving strip. The bubble variant is a white tile holding the logo with
+ * the brand name underneath, and hover lifts and scales the tile only. It
+ * followed the `HPE - refined` draft's circle until the logos became the
+ * principals' full lockups, whose aspect ratios go to 8.5:1 — see the tile
+ * itself for why a round frame could not hold them.
  *
  * Motion is CSS (`.marquee__track` in globals.css) with a requestAnimationFrame
  * engine as backup. The backup exists because of a specific failure the draft
@@ -338,10 +340,24 @@ export function PartnerCarousel({
                     width={logo.width}
                     height={logo.height}
                     decoding="async"
+                    /*
+                      A box with both dimensions capped, not a square.
+                      `size-[46px]` fitted a landscape lockup into a 46px square
+                      and got 46x12 out of a wordmark — legible as a coloured
+                      smudge and nothing more. Capping each axis lets a wide
+                      mark spend its budget on width and a square one on height,
+                      so every logo lands at roughly the same optical weight.
+
+                      The height caps are what the widest logo dictates: at
+                      Fortinet's 8.5:1 a 132px width is already only 15px tall,
+                      so there is no room to trade width for a taller box. The
+                      square ones (Huawei) hit the height cap instead and stop
+                      there.
+                    */
                     className={
                       variant === "card"
-                        ? "max-h-[42px] w-auto max-w-[120px] object-contain"
-                        : "size-[46px] object-contain"
+                        ? "max-h-[44px] w-auto max-w-[132px] object-contain"
+                        : "max-h-[56px] w-auto max-w-[132px] object-contain"
                     }
                   />
                 ) : (
@@ -376,8 +392,31 @@ export function PartnerCarousel({
 
                 return (
                   <li key={partner} className="mx-2.5 shrink-0">
-                    <span className="group flex w-[104px] cursor-default flex-col items-center gap-3">
-                      <span className="flex size-[84px] items-center justify-center overflow-hidden rounded-full border border-rule bg-paper shadow-[0_8px_22px_rgb(20_24_29_/_0.10)] transition-[transform,box-shadow,border-color] duration-[350ms] ease-[var(--ease-out-quint)] group-hover:-translate-y-1.5 group-hover:scale-[1.09] group-hover:border-brand group-hover:shadow-[0_18px_36px_rgb(242_111_33_/_0.30)]">
+                    <span className="group flex w-[172px] cursor-default flex-col items-center gap-3">
+                      {/*
+                        A landscape tile, and it used to be an 84px circle.
+
+                        The circle could not hold these logos. Every one is now
+                        the principal's full lockup, and their aspect ratios run
+                        to 8.5:1 — Fortinet's wordmark in a disc that narrow
+                        came out around 62x7px, which is a coloured smudge, not
+                        a logo. A round frame can only ever show a round mark
+                        well, and the artwork here is overwhelmingly wide. The
+                        radius matches `.partner-card`'s 0.75rem so the two
+                        strips are the same family; the square-corner rule is
+                        still the rule everywhere else on the site.
+
+                        `bg-white`, not `bg-paper`, and fixed in both themes —
+                        the same rule `.partner-card` already follows. These are
+                        seventeen principals' own artwork in their own colours,
+                        and most of it is dark ink: navy Cisco bars, a black
+                        Ruckus dog, black Cyberoam and AMP type. On the
+                        near-black `--color-paper` becomes in the dark theme,
+                        those disappear into the tile. A white field is also how
+                        a logo is meant to be presented, so this is not a
+                        concession to the theme.
+                      */}
+                      <span className="flex h-[92px] w-[172px] items-center justify-center overflow-hidden rounded-xl border border-rule bg-white px-5 shadow-[0_8px_22px_rgb(20_24_29_/_0.10)] transition-[transform,box-shadow,border-color] duration-[350ms] ease-[var(--ease-out-quint)] group-hover:-translate-y-1.5 group-hover:scale-[1.06] group-hover:border-brand group-hover:shadow-[0_18px_36px_rgb(242_111_33_/_0.30)]">
                         {mark}
                       </span>
                       <span className="whitespace-nowrap text-center text-[0.8125rem] font-semibold text-ink-muted transition-colors duration-300 group-hover:text-brand">

@@ -21,13 +21,34 @@ export function Coverage() {
       image="/media/coverage-kl.jpg"
       alt="Aerial view of the Kuala Lumpur skyline at night"
       /*
-       * Aperture, not drift. The hero already spends the drift figure on a
-       * full-bleed dark photo band, and this section is the same shape — two
-       * bands doing the same thing read as one effect used twice rather than
-       * as rhythm. Pinning the skyline also suits what the band is about: the
-       * map holds still while the list of centres travels across it.
+       * Drift, not aperture — the same figure and the same numbers the seven
+       * service pages use, and it is a correctness fix rather than a change of
+       * taste.
+       *
+       * The aperture cancels the scroll: it holds the photograph against the
+       * viewport by translating the layer by 0.92 of however far the section
+       * has travelled. But scrolling is composited off the main thread while
+       * the transform is written from `requestAnimationFrame`, so the layer is
+       * always one frame behind the scroll it is cancelling — and the error is
+       * 0.92 of a frame's scroll distance, which during a fast continuous
+       * scroll is tens of pixels. The picture therefore shakes up and down
+       * around its pinned position, and the faster you scroll the worse it
+       * gets. It is the same reason `background-attachment: fixed` judders.
+       *
+       * A drift has the same one-frame lag and does not show it, because the
+       * layer's position is dominated by the section's own natively composited
+       * scrolling and the transform only adds a small lag on top. The error is
+       * a fraction of a small number instead of nearly all of a large one.
+       *
+       * So this cannot be tuned out of the aperture — strength below 1 reduces
+       * the pinning, which is the whole figure. The trade is that this band and
+       * the hero now share the drift; that is what the aperture was avoiding,
+       * and a still figure is worth more than a distinct one.
        */
-      variant="aperture"
+      speed={90}
+      // Same reason as the service band: scroll on a touch device arrives in
+      // flings, which is where a drifting layer reads as stutter.
+      flattenOnCoarsePointer
       // Measures as the LCP element on slower machines, where the sections
       // above it paint as text almost immediately.
       eager

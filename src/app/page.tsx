@@ -6,7 +6,7 @@ import { CasePreview } from "@/components/sections/case-preview";
 import { Coverage } from "@/components/sections/coverage";
 import { Partners } from "@/components/sections/partners";
 import { ContactCta } from "@/components/sections/contact-cta";
-import { ScrollStage } from "@/components/scroll-stage";
+import { ScrollStage, SETTLED_EXIT_SPAN } from "@/components/scroll-stage";
 
 /*
  * Eight bands, eight different scroll behaviours.
@@ -49,7 +49,16 @@ export default function HomePage() {
     <>
       <Hero />
 
-      <ScrollStage variant="fold">
+      {/*
+        `exitSpan` because this section is the tall one — a little over two
+        viewports once every card carries its schedule. At the default 0.9 the
+        fold began the moment the section's bottom edge cleared the fold, so
+        the last row of cards sat at 0.76 opacity and 0.96 scale while it was
+        still fully on screen and being read. `SETTLED_EXIT_SPAN` holds the
+        section perfectly still for its whole middle and plays the departure
+        only over its last third of a viewport.
+      */}
+      <ScrollStage variant="fold" exitSpan={SETTLED_EXIT_SPAN}>
         <ServicesGrid />
       </ScrollStage>
 

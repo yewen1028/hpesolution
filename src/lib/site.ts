@@ -935,59 +935,76 @@ export const partners: string[] = [
 ];
 
 /**
- * Brand marks for the partner carousel. Each one was opened and looked at
- * before being committed — see the header of `scripts/fetch-logos.mjs` for the
- * wrong-subject hits that check caught.
+ * Brand marks for the partner carousel. **All seventeen have artwork**, and it
+ * is the artwork hpe.com.my publishes for itself — `scripts/fetch-logos.mjs`
+ * pulls the same seventeen files the live site serves on /business-partner.
  *
- * The first eleven are 400px renders from Wikimedia Commons. The last four came
- * from the `HPE - refined` draft's `assets/partner-logos/` and are small site
- * favicons (32–128px) — the only marks available for those brands. They are
- * noticeably softer than the rest; replacing them with the principal's own logo
- * pack is the upgrade path.
+ * That replaced a mixed set: eleven Wikimedia Commons renders plus four site
+ * favicons, with AMP and Cyberoam falling back to type because Commons had
+ * nothing usable for either. Same brands either way, but only this set is the
+ * company's own.
+ *
+ * Each file is trimmed to its ink on download, so `object-contain` fits the
+ * artwork rather than whichever margin that particular file shipped with.
+ *
+ * **Every one is the full lockup — the whole logo, symbol and wordmark, exactly
+ * as the live site shows it.** Five of them briefly carried a `-mark` crop
+ * instead, the symbol alone with the brand name set in type underneath, because
+ * a wide lockup shrinks to an illegible smear in a small box. That was the
+ * wrong lever: the fix for artwork that does not fit is a box that fits the
+ * artwork, and the crops also quietly edited brands the company does not own.
+ * The crop machinery is gone from the fetch script with them.
+ *
+ * The consequence lives in `partner-carousel.tsx`, and anyone changing that
+ * component needs it: **these are landscape, and their aspect ratios run from
+ * 0.99 (Huawei, square) to 8.51 (Fortinet, a bare wordmark).** Any frame here
+ * has to hold both, which is why neither variant uses a square box any more.
  *
  * `width`/`height` are intrinsic pixel dimensions so the browser reserves the
- * right box before the image lands.
+ * right box before the image lands. They vary, because trimmed artwork has the
+ * aspect ratio of the artwork.
  */
 export type PartnerLogo = { src: string; width: number; height: number };
 
 export const partnerLogos: Record<string, PartnerLogo> = {
-  Aruba: { src: "/media/logos/aruba.png", width: 500, height: 244 },
-  Avaya: { src: "/media/logos/avaya.png", width: 500, height: 143 },
-  Cisco: { src: "/media/logos/cisco.png", width: 500, height: 264 },
-  Fortinet: { src: "/media/logos/fortinet.png", width: 500, height: 61 },
+  AMP: { src: "/media/logos/amp.png", width: 415, height: 169 },
+  Aruba: { src: "/media/logos/aruba.png", width: 423, height: 108 },
+  Avaya: { src: "/media/logos/avaya.png", width: 404, height: 120 },
+  Cisco: { src: "/media/logos/cisco.png", width: 330, height: 174 },
+  Cyberoam: { src: "/media/logos/cyberoam.png", width: 482, height: 175 },
+  Dintek: { src: "/media/logos/dintek.png", width: 522, height: 124 },
+  Fortinet: { src: "/media/logos/fortinet.png", width: 502, height: 59 },
   "HP Enterprise": {
     src: "/media/logos/hp-enterprise.png",
-    width: 500,
-    height: 209,
+    width: 396,
+    height: 166,
   },
-  Huawei: { src: "/media/logos/huawei.png", width: 500, height: 86 },
-  Microsoft: { src: "/media/logos/microsoft.png", width: 500, height: 500 },
-  Riverbed: { src: "/media/logos/riverbed.png", width: 500, height: 145 },
-  Sophos: { src: "/media/logos/sophos.png", width: 500, height: 90 },
-  TM: { src: "/media/logos/tm.png", width: 500, height: 246 },
-  Veeam: { src: "/media/logos/veeam.png", width: 500, height: 91 },
-
-  // From the draft's assets — low-resolution favicons, flagged above.
-  Peplink: { src: "/media/logos/peplink.png", width: 128, height: 128 },
-  Dintek: { src: "/media/logos/dintek.png", width: 50, height: 51 },
-  Ruckus: { src: "/media/logos/ruckus.png", width: 48, height: 48 },
-  Sangfor: { src: "/media/logos/sangfor.png", width: 32, height: 32 },
+  Huawei: { src: "/media/logos/huawei.png", width: 230, height: 232 },
+  Microsoft: { src: "/media/logos/microsoft.png", width: 448, height: 97 },
+  Peplink: { src: "/media/logos/peplink.png", width: 317, height: 161 },
+  Riverbed: { src: "/media/logos/riverbed.png", width: 307, height: 148 },
+  Ruckus: { src: "/media/logos/ruckus.png", width: 414, height: 121 },
+  Sangfor: { src: "/media/logos/sangfor.png", width: 437, height: 132 },
+  Sophos: { src: "/media/logos/sophos.png", width: 365, height: 61 },
+  TM: { src: "/media/logos/tm.png", width: 308, height: 143 },
+  Veeam: { src: "/media/logos/veeam.png", width: 409, height: 74 },
 };
 
 /**
- * Partners with no usable mark at all fall back to a category icon, the same
- * way the draft falls back to a Font Awesome glyph when an image 404s.
+ * Category icons for a partner with no mark, the same way the draft falls back
+ * to a Font Awesome glyph when an image 404s.
  *
- * AMP: the draft's `amp.png` is a 16×16 TE Connectivity favicon — wrong brand
- * for the cabling line, and far too small regardless.
- * Cyberoam: the draft's `cyberoam.png` is byte-identical to `sophos.png`
- * (Sophos acquired them and the domain now serves the Sophos icon), so using it
- * would print the same logo in two bubbles.
+ * **Empty, and deliberately kept.** AMP and Cyberoam used to be here: the
+ * draft's `amp.png` is a 16×16 TE Connectivity favicon, wrong brand for the
+ * cabling line, and its `cyberoam.png` is byte-identical to `sophos.png` —
+ * Sophos acquired them and the domain now serves the Sophos icon — so it would
+ * have printed the same logo in two bubbles. Both now use the artwork from
+ * hpe.com.my, which is the company's own and is right.
+ *
+ * The carousel still reads this, so adding an eighteenth partner without a mark
+ * needs a line here and no component change.
  */
-export const partnerFallbackIcons: Record<string, IconName> = {
-  AMP: "Network",
-  Cyberoam: "ShieldCheck",
-};
+export const partnerFallbackIcons: Record<string, IconName> = {};
 
 export const principles = {
   vision:

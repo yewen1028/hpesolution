@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { reducedMotion, registerScrollLayer } from "@/components/parallax";
-import { stagePhases } from "@/components/scroll-stage";
+import { stagePhases, type Phasing } from "@/components/scroll-stage";
 
 /* ---------------------------------------------------------------------------
    A parallax layer that plays on arrival and departure and holds still in
@@ -37,13 +37,32 @@ import { stagePhases } from "@/components/scroll-stage";
 --------------------------------------------------------------------------- */
 
 export function ScrollDrift({
+  /**
+   * Where the two phases begin and end. `READING_DRIFT` is the tuned set for a
+   * translate on something taller than the window, and the arithmetic behind
+   * those numbers is written out where they are declared.
+   *
+   * A drift does **not** have to share its section's phasing, and the services
+   * grid does not: the stage it sits in takes `SETTLED_EXIT_SPAN` so its fade
+   * and scale stay off the reading, while the drift takes the full tail so the
+   * departure is visible. What it must not do is *outlast* the stage — both
+   * phases still resolve at the same edges, so the drift leads the fold and is
+   * finished with it.
+   */
+  phasing,
   className = "",
   children,
 }: {
+  phasing?: Phasing;
   className?: string;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+
+  /* Destructured so the effect depends on three primitives rather than on an
+     object identity, which a caller passing an inline literal would change on
+     every render — re-registering the layer each time. */
+  const { enterLead, enterSpan, exitSpan } = phasing ?? {};
 
   useEffect(() => {
     const el = ref.current;
@@ -54,7 +73,11 @@ export function ScrollDrift({
     const unregister = registerScrollLayer({
       el,
       read(rect, viewportH) {
-        const { enter, exit } = stagePhases(rect, viewportH);
+        const { enter, exit } = stagePhases(rect, viewportH, {
+          enterLead,
+          enterSpan,
+          exitSpan,
+        });
         progress = 1 - enter - exit;
       },
       write() {
@@ -66,7 +89,7 @@ export function ScrollDrift({
       unregister();
       el.style.removeProperty("--drift-p");
     };
-  }, []);
+  }, [enterLead, enterSpan, exitSpan]);
 
   return (
     <div ref={ref} className={className}>

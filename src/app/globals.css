@@ -402,8 +402,15 @@
  * Unset — no script, reduced motion, before hydration — it resolves to 0 and
  * the grid is simply a grid. The explicit bail-out below is belt and braces.
  */
+/*
+ * 96px each way, up from 60px. The phases now run over a viewport and a fifth
+ * rather than a third of one (`READING_DRIFT`), and the same 60px stretched
+ * over four times the scroll distance is a rate of lag slow enough to read as
+ * nothing happening. The travel and the span are a pair: shorten one and the
+ * other has to come down with it.
+ */
 .svc-list {
-  --svc-travel: 60px;
+  --svc-travel: 96px;
   transform: translate3d(0, calc(var(--drift-p, 0) * var(--svc-travel)), 0);
   will-change: transform;
 }
@@ -412,7 +419,7 @@
    that is itself only a few lines tall reads as a jump rather than a drift. */
 @media (max-width: 640px) {
   .svc-list {
-    --svc-travel: 34px;
+    --svc-travel: 54px;
   }
 }
 
@@ -2525,15 +2532,18 @@ body:has(.site-header[data-shrunk]) .section-nav--bar {
     opacity 0.32s var(--ease-out-quint),
     transform 0.32s var(--ease-out-quint),
     visibility 0s linear 0.32s,
-    background-color 0.25s linear;
+    background-color 0.25s linear,
+    /* The chat label appearing or being dismissed changes this, so the arrow
+       slides to its new resting place rather than jumping to it. */
+    bottom 0.36s var(--ease-out-quint);
 }
 
 .back-to-top[data-shown] {
   opacity: 1;
   visibility: visible;
   transform: none;
-  /* Un-delay visibility on the way in. */
-  transition-delay: 0s, 0s, 0s, 0s;
+  /* Un-delay visibility on the way in. One value per property above. */
+  transition-delay: 0s, 0s, 0s, 0s, 0s;
 }
 
 .back-to-top:hover {
@@ -2815,7 +2825,6 @@ html[data-motion="reduced"] {
      the brand rule would sit flush against the edge of the screen. */
   margin-inline: -1rem;
   border-bottom: 1px solid var(--color-rule);
-  transition: background-color 0.4s var(--ease-out-quint);
 }
 
 /* Overlaps its own hairline at both ends, so the rule reads as a continuous
@@ -2833,10 +2842,44 @@ html[data-motion="reduced"] {
   transition: transform 0.45s var(--ease-out-quint);
 }
 
-/* The section is warm paper, so a row lifts to plain paper under the cursor —
-   the same accent-free way the services grid marks the row you are on. */
-.benefit-row:hover {
-  background-color: var(--color-paper);
+/*
+ * The hover wash. The section is warm paper, so a row lifts to plain paper
+ * under the cursor — the same accent-free way the services grid marks the row
+ * you are on.
+ *
+ * **It is a layer that fades out to the right, not a `background-color` on the
+ * row.** A flat fill is opaque, and the numeral it covers is drawn in an
+ * 0.11-alpha stroke: pointing at a row erased the section's one moving object
+ * for as long as the cursor was on it, and on a five-row ledger that is most of
+ * the section's height. The gradient reaches full strength across the reading
+ * column and is gone by the right-hand quarter the numeral sits in — the same
+ * quarter `.benefits__mark` is sized and positioned to occupy, and the same
+ * reason it can be there at all: the ledger leaves it empty, so fading the wash
+ * out over it costs no contrast behind any text.
+ *
+ * Its own element, because a `background-image` gradient does not transition —
+ * only `opacity` on a layer gets the 0.4s fade the flat fill used to have.
+ * `z-index: -1` puts it behind the row's text; it still paints *over*
+ * `.benefits__mark`, which shares that layer and comes first in the DOM, which
+ * is precisely why the right end has to be transparent rather than merely faint.
+ */
+.benefit-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to right,
+    var(--color-paper) 0 50%,
+    transparent 86%
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out-quint);
+  pointer-events: none;
+}
+
+.benefit-row:hover::after {
+  opacity: 1;
 }
 
 .benefit-row:hover::before {
@@ -2896,7 +2939,10 @@ html[data-motion="reduced"] {
   }
 
   .benefit-row,
-  .benefit-row::before {
+  .benefit-row::before,
+  .benefit-row::after {
+    /* The wash and the rule still appear — they are the row's state, not
+       decoration. They just arrive without the fade. */
     transition: none;
   }
 }
@@ -3000,43 +3046,27 @@ html[data-motion="reduced"] {
 /* --- Variable weight on hover --------------------------------------------- */
 
 /*
- * `font-weight` between two variable-font instances does not interpolate on its
- * own — a custom property does, but only once it has been registered with a
- * type. `@property` is what makes this a smooth 600 → 780 ramp rather than a
- * snap at the midpoint.
+ * REMOVED, and worth knowing why before anyone reaches for it again.
  *
- * Both Archivo and Inter are loaded by `next/font/google` without a `weight`
- * argument, which serves the variable file, so the `wght` axis is live.
- * `font-synthesis-weight: none` in the base layer keeps the browser from
- * faking any of it.
+ * `.wght-hover` ramped a registered `--wght` custom property 600 → 780 on the
+ * services-grid card titles, which was the site's one variable-font
+ * interaction. A heavier axis draws wider glyphs, so a heading sitting near
+ * its wrap boundary gains a line the moment it is pointed at — "Authorised
+ * Warranty Provider" did exactly that, taking its title from 34px to 67px, its
+ * grid row with it, and 33px onto the height of the whole list. Only that one
+ * card showed it, because only that title straddled the break.
+ *
+ * The failure is inherent to animating font metrics on text that wraps, not to
+ * the numbers chosen: a title one word longer reintroduces it at some viewport
+ * width. To bring the effect back it needs a box that reserves the *heavy*
+ * measurement at rest — a `visibility: hidden` copy of the text at wght 780
+ * stacked under the visible one in a one-cell grid — which costs a duplicated
+ * text node. It was not worth that for a weight ramp; the cards answer the
+ * pointer four other ways, none of which touch layout.
+ *
+ * `font-synthesis-weight: none` stays in the base layer. It is unrelated — it
+ * stops the browser faking weights it was not given.
  */
-@property --wght {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 600;
-}
-
-.wght-hover {
-  --wght: 600;
-  font-variation-settings: "wght" var(--wght);
-  /* Long-hand deliberately: a custom property name inside the `transition`
-     shorthand is not parsed consistently across engines. */
-  transition-property: --wght, color;
-  transition-duration: 0.4s;
-  transition-timing-function: var(--ease-out-quint);
-}
-
-.group:hover .wght-hover,
-.wght-hover:hover,
-.group:focus-visible .wght-hover {
-  --wght: 780;
-}
-
-html[data-motion="reduced"] {
-  .wght-hover {
-    transition: none;
-  }
-}
 
 /* --- Skeletons ------------------------------------------------------------ */
 
@@ -3341,8 +3371,9 @@ html[data-motion="reduced"] {
  * Card variant of the partner carousel, used on the home page.
  *
  * Square corners and a hairline border, because that is how everything else on
- * this site is drawn — the bubble variant's circle is the deliberate exception,
- * not the pattern to follow.
+ * this site is drawn. This card and the bubble variant's tile carry the same
+ * 0.75rem radius as the two deliberate exceptions, and they are not a licence
+ * to soften anything else.
  *
  * Fixed width and height on purpose: the logos vary from a wide wordmark to a
  * square glyph, and letting the cards size to their contents makes the strip
@@ -4125,20 +4156,29 @@ html[data-motion="reduced"] {
 }
 
 /*
- * Back-to-top sits **beside** the launcher, not above it.
+ * Back-to-top sits **above** the launcher, stacked in the same corner column.
  *
- * Above was wrong: the space directly over the launcher is where the chat's
- * floating label lives, so the label covered the arrow — the label is the
- * wider element and it won, leaving a control the visitor could see but not
- * click. Moving the arrow to the left of the launcher puts both on the same
- * baseline and leaves the column above the launcher to the label alone.
+ * That space used to belong to the chat's standing label, which is why the
+ * arrow was parked beside the launcher instead; with the label gone the column
+ * is free, and stacking keeps both controls on one vertical axis rather than
+ * spreading two dark circles across the bottom edge.
  *
- * The vertical nudge centres the 2.875rem arrow against the taller launcher,
- * and is written off `--chat-size` so it survives a change to that token.
+ * The order in that column, bottom to top, is **launcher, label, arrow**. The
+ * label belongs against the launcher — its caret points at it and it is that
+ * button's only name — so the arrow is the one that gives way, standing off by
+ * the label's height whenever it is showing. `--chat-nudge-h` carries that
+ * measurement, published by `chat-widget.tsx` and unset when there is no label,
+ * where the `0px` fallback drops the arrow back against the launcher.
+ *
+ * The horizontal nudge centres the 2.875rem arrow on the wider launcher, and
+ * both offsets are written off `--chat-size` so they survive a change to that
+ * token.
  */
 .back-to-top {
-  right: calc(var(--chat-edge) + var(--chat-size) + 0.75rem);
-  bottom: calc(var(--chat-edge) + (var(--chat-size) - 2.875rem) / 2);
+  right: calc(var(--chat-edge) + (var(--chat-size) - 2.875rem) / 2);
+  bottom: calc(
+    var(--chat-edge) + var(--chat-size) + 0.75rem + var(--chat-nudge-h, 0px)
+  );
 }
 
 /* --- Launcher -------------------------------------------------------------- */
@@ -4273,63 +4313,6 @@ html[data-motion="reduced"] {
 
 
 /*
- * The standing label above the launcher. Deliberately quiet — it names the
- * button, it does not sell. The caret ties it to the control below it, the
- * same as the larger nudge.
- */
-.chat-tag {
-  position: relative;
-  padding: 0.34rem 0.6rem;
-  background: var(--color-paper);
-  border: 1px solid var(--color-rule);
-  box-shadow: 0 10px 26px -18px rgb(20 24 29 / 0.55);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--color-ink-soft);
-  white-space: nowrap;
-  transition:
-    color 0.2s linear,
-    border-color 0.2s linear,
-    transform 0.28s var(--ease-out-quint);
-}
-
-.chat-tag::after {
-  content: ;
-  position: absolute;
-  right: 0.85rem;
-  bottom: -0.3rem;
-  width: 0.55rem;
-  height: 0.55rem;
-  background: var(--color-paper);
-  border-right: 1px solid var(--color-rule);
-  border-bottom: 1px solid var(--color-rule);
-  transform: rotate(45deg);
-}
-
-/* Hovering either part lights both: they are one control in two boxes. */
-.chat-tag:hover,
-.chat:has(.chat-fab:hover) .chat-tag {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-  transform: translateY(-2px);
-}
-
-.chat-tag:hover::after,
-.chat:has(.chat-fab:hover) .chat-tag::after {
-  border-color: var(--color-brand);
-}
-
-html[data-motion="reduced"] {
-  .chat-tag,
-  .chat-tag:hover,
-  .chat:has(.chat-fab:hover) .chat-tag {
-    transform: none;
-  }
-}
-
-
-/*
  * Dark theme: a fixed dark glyph on the brand fills.
  *
  * `--color-brand` lightens to #ff8236 in the dark theme — deliberately, so it
@@ -4383,6 +4366,7 @@ html[data-motion="reduced"] {
     transform: translateY(10px) scale(0.96);
   }
 }
+
 
 .chat-nudge__body {
   display: block;

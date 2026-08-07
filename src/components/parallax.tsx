@@ -175,6 +175,31 @@ export function Parallax({
 /**
  * The other parallax figure: an **aperture**.
  *
+ * ---------------------------------------------------------------------------
+ * **CURRENTLY UNUSED, AND THERE IS A REASON. READ THIS BEFORE REACHING FOR IT.**
+ *
+ * It judders on a long continuous scroll, and the fault is structural rather
+ * than a tuning problem. Scrolling is composited off the main thread; this
+ * transform is written from `requestAnimationFrame` on it. So the layer is
+ * always one frame behind the scroll — and because the figure works by
+ * *cancelling* that scroll, the residual error is `strength` times a whole
+ * frame's scroll distance, which is tens of pixels when someone is moving. The
+ * picture shakes up and down around the position it is supposed to be pinned
+ * at, and it gets worse the faster you scroll.
+ *
+ * `Parallax` has exactly the same one-frame lag and does not show it: there the
+ * layer rides the section's own natively composited scrolling and the transform
+ * only adds a small lag on top, so the error is a fraction of a small number
+ * rather than nearly all of a large one.
+ *
+ * Lowering `strength` does not fix it — it reduces the pinning, which is the
+ * entire figure — and neither does the clamp below, which is about coverage,
+ * not smoothness. A real fix needs the transform driven by the compositor
+ * (a scroll-driven `animation-timeline`, once that can be relied on), not a
+ * different constant here. The home page's coverage band used this and was
+ * moved to `Parallax` for precisely this reason.
+ * ---------------------------------------------------------------------------
+ *
  * `Parallax` drifts a photo inside a frame that is itself scrolling — the
  * photo lags, and you read the lag. This inverts that. The layer is held
  * against the viewport and the section scrolls over it, so the section reads

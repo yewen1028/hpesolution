@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { ScrollDrift } from "@/components/scroll-drift";
+import { READING_DRIFT } from "@/components/scroll-stage";
 import { DrawIcon } from "@/components/draw-icon";
 import { FlickeringGrid } from "@/components/flickering-grid";
 import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
@@ -126,8 +127,14 @@ export function ServicesGrid({
           The wrapper is the ruler and the `<ul>` is what moves. They cannot be
           the same element: measuring the thing you are moving reads back your
           own last frame. See `scroll-drift.tsx`.
+
+          `READING_DRIFT` is what puts the movement where it can be seen. The
+          default spans resolve both phases while the grid is all but off
+          screen — the arithmetic is written out where that constant is
+          declared — so the grid held its settled state for every frame a
+          visitor actually had in front of them.
         */}
-        <ScrollDrift className="mt-16">
+        <ScrollDrift className="mt-16" phasing={READING_DRIFT}>
           <ul className="svc-list grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service, i) => {
               return (
@@ -161,14 +168,29 @@ export function ServicesGrid({
                     </span>
 
                     {/*
-                      `wght-hover` ramps the variable axis 600 → 780 on hover of
-                      the surrounding `group` link. The weight is the hover
-                      state — the type thickens rather than something being
-                      added to it.
+                      **No hover effect on this heading, and that is the fix
+                      rather than an omission.**
+
+                      It used to carry `wght-hover`, which ramped the variable
+                      weight axis 600 → 780. A heavier axis means wider glyphs,
+                      and "Authorised Warranty Provider" sits exactly on its
+                      wrap boundary: at 600 it is one line, at 780 it is two.
+                      Pointing at that one card grew its title by 33px, which
+                      grew its row, which grew the grid — measured at 1440px as
+                      +33px on three cells and on the list. Every other card
+                      was stable, so the fault only showed on the one title
+                      whose length happened to straddle the break.
+
+                      Any weight ramp on wrapping text has this failure mode
+                      waiting in it: it is not a bug in the value, it is what
+                      changing font metrics on hover does. A future title one
+                      word longer would reintroduce it at some viewport width.
+
+                      The card still answers the pointer four ways — the cell
+                      warms, the cursor wash follows, the icon fills brand, and
+                      the action turns and steps. None of them touch layout.
                     */}
-                    <h3 className="display-3 wght-hover mt-7">
-                      {service.title}
-                    </h3>
+                    <h3 className="display-3 mt-7">{service.title}</h3>
 
                     <p className="mt-4 text-[0.95rem] leading-relaxed text-ink-soft">
                       {service.short}

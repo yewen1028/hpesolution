@@ -90,9 +90,21 @@ It lives **inside** `<header>`, not above it in `layout.tsx`. The header is
   supplies the photograph and the sentence and nothing about the movement. It
   used to carry a `variant` of `drift | aperture` chosen per service, which
   meant the same slot moved in two directions depending on which service you
-  had opened. Do not reintroduce a per-page movement prop. `ParallaxBand` still
-  takes `variant` because the home page's coverage band uses the aperture — that
-  is a different section, not a variant of this one.
+  had opened. Do not reintroduce a per-page movement prop.
+- **`ParallaxWindow` (the aperture) is unused, and reaching for it again is a
+  mistake.** It judders on a long continuous scroll and cannot be tuned out of
+  it: scrolling is composited off the main thread, the transform is written from
+  `rAF`, so the layer is one frame behind — and since the figure works by
+  *cancelling* the scroll, the residual error is `strength` times a whole
+  frame's scroll distance. The picture shakes around the position it is meant
+  to be pinned at, worse the faster you scroll, for the same reason
+  `background-attachment: fixed` judders. `Parallax` has the identical one-frame
+  lag and does not show it, because there the layer rides the section's own
+  natively composited scrolling and the transform only adds a small lag on top.
+  The home page's coverage band was an aperture and is now a drift at the
+  service band's own `speed={90}`. `ParallaxBand` still takes `variant`, but
+  nothing passes `aperture`. A real fix needs a compositor-driven
+  `animation-timeline`, not a different constant.
 - `components/scroll-stage.tsx` — the section figures play **on arrival and on
   departure, never in between**. Entry is keyed to the top edge arriving, exit
   to the *bottom* edge leaving, and each span is capped at half the section so
@@ -100,6 +112,24 @@ It lives **inside** `<header>`, not above it in `layout.tsx`. The header is
   between is the settled state. Keying both phases off the top edge — which is
   what it used to do — makes a tall section tip away and dim while it is still
   being read.
+  `stagePhases` takes an optional `Phasing` — `enterLead`, `enterSpan`,
+  `exitSpan`, all in viewport fractions. **Check where a phase resolves before
+  trusting a span.** On the home page's ~1500px services grid in an 800px
+  window, the defaults ran the entry from the grid's top edge at 800px down to
+  560px down, and the exit over the last 240px of `rect.bottom` — both almost
+  entirely off screen, so the grid was settled for every frame anyone could
+  see, and it read as having no parallax at all. The travel was not too small;
+  it was spent somewhere else. `READING_DRIFT` is the tuned set for a translate
+  on something taller than the window, and it is **only** safe for a translate:
+  the same spans on a stage, which fades and scales, are what
+  `SETTLED_EXIT_SPAN` exists to prevent.
+- A drift does not have to share its section's phasing. The services grid's
+  stage takes `SETTLED_EXIT_SPAN` so its fade and scale stay off the reading,
+  while its `ScrollDrift` takes the full tail so the departure is visible. Both
+  still resolve at the same edges, so the drift leads the fold rather than
+  outlasting it — that is the constraint, not "same numbers on both".
+- `--svc-travel` and the drift's spans are a pair. 96px over a viewport and a
+  fifth reads; the old 60px over the same distance does not.
 - `components/reveal.tsx` — `IntersectionObserver` reveal with a **2.5s
   safety-net timer**. Content starts hidden in CSS, so anything animated needs
   that net or it can stay invisible. Keep the `<noscript>` override in
@@ -210,20 +240,48 @@ production line that read as a rack aisle at thumbnail size.
 ### Partner logos
 
 `public/media/logos/` — partner brand marks for the business-partner carousel,
-downloaded from Wikimedia Commons by `scripts/fetch-logos.mjs` as rendered PNGs
-and registered in `partnerLogos` in `src/lib/site.ts`.
+downloaded by `scripts/fetch-logos.mjs` and registered in `partnerLogos` in
+`src/lib/site.ts`.
 
-The same eye-check rule applies, and it bites harder here: searching Commons for
-"Ruckus Networks" returns a photo of their head office, and Simple Icons' `amp`
-is Google AMP, not the cabling brand. **Open every file before committing it.**
+**The source is hpe.com.my itself** — the seventeen files the live site serves
+on /business-partner. So the carousel shows the artwork the company already
+publishes for itself, which is the point. It replaced a mixed set of eleven
+Wikimedia Commons renders plus four draft favicons, where AMP and Cyberoam fell
+back to type because Commons had nothing usable. **All seventeen have artwork
+now.** The principal's own logo pack is still the better source if one is to
+hand; check each principal's brand guidelines for usage terms.
 
-**Fifteen** of the seventeen partners have a mark — eleven 400px Commons
-renders plus four small favicons taken from the draft. Only **AMP** and
-**Cyberoam** have none that could be sourced, and they render as typographic
-wordmarks. To add one, drop the file in and add a line to `partnerLogos` — no
-component needs changing. The authoritative source is the logo pack each
-principal issues to authorised partners; prefer it over Commons, and check each
-principal's brand guidelines for usage terms.
+The same eye-check rule applies. **Open every file before committing it** — these
+ids are not self-describing.
+
+**Every logo is the full lockup**, exactly as the live site shows it. The script
+briefly also derived `-mark.png` crops — the symbol cut away from the wordmark —
+for the brands whose lockup is too wide to read in a small box. **Do not bring
+that back.** The fix for artwork that does not fit is a frame that fits the
+artwork; cropping instead meant editing seventeen other companies' trademarks to
+suit this site's layout, with a geometric split that cannot tell a symbol from a
+letter. It cut Ruckus' logo through the "R" — the dog's leash bridges the gutter
+to the wordmark — and produced a perfectly plausible file.
+
+Two things happen on download, and both matter:
+
+- **Everything is trimmed to its ink.** All seventeen arrive 600×300 with
+  inconsistent internal padding, so under `object-contain` it is the padding
+  that gets fitted and each logo lands at a different optical size.
+- **Cyberoam is keyed out.** It is the one file with no alpha channel, drawn on
+  opaque white; left alone its bounding box paints a white rectangle on every
+  dark surface. Trimming does not help — what is left is still opaque.
+
+**The aspect ratios run from 0.99 (Huawei, square) to 8.51 (Fortinet, a bare
+wordmark), and any frame has to hold both.** That is why neither variant uses a
+square box, and why the bubble strip is a 172×92 tile rather than the 84px
+circle it was: Fortinet in that circle came out about 62×7px. A round frame can
+only show a round mark well, and this artwork is overwhelmingly wide. The image
+height caps are set by the widest logo, not the tallest.
+
+The bubble and the card both sit on **fixed white in either theme**. Thirteen
+of these marks are dark ink, and `--color-paper` is near-black in the dark
+theme, which swallowed them.
 
 Both pages render this list through `components/partner-carousel.tsx`, in its
 two variants: the home page takes `card` on the near-black band (`tone="dark"`,
@@ -378,10 +436,16 @@ To put a real model behind it, keep `Reply` as the response shape and replace
   brand, an expanding ring on a loop. Press goes inward — compress to 0.92,
   plus the shared `[data-ripple]` wash. `[data-pressed]` from `press.tsx` is
   what makes press work on touch, where `:active` is unreliable.
-- Two labels float above the launcher, never both at once: `.chat-nudge` (the
-  prompt, after 2.6s, dismissed for the session through `sessionStorage`) and
-  `.chat-tag` (the standing "Chat with us", so the control is never a bare icon
-  a visitor has to guess at).
+- **One** label floats above the launcher: `.chat-nudge`, the prompt, after
+  2.6s. **The ✕ is the only thing that dismisses it.** Not hover — the label
+  sits directly over the launcher, so a pointer leaving the label crosses the
+  button, and an `onMouseEnter` dismissal there made the prompt vanish from
+  being read. Not opening the panel either; the label is hidden while the panel
+  is open anyway, so it returns when the panel is closed. Dismissal is
+  **page-scoped, not persisted** — a reload is a fresh arrival and gets the
+  prompt again, because it is the only thing naming the control. (There used to be a second, `.chat-tag`, a standing "Chat with us"
+  that took the space back once the prompt was dismissed; it is gone, and the
+  space above the launcher now belongs to the back-to-top arrow.)
 - The panel is hidden, not unmounted — it keeps the conversation across opens
   and has something to animate out of. `inert` is what takes it out of the tab
   order and the accessibility tree; `visibility: hidden` alone leaves a closed
@@ -394,5 +458,11 @@ To put a real model behind it, keep `Reply` as the response shape and replace
   `min-height: auto` and will not shrink below its content, which pushed the
   input and footer out through the bottom of the panel instead of scrolling.
 - Stacking: splash 200 > header 100 > scroll progress 99 > **chat 95** >
-  back-to-top 90. `.back-to-top` is offset upward by `--chat-size`, so the two
-  fixed corner controls share the corner instead of covering each other.
+  back-to-top 90. The corner is **one column: launcher, label, arrow**, bottom
+  to top. `.back-to-top` is offset upward by `--chat-size` plus
+  `--chat-nudge-h` — the label's measured height, published on `:root` by
+  `chat-widget.tsx` and unset when there is no label. The label keeps the space
+  against the launcher, because its caret points at that button and it is the
+  button's only name; the arrow is what gives way. The height is measured with
+  a `ResizeObserver` rather than written as a constant: the label is two lines
+  of copy at one width and three at another.
