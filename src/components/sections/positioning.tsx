@@ -23,7 +23,15 @@ import { drivers } from "@/lib/site";
  * on a divider? If it does, this rule is redundant and will be visible as a
  * line across the bottom of that section's artwork.
  */
-export function Positioning({ topRule = true }: { topRule?: boolean } = {}) {
+export function Positioning({
+  topRule = true,
+  /**
+   * The "About HPE Solutions" hand-off. On by default and **off on
+   * `/about-us`**, where it is a button offering to take you to the page you
+   * are already reading.
+   */
+  cta = true,
+}: { topRule?: boolean; cta?: boolean } = {}) {
   return (
     <section
       className={`bg-paper-warm py-24 sm:py-32 ${
@@ -91,13 +99,15 @@ export function Positioning({ topRule = true }: { topRule?: boolean } = {}) {
               ))}
             </ol>
 
-            <Reveal delay={120}>
-              <div className="mt-12">
-                <ButtonLink href="/about-us" variant="ghost">
-                  About HPE Solutions
-                </ButtonLink>
-              </div>
-            </Reveal>
+            {cta && (
+              <Reveal delay={120}>
+                <div className="mt-12">
+                  <ButtonLink href="/about-us" variant="ghost">
+                    About HPE Solutions
+                  </ButtonLink>
+                </div>
+              </Reveal>
+            )}
           </div>
         </div>
       </Container>

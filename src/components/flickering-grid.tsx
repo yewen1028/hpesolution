@@ -131,9 +131,36 @@ export function FlickeringGrid({
     /** How long a cell burns brighter than its resting value after landing. */
     const REVEAL_FLARE_S = 0.14;
 
+    /*
+     * The canvas is sized from the parent's **layout** box, inset by a pixel.
+     * Both halves of that matter, and the second one is what stops the field
+     * printing over the hairline at the foot of the services grid's CTA panel.
+     *
+     * `clientWidth` / `clientHeight` rather than `getBoundingClientRect()`:
+     * the rect is the *visually transformed* box, and this canvas's parent
+     * lives inside `ScrollDrift`'s translate and `ScrollStage`'s `rotateX` and
+     * `scale`. A `ResizeObserver` notification that happened to land while the
+     * section was mid-fold measured the projected box — 9% short at the end of
+     * the exit — and sized the field to it. What the field should track is the
+     * box the document gives the panel, which does not move.
+     *
+     * The one-pixel inset is the fix for the bleed. `-z-10` puts this canvas in
+     * the negative-index paint step, which comes **after** the parent's own
+     * background and border, so any part of it that reaches the border paints
+     * on top of the hairline rather than under it. `overflow: hidden` should
+     * prevent that on its own, but the clip and the canvas are separate
+     * composited layers under the fold's 3D transform, and they round to device
+     * pixels independently: at a fractional scroll offset the canvas's bottom
+     * edge lands half a pixel past the clip and the dots print across the rule.
+     * Ending the field a pixel early removes the overlap outright, and a pixel
+     * off a 3px dot field at 34% opacity behind a mask is not a visible change.
+     */
+    const INSET = 1;
+
     function resize() {
-      const { width, height } = parent!.getBoundingClientRect();
-      if (width === 0 || height === 0) return;
+      const width = parent!.clientWidth - INSET * 2;
+      const height = parent!.clientHeight - INSET * 2;
+      if (width <= 0 || height <= 0) return;
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas!.width = Math.ceil(width * dpr);
@@ -271,7 +298,13 @@ export function FlickeringGrid({
     <canvas
       ref={ref}
       aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 ${className}`}
+      /*
+        `left-px top-px`, not `inset-0`: the size comes from `resize()`, which
+        insets the field by the same pixel at every edge — see the note there.
+        With an explicit width a second horizontal offset is ignored anyway, so
+        `inset-0` was only ever setting the top-left corner.
+      */
+      className={`pointer-events-none absolute left-px top-px ${className}`}
     />
   );
 }

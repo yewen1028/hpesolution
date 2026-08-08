@@ -244,10 +244,26 @@
  * is the one case where that is the intended reading — it is arriving from off
  * screen — but nothing here can produce a horizontal scrollbar.
  *
- * `transform: none` on the shown state resolves all three variants, which is
- * why there is no per-direction shown rule. Both overrides that must beat these
- * still do: `html[data-motion="reduced"] [data-reveal]` outranks them on
- * specificity, and `.no-js [data-reveal]` ties and wins on source order.
+ * **The shown state needs the `[data-from]` selector to match these two on
+ * specificity, and that is not a tidiness point — it is the whole reason a
+ * directional reveal ever lands.** `[data-reveal="shown"]` alone is one
+ * attribute selector, 0-1-0; each rule below is two, 0-2-0, and both still
+ * match once the attribute changes value, because `[data-reveal]` tests for
+ * presence. So the plain shown rule lost the cascade and the transform was
+ * never released: every `from="left"` and `from="right"` element faded up and
+ * then stayed put, parked 28–56px to the side of where the document had put it,
+ * for the life of the page.
+ *
+ * It was plainly visible on `/case-study`, where both halves of every row take
+ * a direction: the photograph sat 56px clear of the left edge of its own row —
+ * outside the row's background, over the section band behind it — and the type
+ * column hung the same distance past the right. Nothing looked broken enough to
+ * name, which is why it survived; it just read as a section that would not line
+ * up.
+ *
+ * The two overrides that must beat all of this still do:
+ * `html[data-motion="reduced"] [data-reveal]` is 0-2-1, and `.no-js
+ * [data-reveal]` ties at 0-2-0 and wins on source order, being further down.
  */
 [data-reveal][data-from="left"] {
   transform: translateX(calc(clamp(28px, 4vw, 56px) * -1));
@@ -257,7 +273,8 @@
   transform: translateX(clamp(28px, 4vw, 56px));
 }
 
-[data-reveal="shown"] {
+[data-reveal="shown"],
+[data-reveal="shown"][data-from] {
   opacity: 1;
   transform: none;
 }
@@ -462,6 +479,48 @@ html[data-motion="reduced"] .svc-list {
 }
 
 /*
+ * The card title answers the pointer word by word: each word lifts, left to
+ * right, on a 34ms stagger.
+ *
+ * **It is a transform, and that is the whole constraint** — read the removed
+ * `.wght-hover` note further down before changing this. The previous attempt at
+ * an effect on these words ramped the variable weight axis, which redraws the
+ * glyphs wider, which pushed "Authorised Warranty Provider" onto a second line
+ * and grew the grid by 33px the moment that one card was pointed at. Anything
+ * here that touches font metrics, letter-spacing, or the box has the same
+ * failure waiting in it at some viewport width. A translate does not: the word
+ * occupies exactly the space it did at rest, so the wrap point cannot move.
+ *
+ * `inline-block` is needed for the transform to apply at all, and is safe for
+ * the same reason — the spans are whole words with the spaces left outside
+ * them as ordinary text nodes, so the line still breaks where it always did.
+ *
+ * The delay runs on hover and unwinds in reverse on the way out, so the words
+ * settle back in the order they left rather than snapping flat together.
+ */
+.svc-word {
+  display: inline-block;
+  transform: translate3d(0, 0, 0);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--w, 0) * 34ms);
+}
+
+.svc-card:hover .svc-word,
+.svc-card:focus-visible .svc-word {
+  transform: translate3d(0, -0.16em, 0);
+}
+
+/* Rest is the settled state, so the return leads with the last word. */
+.svc-card:not(:hover):not(:focus-visible) .svc-word {
+  transition-delay: calc((var(--wn, 1) - var(--w, 0)) * 24ms);
+}
+
+html[data-motion="reduced"] .svc-word {
+  transform: none;
+  transition: none;
+}
+
+/*
  * Per-card drift inside the case-study row. `--case-y` is written by the shared
  * scroll loop from `components/case-parallax.tsx`; unset — no script, reduced
  * motion — it resolves to 0 and the row is simply a row.
@@ -473,6 +532,103 @@ html[data-motion="reduced"] .svc-list {
 
 html[data-motion="reduced"] .case-parallax {
   transform: none;
+}
+
+/* --- The engagement register --------------------------------------------- */
+
+/*
+ * `/case-study`'s closing section: four contract types, each a full-width band
+ * of a left rail and a ruled list of entries. The grid, the hairlines and the
+ * spacing are Tailwind classes on the markup; what lives here is the part that
+ * classes cannot express — the counter-drift and the row's hover.
+ *
+ * **The hairlines never move.** `ScrollDrift` publishes `--drift-p` on the
+ * wrapper and the two columns read it in opposite directions inside a band
+ * whose borders are drawn by the untransformed group element. The type travels;
+ * the frame it travels in stays where the document put it. That is the same
+ * arrangement `case-row.tsx` uses one section up, which is deliberate — a page
+ * should have one idea about what moves, not one per section.
+ *
+ * The rail leads by about half the entries' travel, so on arrival the contract
+ * type is already in place while its entries are still catching up, and on
+ * departure the name leaves first. The numbers are small on purpose: the band
+ * is only 36–44px of vertical padding, and anything much past this reaches the
+ * hairline above it and reads as the text escaping its row.
+ */
+.ledger {
+  --ledger-travel: 24px;
+}
+
+.ledger__rail {
+  transform: translate3d(
+    0,
+    calc(var(--drift-p, 0) * var(--ledger-travel) * -0.5),
+    0
+  );
+  will-change: transform;
+}
+
+.ledger__entries {
+  transform: translate3d(0, calc(var(--drift-p, 0) * var(--ledger-travel)), 0);
+  will-change: transform;
+}
+
+/*
+ * The row's hover lights its own segment of the spine.
+ *
+ * These rows are not links and nothing here suggests they are — no cursor
+ * change, no lift, no colour on the tag column. It is a line-tracking aid: the
+ * sector a reader is scanning for sits at the far right of a wide row, and this
+ * is what ties it back to the sentence it belongs to. The tick is drawn on the
+ * hairline the row already carries at `lg`, so nothing shifts and no space is
+ * reserved for it.
+ */
+.ledger__row {
+  position: relative;
+}
+
+.ledger__row::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ledger__row:hover::before {
+  transform: scaleY(1);
+}
+
+.ledger__row:hover .ledger__body {
+  color: var(--color-ink);
+}
+
+/*
+ * The sectors read as one index entry, not as a row of chips: a middot between
+ * them, and the separator drawn by the pseudo-element so it never lands at the
+ * start of a wrapped line.
+ */
+.ledger__tags span + span::before {
+  content: "·";
+  margin-inline: 0.55em;
+  color: var(--color-rule-strong);
+}
+
+html[data-motion="reduced"] {
+  .ledger__rail,
+  .ledger__entries {
+    transform: none;
+    will-change: auto;
+  }
+
+  .ledger__row::before {
+    transition: none;
+  }
 }
 
 /*

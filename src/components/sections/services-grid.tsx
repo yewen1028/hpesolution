@@ -1,16 +1,29 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { ScrollDrift } from "@/components/scroll-drift";
 import { READING_DRIFT } from "@/components/scroll-stage";
-import { DrawIcon } from "@/components/draw-icon";
+import { ServiceCard } from "@/components/service-card";
 import { FlickeringGrid } from "@/components/flickering-grid";
-import { Container, SectionHeading, ServiceIcon } from "@/components/ui";
+import { Container, SectionHeading } from "@/components/ui";
 import { services } from "@/lib/site";
 
 /*
  * The services list: seven cells, each an icon, a name, one line of what it is,
  * and a way in.
+ *
+ * **The inside of a cell is `components/service-card.tsx`, not this file.** The
+ * related-services row at the foot of every service page renders the same
+ * element, so a visitor who arrives there from this grid meets the same card
+ * rather than a smaller imitation of it. This file owns the frame: the
+ * hairlines, the reveal order, the drift, and the panel that closes the row.
+ *
+ * The cells are deliberately roomy — `p-9` rising to `p-12`, a 56px icon frame,
+ * and the summary capped to a 34-character measure rather than the column
+ * width. Seven items on a page that is mostly hairlines and warm white can
+ * afford the space, and at three columns on a wide screen an uncapped summary
+ * sets as one long line hugging both edges of a cell that is otherwise padded:
+ * the cell reads as full while the type reads as cramped.
  *
  * **The cells used to carry a schedule** — `featureHeading` plus the first three
  * `features[].title` on ruled rows, plus a "+4 more" count. It was put there
@@ -92,7 +105,10 @@ export function ServicesGrid({
           declared — so the grid held its settled state for every frame a
           visitor actually had in front of them.
         */}
-        <ScrollDrift className="mt-16" phasing={READING_DRIFT}>
+        {/* The heading and the grid are two things, not one block: the list is
+            wide and quiet, and it wants more air above it than a paragraph
+            would. */}
+        <ScrollDrift className="mt-20" phasing={READING_DRIFT}>
           <ul className="svc-list grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service, i) => {
               return (
@@ -103,87 +119,14 @@ export function ServicesGrid({
                   className="border-b border-r border-rule"
                 >
                   {/*
-                    `data-spotlight` is the hover target, so it goes on the link
-                    rather than the cell: the wash should follow the pointer
-                    across the surface the visitor is actually pointing at, and
-                    the cell also owns the shared hairlines.
+                    The cell owns the hairlines; `ServiceCard` owns everything
+                    inside it, and is the same element the related-services row
+                    on each service page renders. `i % 3` offsets the icon draw
+                    per column so a row does not stroke in lockstep, and matches
+                    the `Reveal` delay above so the stroke starts as the cell
+                    finishes arriving.
                   */}
-                  <Link
-                    href={`/services/${service.slug}`}
-                    data-press="card"
-                    data-spotlight=""
-                    className="group flex h-full flex-col p-8 transition-colors duration-300 hover:bg-paper-warm lg:p-10"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center border border-rule text-brand transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
-                      {/*
-                        Offset per column so a row of three does not draw in
-                        lockstep. `i % 3` matches the `Reveal` delay above, so
-                        the stroke starts as the cell finishes arriving.
-                      */}
-                      <DrawIcon delay={(i % 3) * 90}>
-                        <ServiceIcon name={service.icon} />
-                      </DrawIcon>
-                    </span>
-
-                    {/*
-                      **No hover effect on this heading, and that is the fix
-                      rather than an omission.**
-
-                      It used to carry `wght-hover`, which ramped the variable
-                      weight axis 600 → 780. A heavier axis means wider glyphs,
-                      and "Authorised Warranty Provider" sits exactly on its
-                      wrap boundary: at 600 it is one line, at 780 it is two.
-                      Pointing at that one card grew its title by 33px, which
-                      grew its row, which grew the grid — measured at 1440px as
-                      +33px on three cells and on the list. Every other card
-                      was stable, so the fault only showed on the one title
-                      whose length happened to straddle the break.
-
-                      Any weight ramp on wrapping text has this failure mode
-                      waiting in it: it is not a bug in the value, it is what
-                      changing font metrics on hover does. A future title one
-                      word longer would reintroduce it at some viewport width.
-
-                      The card still answers the pointer four ways — the cell
-                      warms, the cursor wash follows, the icon fills brand, and
-                      the action turns and steps. None of them touch layout.
-                    */}
-                    <h3 className="display-3 mt-7">{service.title}</h3>
-
-                    <p className="mt-4 text-[0.95rem] leading-relaxed text-ink-soft">
-                      {service.short}
-                    </p>
-
-                    {/*
-                      The arrow alone, pinned to the floor of the cell.
-
-                      It replaced a "Read more" label, which was the same
-                      instruction printed seven times under seven headings that
-                      already said what they were. The whole cell is the link
-                      and answers the pointer four ways — the surface warms, the
-                      cursor wash follows, the icon fills brand, this turns —
-                      so the label was telling a visitor something the card was
-                      already demonstrating.
-
-                      `mt-auto` is what gives the cell a floor, and it is the
-                      reason the summary can stand on its own line without the
-                      slack reading as an unfinished cell.
-                    */}
-                    {/*
-                      The wrapper carries the spacing, not the icon. An `svg`
-                      inherits `box-sizing: border-box` from preflight and
-                      carries its size as `width`/`height` attributes, so
-                      padding on it eats the glyph rather than sitting above it.
-                    */}
-                    <span className="mt-auto pt-10">
-                      <ArrowUpRight
-                        size={20}
-                        strokeWidth={1.75}
-                        aria-hidden="true"
-                        className="text-ink-muted transition-[color,transform] duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand"
-                      />
-                    </span>
-                  </Link>
+                  <ServiceCard service={service} drawDelay={(i % 3) * 90} />
                 </Reveal>
               );
             })}
@@ -215,7 +158,7 @@ export function ServicesGrid({
                 data-press="card"
                 data-tone="dark"
                 data-spotlight=""
-                className="group relative flex h-full flex-col justify-center p-8 lg:p-10"
+                className="group relative flex h-full flex-col justify-center p-9 lg:p-12"
               >
                 <h3 className="display-3 max-w-md text-white">
                   Not sure which scope you need?

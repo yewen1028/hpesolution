@@ -59,13 +59,24 @@ export function SpotlightProvider() {
         (e.target as Element | null)?.closest<HTMLElement>("[data-spotlight]") ??
         null;
 
-      if (target !== active) {
-        // Leaving a card: drop the properties so it cannot resume mid-fade
-        // with the cursor's last position baked in.
-        active?.style.removeProperty("--spot-x");
-        active?.style.removeProperty("--spot-y");
-        active = target;
-      }
+      /*
+       * **The card that is being left keeps its last cursor position**, and
+       * that is load-bearing rather than an oversight.
+       *
+       * This used to clear `--spot-x` / `--spot-y` the moment the pointer left,
+       * on the reasoning that a card should not resume mid-fade with a stale
+       * position. What it actually did was jump the gradient to the fallback in
+       * the stylesheet — `50% 50%`, the centre of the card — at the exact
+       * moment the 0.4s opacity fade-out began. So pointing at a card and then
+       * moving away lit an orange blob in the middle of it and faded that out,
+       * which reads as a blink from a card the cursor has already left.
+       *
+       * Leaving the properties in place means the wash fades out from under
+       * where the cursor actually was, which is the whole point of the effect,
+       * and a card re-entered later gets fresh coordinates from this same
+       * handler before it is visible again.
+       */
+      if (target !== active) active = target;
 
       if (!target) return;
 

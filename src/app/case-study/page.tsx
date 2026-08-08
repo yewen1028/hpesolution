@@ -4,6 +4,12 @@ import { CaseRow } from "@/components/case-row";
 import DiagonalMarquee from "@/components/ui/diagonal-marquee";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
+import { ScrollDrift } from "@/components/scroll-drift";
+import {
+  READING_DRIFT,
+  ScrollStage,
+  SETTLED_EXIT_SPAN,
+} from "@/components/scroll-stage";
 import { FolderOpen } from "lucide-react";
 import { CounterText } from "@/components/counter";
 import { EmptyState } from "@/components/empty-state";
@@ -201,47 +207,104 @@ export default function CaseStudyPage() {
         sector, with no node counts or response windows, so they are rendered
         as the hairline list they are rather than dressed up as engagements
         with metrics they do not have.
-      */}
-      <section className="border-t border-rule py-24 sm:py-32">
-        <Container>
-          <Reveal>
-            <SectionHeading
-              title="Further engagements"
-              lede="Support partner appointments, helpdesk and staffing contracts, and sourcing work, listed by the sector each was delivered for."
-            />
-          </Reveal>
 
-          <div className="mt-16 grid gap-px bg-rule lg:grid-cols-2">
-            {engagementGroups.map((group, gi) => (
-              <Reveal
-                key={group.name}
-                delay={(gi % 2) * 90}
-                className="bg-paper p-8 lg:p-10"
-              >
-                <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink">
-                  {group.name}
-                </h3>
-                <ul className="mt-6 border-t border-rule">
-                  {group.items.map((item) => (
-                    <li key={item.body} className="border-b border-rule py-4">
-                      <p className="text-[0.95rem] leading-relaxed text-ink-soft">
-                        {item.body}
+        **It is a register, and it is now laid out as one.** It used to be four
+        equal cells in a two-column grid, which is the wrong container for this
+        content twice over. The groups hold 3, 2, 6 and 9 entries, and a grid
+        row equalises to its tallest cell — so the two-item helpdesk group sat
+        beside the nine-item sourcing group and spent most of its height empty.
+        That is the same hollow-cell failure recorded in `services-grid.tsx`,
+        and it cannot be fixed by writing more copy, because the copy is a
+        register of work rather than prose.
+
+        So each group is a full-width band instead: the contract type on a left
+        rail with a count, the entries ruled beneath one another on the right,
+        and the sectors in their own column against a hairline. Nothing is
+        equalised against anything, so nothing has a void to fill. The sector
+        column is the part worth keeping — a reader arriving here is looking
+        for their own industry, and aligned into a column the recurrences are
+        visible down the page in a way they were not when each tag list hung
+        under its own sentence.
+
+        Deliberately not here: **numbering.** Same reason as the services grid
+        — these are parallel entries in a register, not steps, and 01/02/03
+        would assert a sequence the content does not have. The count on each
+        rail is a real fact about the group; an index number would not be.
+      */}
+      <ScrollStage variant="rise" exitSpan={SETTLED_EXIT_SPAN}>
+        <section className="border-t border-rule py-24 sm:py-32">
+          <Container>
+            <Reveal>
+              <SectionHeading
+                title="Further engagements"
+                lede="Support partner appointments, helpdesk and staffing contracts, and sourcing work, listed by the sector each was delivered for."
+              />
+            </Reveal>
+
+            {/*
+              The figure for this section, and it plays on arrival and on
+              departure only — `READING_DRIFT`, because the register is several
+              screens tall and the default spans would resolve both phases with
+              it all but off screen.
+
+              The rail and the entries counter-drift: the contract type leads,
+              its entries follow, and on the way out the name leaves first. The
+              hairlines belong to the group and stay put while the type moves
+              inside them, which is the same figure the case rows above use for
+              their photographs — one page, one idea about what moves.
+            */}
+            <ScrollDrift className="mt-16" phasing={READING_DRIFT}>
+              <div className="ledger border-t border-rule">
+                {engagementGroups.map((group, gi) => (
+                  <Reveal
+                    as="section"
+                    key={group.name}
+                    delay={gi * 70}
+                    className="ledger__group border-b border-rule py-9 lg:grid lg:grid-cols-[minmax(0,15rem)_1fr] lg:gap-10 lg:py-11"
+                  >
+                    <div className="ledger__rail">
+                      <h3 className="font-display text-sm font-semibold uppercase leading-snug tracking-[0.14em] text-ink">
+                        {group.name}
+                      </h3>
+                      {/*
+                        How much is under this heading, which is the one thing
+                        the rail can say that the entries do not.
+                      */}
+                      <p className="tabular mt-3 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                        {group.items.length} listed
                       </p>
-                      {item.sectors.length > 0 && (
-                        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-                          {item.sectors.map((sector) => (
-                            <span key={sector}>{sector}</span>
-                          ))}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
+                    </div>
+
+                    <ul className="ledger__entries mt-7 lg:mt-0">
+                      {group.items.map((item) => (
+                        <li
+                          key={item.body}
+                          className="ledger__row border-b border-rule py-4 last:border-b-0 last:pb-0 sm:grid sm:grid-cols-[1fr_minmax(0,14rem)] sm:gap-8 lg:border-l lg:pl-8"
+                        >
+                          <p className="ledger__body text-[0.95rem] leading-relaxed text-ink-soft transition-colors duration-300">
+                            {item.body}
+                          </p>
+                          {/*
+                            The tag column keeps its hairline whether or not the
+                            entry carries sectors — three of them do not, and a
+                            rule that came and went down the column would read
+                            as a mistake rather than as an absence.
+                          */}
+                          <p className="ledger__tags mt-2 text-[0.72rem] font-semibold uppercase leading-relaxed tracking-[0.12em] text-ink-muted sm:mt-0 sm:border-l sm:border-rule sm:pl-6">
+                            {item.sectors.map((sector) => (
+                              <span key={sector}>{sector}</span>
+                            ))}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </Reveal>
+                ))}
+              </div>
+            </ScrollDrift>
+          </Container>
+        </section>
+      </ScrollStage>
 
       <ContactCta />
     </>

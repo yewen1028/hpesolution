@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
+import { ServiceCard } from "@/components/service-card";
 import { Reveal } from "@/components/reveal";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { ServiceBand } from "@/components/sections/service-band";
@@ -218,40 +218,40 @@ export default async function ServicePage(props: PageProps<"/services/[slug]">) 
       {/* Benefits */}
       <ServiceBenefits benefits={service.benefits} />
 
-      {/* Sibling services */}
+      {/*
+        Sibling services.
+
+        **Same card as the home and `/services` grid**, down to the padding —
+        `ServiceCard`, one implementation. These three used to be a smaller
+        variant of their own: no icon frame, a `text-lg` title against the
+        grid's `display-3`, a right arrow against its diagonal one, and none of
+        the hover responses. A visitor arrives here *from* that grid, so meeting
+        the same seven services again in a different costume read as a second,
+        cheaper site.
+
+        The frame is the house grid rule as well — the list draws left and top,
+        each cell draws right and bottom — rather than the `nth-child` border
+        arithmetic this had, which only ever produced the right result at
+        exactly three columns.
+
+        One column until `lg`, then three. There are exactly three cards and no
+        panel to close a ragged row with, so an intermediate two-column step
+        would leave a half-empty row at every tablet width.
+      */}
       <section className="border-t border-rule py-24 sm:py-32">
         <Container>
           <Reveal>
             <SectionHeading title="Related services" />
           </Reveal>
-          <ul className="mt-12 grid border-t border-rule md:grid-cols-3">
+          <ul className="mt-16 grid border-l border-t border-rule lg:grid-cols-3">
             {others.map((other, i) => (
               <Reveal
                 as="li"
                 key={other.slug}
                 delay={i * 90}
-                className="border-b border-rule md:[&:not(:last-child)]:border-r"
+                className="border-b border-r border-rule"
               >
-                <Link
-                  href={`/services/${other.slug}`}
-                  className="group flex h-full flex-col p-8 transition-colors hover:bg-paper-warm"
-                >
-                  <span className="text-brand">
-                    <ServiceIcon name={other.icon} size={20} />
-                  </span>
-                  <h3 className="mt-5 font-display text-lg font-semibold text-ink">
-                    {other.title}
-                  </h3>
-                  <p className="mt-2.5 flex-1 text-[0.925rem] leading-relaxed text-ink-soft">
-                    {other.short}
-                  </p>
-                  <ArrowRight
-                    size={17}
-                    strokeWidth={2}
-                    aria-hidden="true"
-                    className="mt-6 text-ink-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand"
-                  />
-                </Link>
+                <ServiceCard service={other} drawDelay={i * 90} />
               </Reveal>
             ))}
           </ul>

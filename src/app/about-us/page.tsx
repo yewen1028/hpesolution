@@ -154,7 +154,8 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      <Positioning />
+      {/* No hand-off button here: it points at this page. */}
+      <Positioning cta={false} />
       <Coverage />
       <ContactCta />
     </>
